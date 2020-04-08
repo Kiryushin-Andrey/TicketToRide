@@ -1,10 +1,40 @@
 package ticketToRide
 
-enum class GameState { Welcome, StartingGame, GameInProgress }
+import kotlinx.serialization.*
 
-sealed class ApiRequest(val playerId: PlayerId)
-class StartGame(playerId: PlayerId, val playerName: PlayerName, val color: Color, val targetPlayersCount: Int) : ApiRequest(playerId)
-class JoinGame(playerId: PlayerId, val playerName: PlayerName, val color: Color) : ApiRequest(playerId)
-class StartGameNow(playerId: PlayerId) : ApiRequest(playerId)
-class WentAway(playerId: PlayerId) : ApiRequest(playerId)
-class CameBack(playerId: PlayerId) : ApiRequest(playerId)
+const val NoGameFound = "404"
+
+enum class JoinGameFailure {
+    GameNotExists,
+    PlayerNameEmpty,
+    PlayerNameTaken
+}
+
+@Serializable
+sealed class ApiRequest()
+
+interface GameRequest {
+    val gameId : GameId
+    val playerId : PlayerId
+}
+
+@Serializable
+class StartGame(
+    val playerId: PlayerId,
+    val playerName: PlayerName) : ApiRequest()
+
+@Serializable
+class JoinGame(
+    override val gameId: GameId,
+    override val playerId: PlayerId,
+    val playerName: PlayerName): ApiRequest(), GameRequest
+
+@Serializable
+class WentAway(
+    override val gameId: GameId,
+    override val playerId: PlayerId) : ApiRequest(), GameRequest
+
+@Serializable
+class CameBack(
+    override val gameId: GameId,
+    override val playerId: PlayerId) : ApiRequest(), GameRequest

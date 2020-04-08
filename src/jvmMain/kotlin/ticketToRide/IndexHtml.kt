@@ -4,6 +4,8 @@ import io.ktor.http.ContentType
 import kotlinx.css.*
 import kotlinx.html.*
 
+private const val GoogleMapsKey = "AIzaSyCdpAiP1sFvTVh7uPsCKoFuKsE1BYsY-Q0"
+
 fun HTML.indexHtml() {
     head {
         title("Ticket to Ride!")
