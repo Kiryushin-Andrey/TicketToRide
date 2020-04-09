@@ -1,23 +1,25 @@
-package ticketToRide.components
+package ticketToRide.components.screens
 
 import kotlinx.css.*
 import react.*
 import react.dom.*
 import styled.*
 import ticketToRide.*
+import ticketToRide.components.MainMapBlock
 
 external interface GameScreenProps : RProps {
+    var gameId: GameId
     var gameState: GameState
 }
 
-class GameScreen() : RComponent<GameScreenProps, RState>() {
+class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, RState>(props) {
     override fun RBuilder.render() {
         styledDiv {
             css { +ComponentStyles.playersList }
             ul {
-                li { +"Player1" }
-                li { +"Player2" }
-                li { +"Player3" }
+                for (player in props.gameState.players) {
+                    li { +player.name.value }
+                }
             }
         }
         styledDiv {

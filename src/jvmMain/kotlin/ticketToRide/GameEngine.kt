@@ -2,20 +2,20 @@ package ticketToRide
 
 import kotlinx.coroutines.flow.*
 
-fun runGame(firstPlayer: Player, requests: Flow<ApiRequest>) : Flow<GameState> {
+fun runGame(firstPlayer: Player, requests: Flow<Request>) : Flow<GameState> {
     val initialState = GameState(listOf(firstPlayer), emptyList())
     return requests.scan(initialState) { game, req ->
         when (req) {
-            is JoinGame -> game.joinPlayer(req.playerId, req.playerName, Color.random(game))
-            is WentAway -> game.player(req.playerId) { copy(away = true) }
-            is CameBack -> game.player(req.playerId) { copy(away = false) }
+            is JoinGameRequest -> game.joinPlayer(req.playerName, Color.randomForPlayer(game))
+            is WentAwayRequest -> game.player(req.playerName) { copy(away = true) }
+            is CameBackRequest -> game.player(req.playerName) { copy(away = false) }
             else -> game
         }
     }
 }
 
-fun GameState.joinPlayer(id: PlayerId, name: PlayerName, color: Color) =
-    GameState(players + Player(id, name, color), openCoaches)
+fun GameState.joinPlayer(name: PlayerName, color: Color) =
+    GameState(players + Player(name, color), openCoaches)
 
-fun GameState.player(playerId: PlayerId, block: Player.() -> Player) =
-    GameState(players.map { if (it.id == playerId) it.block() else it }, openCoaches)
+fun GameState.player(name: PlayerName, block: Player.() -> Player) =
+    GameState(players.map { if (it.name == name) it.block() else it }, openCoaches)

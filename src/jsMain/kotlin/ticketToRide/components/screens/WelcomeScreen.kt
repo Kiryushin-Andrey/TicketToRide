@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.screens
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
@@ -11,8 +11,9 @@ import ticketToRide.*
 import kotlin.browser.window
 
 external interface WelcomeScreenProps : RProps {
-    var onStartGame: () -> Unit
-    var onJoinGame: (GameId) -> JoinGameFailure?
+    var onStartGame: (PlayerName) -> Unit
+    var onJoinGame: (GameId, PlayerName) -> Unit
+    var joinGameFailure: JoinGameFailure?
 }
 
 external interface WelcomeScreenState : RState {
@@ -20,7 +21,11 @@ external interface WelcomeScreenState : RState {
     var joinGameFailure: JoinGameFailure?
 }
 
-class WelcomeScreen() : RComponent<WelcomeScreenProps, WelcomeScreenState>() {
+class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
+    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
+        joinGameFailure = props.joinGameFailure
+    }
+
     override fun RBuilder.render() {
         val gameId = URLSearchParams(window.location.search).get("game")
         mDialog {
@@ -57,18 +62,17 @@ class WelcomeScreen() : RComponent<WelcomeScreenProps, WelcomeScreenState>() {
                 mButton(btnTitle, MColor.primary, MButtonVariant.contained,
                     disabled = state.joinGameFailure != null,
                     onClick = {
-                        if (gameId == null) {
-                            props.onStartGame()
-                        } else {
-                            val failure = props.onJoinGame(GameId(gameId))
-                            setState { joinGameFailure = failure }
-                        }
+                        val playerName = PlayerName(state.playerName)
+                        if (gameId == null)
+                            props.onStartGame(playerName)
+                        else
+                            props.onJoinGame(GameId(gameId), playerName)
                     })
             }
         }
     }
 
-    private object ComponentStyles : StyleSheet("Welcome", isStatic = true) {
+    object ComponentStyles : StyleSheet("Welcome", isStatic = true) {
         val welcomeDialog by css {
             width = 100.pct
             margin = "0"

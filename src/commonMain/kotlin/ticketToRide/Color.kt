@@ -12,9 +12,11 @@ enum class Color(val rgb: String) {
     MAGENTO("#FF00FF");
 
     companion object {
-        fun random(gameState: GameState? = null) =
+        fun randomForPlayer(gameState: GameState? = null) =
             values()
-                .filter { color -> gameState == null || gameState.players.map { it.color }.contains(color) }
+                .filter { color -> color != Color.NONE && (gameState == null || !gameState.players.map { it.color }.contains(color)) }
                 .toList().shuffled().first()
+
+        fun randomForCar() = values().toList().shuffled().first()
     }
 }
