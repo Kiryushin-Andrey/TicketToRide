@@ -40,7 +40,12 @@ fun Application.module() {
             resource("favicon.ico")
         }
         static("icons") { resources("icons") }
+        static("cards") { resources("cards") }
         get("/") {
+            call.push("/ticket-to-ride.js")
+            call.respondHtml { indexHtml() }
+        }
+        get("/game/{gameId}") {
             call.push("/ticket-to-ride.js")
             call.respondHtml { indexHtml() }
         }
@@ -51,14 +56,27 @@ fun Application.module() {
                 .collect { req ->
                     when (req) {
                         is StartGameRequest -> {
-                            val player = Player(req.playerName, Color.randomForPlayer())
-                            startGame(player) { gameId, state -> send(GameStateResponse(gameId, state)) }
+                            startGame(req.playerName) { gameId, state ->
+                                send(
+                                    GameStateResponse(
+                                        gameId,
+                                        state.toPlayerView(req.playerName)
+                                    )
+                                )
+                            }
                         }
                         is JoinGameRequest -> {
                             val game = games[req.gameId]
                             if (game == null) send(FailureResponse(JoinGameFailure.GameNotExists))
                             game?.apply {
-                                notifyCallbacks += { gameId, state -> send(GameStateResponse(gameId, state)) }
+                                notifyCallbacks += { gameId, state ->
+                                    send(
+                                        GameStateResponse(
+                                            gameId,
+                                            state.toPlayerView(req.playerName)
+                                        )
+                                    )
+                                }
                                 requestsQueue.send(req)
                             }
                         }
@@ -73,12 +91,12 @@ fun Application.module() {
 
 suspend fun WebSocketSession.send(resp: Response) = send(json.stringify(Response.serializer(), resp))
 
-fun CoroutineScope.startGame(firstPlayer: Player, firstPlayerCallback: PlayerCallback) {
+fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: PlayerCallback) {
     val requestsQueue = Channel<Request>()
     val subscriptions = mutableListOf(firstPlayerCallback)
     val gameId = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
     launch {
-        runGame(firstPlayer, requestsQueue.consumeAsFlow()).collect { state ->
+        runGame(firstPlayerName, requestsQueue.consumeAsFlow()).collect { state ->
             for (notify in subscriptions) notify(gameId, state)
         }
     }

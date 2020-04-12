@@ -1,10 +1,9 @@
-package ticketToRide.components.screens
+package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
 import kotlinx.css.*
-import org.w3c.dom.url.URLSearchParams
 import react.*
 import styled.*
 import ticketToRide.*
@@ -27,7 +26,9 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
     }
 
     override fun RBuilder.render() {
-        val gameId = URLSearchParams(window.location.search).get("game")
+        val gameId =
+            if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
+            else null
         mDialog {
             css {
                 +ComponentStyles.welcomeDialog

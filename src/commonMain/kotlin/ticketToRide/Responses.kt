@@ -15,4 +15,4 @@ sealed class Response()
 class FailureResponse(val reason: JoinGameFailure) : Response()
 
 @Serializable
-class GameStateResponse(val gameId: GameId, val state: GameState) : Response()
+class GameStateResponse(val gameId: GameId, val state: GameStateView) : Response()

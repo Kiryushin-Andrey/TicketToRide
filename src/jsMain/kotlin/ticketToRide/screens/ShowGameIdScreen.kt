@@ -1,4 +1,4 @@
-package ticketToRide.components.screens
+package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
@@ -17,8 +17,8 @@ external interface ShowGameIdScreenProps : RProps {
 
 class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
     override fun RBuilder.render() {
-        val linkUrl = "${window.location.origin}?game=${props.gameId.value}"
-        window.navigator.clipboard.writeText(linkUrl)
+        val gameUrl = window.location.href
+        window.navigator.clipboard.writeText(gameUrl)
         mDialog {
             css {
                 +WelcomeScreen.ComponentStyles.welcomeDialog
@@ -35,10 +35,10 @@ class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
                 p {
                     a {
                         attrs {
-                            href = linkUrl
+                            href = gameUrl
                             target = "_blank"
                         }
-                        +linkUrl
+                        +gameUrl
                     }
                 }
             }
