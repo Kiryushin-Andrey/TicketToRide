@@ -5,7 +5,7 @@ import ticketToRide.components.App
 import kotlin.browser.document
 
 fun main() {
-    render(document.getElementById("root")) {
+    render(document.body) {
         child(App::class) {}
     }
 }

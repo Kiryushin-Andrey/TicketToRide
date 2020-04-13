@@ -240,12 +240,15 @@ external interface Props : react.RProps {
     var resetBoundsOnResize: Boolean?
         get() = definedExternally
         set(value) = definedExternally
-    val onChildClick: ((hoverKey: Any, childProps: Any) -> Unit)?
+    var onChildClick: ((hoverKey: Any, childProps: Any) -> Unit)?
         get() = definedExternally
-    val onChildMouseEnter: ((hoverKey: Any, childProps: Any) -> Unit)?
+        set(value) = definedExternally
+    var onChildMouseEnter: ((hoverKey: Any, childProps: Any) -> Unit)?
         get() = definedExternally
-    val onChildMouseLeave: ((hoverKey: Any, childProps: Any) -> Unit)?
+        set(value) = definedExternally
+    var onChildMouseLeave: ((hoverKey: Any, childProps: Any) -> Unit)?
         get() = definedExternally
+        set(value) = definedExternally
     val onChildMouseDown: ((childKey: Any, childProps: Any, mouse: Any) -> Unit)?
         get() = definedExternally
     val onChildMouseUp: ((childKey: Any, childProps: Any, mouse: Any) -> Unit)?
@@ -258,8 +261,9 @@ external interface Props : react.RProps {
         get() = definedExternally
     val onZoomAnimationStart: ((args: Any) -> Unit)?
         get() = definedExternally
-    val onZoomAnimationEnd: ((args: Any) -> Unit)?
+    var onZoomAnimationEnd: ((args: Any) -> Unit)?
         get() = definedExternally
+        set(value) = definedExternally
     val onMapTypeIdChange: ((args: Any) -> Unit)?
         get() = definedExternally
     val distanceToMouse: ((pt: Point, mousePos: Point, markerProps: Any?) -> Number)?

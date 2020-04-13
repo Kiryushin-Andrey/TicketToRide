@@ -12,8 +12,17 @@ import kotlin.math.*
 data class MainMapBlockProps(val gameMap: GameMap = GameMap): RProps
 data class RouteLine(val from: String, val to: String, val color: Color, val segments: Int, val polyline: Polyline)
 
-class MainMapBlock : RComponent<MainMapBlockProps, RState>() {
+external interface MainMapBlockState : RState {
+    var selectedCityName: String?
+    var displayAllCityNames: Boolean
+}
+
+class MainMapBlock : RComponent<MainMapBlockProps, MainMapBlockState>() {
     private var routes: List<RouteLine> = emptyList()
+
+    override fun MainMapBlockState.init() {
+        displayAllCityNames = false
+    }
 
     override fun RBuilder.render() {
         googleMap {
@@ -23,12 +32,23 @@ class MainMapBlock : RComponent<MainMapBlockProps, RState>() {
                 googleMapLoader = { Promise.resolve(js("google.maps") as Any) }
                 onGoogleApiLoaded = { maps -> drawRoutes(maps.map) }
                 yesIWantToUseGoogleMapApiInternals = true
+                onChildMouseEnter = { key, _ -> setState { selectedCityName = key as String } }
+                onChildMouseLeave = { key, _ -> setState { selectedCityName = null } }
+                onZoomAnimationEnd = { zoom ->
+                    setState {
+                        console.log((zoom as Int) > 4)
+                        displayAllCityNames = (zoom as Int) > 4
+                    }
+                }
             }
             GameMap.cities.map {
                 marker {
                     key = it.name
+                    name = it.name
                     lat = it.latLng.lat
                     lng = it.latLng.lng
+                    displayAllCityNames = state.displayAllCityNames
+                    selected = (state.selectedCityName == it.name)
                 }
             }
         }

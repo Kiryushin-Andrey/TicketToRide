@@ -10,10 +10,11 @@ fun HTML.indexHtml() {
     head {
         title("Ticket to Ride!")
         styleBlock {
-            rule("#root") {
-                display = Display.flex
-                flexDirection = FlexDirection.row
+            rule("#loading") {
+                width = 100.pct
                 height = 100.pct
+                textAlign = TextAlign.center
+                verticalAlign = VerticalAlign.middle
             }
             rule("html, body") {
                 height = 100.pct
@@ -24,7 +25,7 @@ fun HTML.indexHtml() {
     }
     body {
         div {
-            id = "root"
+            id = "loading"
             +"Loading..."
         }
         script(src = "https://maps.googleapis.com/maps/api/js?key=${GoogleMapsKey}") {}
