@@ -92,7 +92,7 @@ class CardsDeck : RComponent<CardsDeckProps, RState>() {
             borderColor = kotlinx.css.Color.black
             borderStyle = BorderStyle.solid
             borderWidth = 1.px
-            cursor = Cursor.grab
+            cursor = Cursor.pointer
         }
     }
 }

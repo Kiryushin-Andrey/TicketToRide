@@ -33,10 +33,9 @@ class MainMapBlock : RComponent<MainMapBlockProps, MainMapBlockState>() {
                 onGoogleApiLoaded = { maps -> drawRoutes(maps.map) }
                 yesIWantToUseGoogleMapApiInternals = true
                 onChildMouseEnter = { key, _ -> setState { selectedCityName = key as String } }
-                onChildMouseLeave = { key, _ -> setState { selectedCityName = null } }
+                onChildMouseLeave = { _, _ -> setState { selectedCityName = null } }
                 onZoomAnimationEnd = { zoom ->
                     setState {
-                        console.log((zoom as Int) > 4)
                         displayAllCityNames = (zoom as Int) > 4
                     }
                 }
