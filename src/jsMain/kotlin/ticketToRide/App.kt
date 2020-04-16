@@ -1,11 +1,10 @@
-package ticketToRide.components
+package ticketToRide
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.w3c.dom.WebSocket
 import react.*
-import ticketToRide.*
 import ticketToRide.screens.*
 import kotlin.browser.window
 

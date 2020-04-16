@@ -9,8 +9,12 @@ import ticketToRide.*
 import kotlin.js.Promise
 import kotlin.math.*
 
-data class MainMapBlockProps(val gameMap: GameMap = GameMap): RProps
 data class RouteLine(val from: String, val to: String, val color: Color, val segments: Int, val polyline: Polyline)
+
+external interface MainMapBlockProps : RProps {
+    var gameMap: GameMap
+    var selectedTicket: Ticket?
+}
 
 external interface MainMapBlockState : RState {
     var selectedCityName: String?
@@ -47,7 +51,9 @@ class MainMapBlock : RComponent<MainMapBlockProps, MainMapBlockState>() {
                     lat = it.latLng.lat
                     lng = it.latLng.lng
                     displayAllCityNames = state.displayAllCityNames
-                    selected = (state.selectedCityName == it.name)
+                    selected = (state.selectedCityName == it.name
+                            || props.selectedTicket?.from?.value == it.name
+                            || props.selectedTicket?.to?.value == it.name)
                 }
             }
         }
