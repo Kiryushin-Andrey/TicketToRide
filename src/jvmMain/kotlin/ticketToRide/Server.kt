@@ -25,7 +25,8 @@ import kotlin.random.Random
 
 private typealias PlayerCallback = suspend (GameId, GameState) -> Unit
 
-private data class Game(val requestsQueue: Channel<Request>, val notifyCallbacks: MutableList<PlayerCallback>)
+private data class Game(val requestsQueue: Channel<Pair<Request, Connection>>, val notifyCallbacks: MutableList<PlayerCallback>)
+data class Connection(val gameId: GameId, val playerName: PlayerName)
 
 private val games = mutableMapOf<GameId, Game>()
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
@@ -53,21 +54,19 @@ fun Application.module() {
             incoming.consumeAsFlow()
                 .mapNotNull { (it as? Frame.Text)?.readText() }
                 .map { json.parse(Request.serializer(), it) }
-                .collect { req ->
+                .fold<Request, Connection?>(null) {
+                    conn, req ->
                     when (req) {
                         is StartGameRequest -> {
-                            startGame(req.playerName) { gameId, state ->
-                                send(
-                                    GameStateResponse(
-                                        gameId,
-                                        state.toPlayerView(req.playerName)
-                                    )
-                                )
+                            val gameId = startGame(req.playerName) { id, state ->
+                                send(GameStateResponse(id, state.toPlayerView(req.playerName)))
                             }
+                            Connection(gameId, req.playerName)
                         }
                         is JoinGameRequest -> {
                             val game = games[req.gameId]
                             if (game == null) send(FailureResponse(JoinGameFailure.GameNotExists))
+                            val connection = Connection(req.gameId, req.playerName)
                             game?.apply {
                                 notifyCallbacks += { gameId, state ->
                                     send(
@@ -77,11 +76,13 @@ fun Application.module() {
                                         )
                                     )
                                 }
-                                requestsQueue.send(req)
+                                requestsQueue.send(req to connection)
                             }
+                            connection
                         }
-                        is GameRequest -> {
-                            games[req.gameId]?.apply { requestsQueue.send(req) }
+                        else -> {
+                            games[conn!!.gameId]?.apply { requestsQueue.send(req to conn!!) }
+                            conn
                         }
                     }
                 }
@@ -91,8 +92,8 @@ fun Application.module() {
 
 suspend fun WebSocketSession.send(resp: Response) = send(json.stringify(Response.serializer(), resp))
 
-fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: PlayerCallback) {
-    val requestsQueue = Channel<Request>()
+fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: PlayerCallback) : GameId {
+    val requestsQueue = Channel<Pair<Request, Connection>>()
     val subscriptions = mutableListOf(firstPlayerCallback)
     val gameId = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
     launch {
@@ -101,4 +102,5 @@ fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: P
         }
     }
     games[gameId] = Game(requestsQueue, subscriptions)
+    return gameId
 }

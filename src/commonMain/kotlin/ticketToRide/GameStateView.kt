@@ -1,6 +1,7 @@
 package ticketToRide
 
 import kotlinx.serialization.Serializable
+import kotlin.random.Random
 
 @Serializable
 data class GameId(val value: String)
@@ -12,14 +13,24 @@ data class CityName(val value: String)
 data class PlayerName(val value: String)
 
 @Serializable
-data class Card(val value: Color) {
+sealed class Card {
+
+    @Serializable
+    data class Car(val value: Color) : Card()
+
+    @Serializable
+    object Loco : Card()
+
     companion object {
-        fun random() = Card(Color.values().random())
+        fun random(): Card {
+            val colors = Color.values()
+            val value = Random.nextInt(colors.size + 1)
+            return if (value < colors.size) Car(colors[value]) else Loco
+        }
+
+        fun randomNoLoco() = Car(Color.values().random())
     }
 }
-
-val Card.isLoko: Boolean
-    get() = this.value == Color.NONE
 
 @Serializable
 data class Ticket(val from: CityName, val to: CityName, val points: Int) {
@@ -27,7 +38,7 @@ data class Ticket(val from: CityName, val to: CityName, val points: Int) {
 }
 
 @Serializable
-data class PendingTicketsChoice(val tickets: List<Ticket>, val shouldChooseOnNextTurn: Boolean)
+data class PendingTicketsChoice(val tickets: List<Ticket>, val minCountToKeep: Int, val shouldChooseOnNextTurn: Boolean)
 
 fun PendingTicketsChoice?.toState() = when {
     this == null -> PendingTicketsChoiceState.None
@@ -54,7 +65,11 @@ data class GameStateView(
     val players: List<PlayerView>,
     val openCards: List<Card>,
     val turn: Int,
-    val myCards: Map<Card, Int>,
+    val myName: PlayerName,
+    val myCards: List<Card>,
     val myTicketsOnHand: List<Ticket>,
     val myPendingTicketsChoice: PendingTicketsChoice?
-)
+) {
+    val myTurn: Boolean
+        get() = players[turn].name == myName
+}

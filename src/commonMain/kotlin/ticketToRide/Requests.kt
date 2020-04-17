@@ -2,30 +2,27 @@ package ticketToRide
 
 import kotlinx.serialization.*
 
-const val NoGameFound = "404"
-
 @Serializable
-sealed class Request()
-
-interface GameRequest {
-    val gameId : GameId
-    val playerName : PlayerName
-}
+sealed class Request
 
 @Serializable
 class StartGameRequest(val playerName: PlayerName) : Request()
 
 @Serializable
-class JoinGameRequest(
-    override val gameId: GameId,
-    override val playerName: PlayerName): Request(), GameRequest
+class JoinGameRequest(val gameId: GameId, val playerName: PlayerName): Request()
 
 @Serializable
-class WentAwayRequest(
-    override val gameId: GameId,
-    override val playerName: PlayerName) : Request(), GameRequest
+class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : Request()
 
 @Serializable
-class CameBackRequest(
-    override val gameId: GameId,
-    override val playerName: PlayerName) : Request(), GameRequest
+sealed class PickCardsRequest : Request() {
+
+    @Serializable
+    object Loco : PickCardsRequest()
+
+    @Serializable
+    class TwoCards(val cards: Pair<Card?, Card?>) : PickCardsRequest()
+}
+
+@Serializable
+object PickTicketsRequest : Request()

@@ -35,7 +35,7 @@ class App() : RComponent<RProps, AppState>() {
     override fun AppState.init() {
         activeScreen = ActiveScreen.Welcome
         scope = CoroutineScope(Dispatchers.Default + Job())
-        requests = Channel<Request>()
+        requests = Channel()
 
         scope.launch {
             val webSocket = WebSocket("ws://" + window.location.host + "/ws")
@@ -92,8 +92,8 @@ class App() : RComponent<RProps, AppState>() {
             ActiveScreen.PlayGame ->
                 child(GameScreen::class) {
                     attrs {
-                        gameId = state.gameId
                         gameState = state.gameState
+                        sendRequest = { requests.offer(it) }
                     }
                 }
         }

@@ -6,13 +6,13 @@ data class Player(
     val name: PlayerName,
     val color: Color,
     val carsLeft: Int,
-    val cards: Map<Card, Int>,
+    val cards: List<Card>,
     val ticketsForChoice: PendingTicketsChoice?,
     val ticketsOnHand: List<Ticket> = emptyList(),
     val away: Boolean = false
 ) {
     fun toPlayerView() =
-        PlayerView(name, color, carsLeft, cards.values.sum(), ticketsOnHand.size, ticketsForChoice.toState(), away)
+        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, ticketsForChoice.toState(), away)
 }
 
 data class GameState(
@@ -30,7 +30,12 @@ data class GameState(
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
         val available = (if (long) GameMap.longTickets else GameMap.shortTickets)
-            .filter { !players.flatMap { p -> p.ticketsOnHand }.contains(it) }
+            .filter {
+                !players
+                    .flatMap { p -> p.ticketsOnHand + (p.ticketsForChoice?.tickets ?: emptyList()) }
+                    .contains(it)
+            }
+            .distinct()
         return (1..count).map { available.random() }
     }
 
@@ -40,6 +45,7 @@ data class GameState(
             players.map { it.toPlayerView() },
             openCards,
             turn,
+            myName,
             me.cards,
             me.ticketsOnHand,
             me.ticketsForChoice

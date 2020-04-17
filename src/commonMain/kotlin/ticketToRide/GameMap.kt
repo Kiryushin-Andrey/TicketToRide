@@ -2,7 +2,7 @@ package ticketToRide
 
 data class LatLong(val lat: Number, val lng: Number)
 data class City(val name: String, val latLng: LatLong, val routes: List<Route> = emptyList())
-data class Route(val destination: String, val color: Color, val segments: Int, val ferries: Int = 0)
+data class Route(val destination: String, val color: Color?, val segments: Int, val ferries: Int = 0)
 
 object GameMap {
     val mapCenter = RussiaMap.mapCenter

@@ -9,7 +9,7 @@ import ticketToRide.*
 import kotlin.js.Promise
 import kotlin.math.*
 
-data class RouteLine(val from: String, val to: String, val color: Color, val segments: Int, val polyline: Polyline)
+data class RouteLine(val from: String, val to: String, val color: Color?, val segments: Int, val polyline: Polyline)
 
 external interface MainMapBlockProps : RProps {
     var gameMap: GameMap
@@ -70,7 +70,7 @@ class MainMapBlock : RComponent<MainMapBlockProps, MainMapBlockState>() {
                         this.map = map
                         path = arrayOf(city.latLng, dest.latLng)
                         strokeOpacity = 1
-                        strokeColor = route.color.rgb
+                        strokeColor = route.color?.rgb ?: "#AAAAAA"
                         strokeWeight = 8
                         icons = arrayOf(jsObject {
                             icon = jsObject {

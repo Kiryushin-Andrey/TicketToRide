@@ -7,18 +7,15 @@ import react.*
 import styled.StyleSheet
 import styled.css
 import styled.styledDiv
-import ticketToRide.GameId
-import ticketToRide.GameMap
-import ticketToRide.GameStateView
-import ticketToRide.Ticket
+import ticketToRide.*
 import ticketToRide.components.CardsDeck
 import ticketToRide.components.MainMapBlock
 import ticketToRide.components.MyTickets
 import ticketToRide.components.PlayersList
 
 external interface GameScreenProps : RProps {
-    var gameId: GameId
     var gameState: GameStateView
+    var sendRequest: (Request) -> Unit
 }
 
 external interface GameScreenState : RState {
@@ -33,7 +30,17 @@ class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, GameScree
             }
             child(CardsDeck::class) {
                 attrs {
+                    myTurn = props.gameState.myTurn
                     openCards = props.gameState.openCards
+                    onPickLoco = {
+                        props.sendRequest(PickCardsRequest.Loco)
+                    }
+                    onPickCards = {
+                        props.sendRequest(PickCardsRequest.TwoCards(it))
+                    }
+                    onPickTickets = {
+                        props.sendRequest(PickTicketsRequest)
+                    }
                 }
             }
             styledDiv {
@@ -45,13 +52,18 @@ class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, GameScree
                         players = props.gameState.players
                     }
                 }
-                mDivider(variant = MDividerVariant.fullWidth)
+                mDivider(variant = MDividerVariant.fullWidth) {
+                    css {
+                        paddingTop = 10.px
+                    }
+                }
                 child(MyTickets::class) {
                     attrs {
                         tickets = props.gameState.myTicketsOnHand
                         pendingChoice = props.gameState.myPendingTicketsChoice
                         hoveredTicket = state.selectedTicket
                         onHoveredTicketChanged = { setState { selectedTicket = it } }
+                        onConfirmTicketsChoice = { tickets -> props.sendRequest(ConfirmTicketsChoiceRequest(tickets)) }
                     }
                 }
             }

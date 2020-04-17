@@ -22,7 +22,7 @@ object RussiaMap {
         City("Мурманск", LatLong(68.970665, 33.07497),
             listOf(
                 Route("Архангельск", Color.BLACK, 4, 1),
-                Route("Нарьян-Мар", Color.NONE, 6, 2)
+                Route("Нарьян-Мар", null, 6, 2)
             )),
         City("Архангельск", LatLong(64.543022, 40.537121),
             listOf(
@@ -118,7 +118,7 @@ object RussiaMap {
         City("Воркута", LatLong(67.494957, 64.0401),
             listOf(
                 Route("Салехард", Color.YELLOW, 1),
-                Route("Сыктывкар", Color.NONE, 6)
+                Route("Сыктывкар", null, 6)
             )),
         City("Магнитогорск", LatLong(53.4242184, 58.983136)),
         City("Нижний Новгород", LatLong(56.328571, 44.003506)),
