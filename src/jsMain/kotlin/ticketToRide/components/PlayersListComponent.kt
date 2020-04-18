@@ -10,11 +10,12 @@ import ticketToRide.PlayerView
 
 external interface PlayersListProps : RProps {
     var players: List<PlayerView>
+    var turn: Int
 }
 
 class PlayersList : RComponent<PlayersListProps, RState>() {
     override fun RBuilder.render() {
-        for (player in props.players) {
+        for ((ix, player) in props.players.withIndex()) {
             mPaper {
                 attrs {
                     elevation = 2
@@ -22,6 +23,11 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
                 css {
                     +ComponentStyles.playerCard
                     backgroundColor = Color(player.color.rgb).withAlpha(0.4)
+                    if (ix == props.turn) {
+                        borderColor = Color.red
+                        borderStyle = BorderStyle.solid
+                        borderWidth = 2.px
+                    }
                 }
                 mTypography(variant = MTypographyVariant.h6) {
                     +player.name.value
@@ -50,7 +56,6 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
 
     private object ComponentStyles : StyleSheet("PlayersList", isStatic = true) {
         val playerCard by css {
-            minWidth = 300.px
             minHeight = 40.px
             display = Display.flex
             alignItems = Align.center

@@ -31,21 +31,7 @@ class CardsDeck : RComponent<CardsDeckProps, CardsDeckState>() {
                     +ComponentStyles.cards
                 }
                 for ((ix, card) in props.openCards.withIndex()) {
-                    card {
-                        imageUrl = "/cards/" + when (card) {
-                            is Card.Loco -> "loco.jpg"
-                            is Card.Car -> when (card.value) {
-                                Color.RED -> "red.png"
-                                Color.GREEN -> "green.png"
-                                Color.BLUE -> "blue.jpg"
-                                Color.BLACK -> "black.jfif"
-                                Color.WHITE -> "white.jfif"
-                                Color.YELLOW -> "yellow.jfif"
-                                Color.ORANGE -> "orange.jpg"
-                                Color.MAGENTO -> "magento.jfif"
-                            }
-                        }
-                        color = if (card is Card.Car) Color(card.value.rgb).withAlpha(0.5) else null
+                    card(card) {
                         enabled = props.myTurn && (card is Card.Car || state.chosenCard == null)
                         onClick = {
                             when {
@@ -88,7 +74,7 @@ class CardsDeck : RComponent<CardsDeckProps, CardsDeckState>() {
     private object ComponentStyles : StyleSheet("CardsDeck", isStatic = true) {
         val cardsDeck by css {
             gridColumnStart = GridColumnStart("1")
-            gridColumnEnd = GridColumnEnd("3")
+            gridColumnEnd = GridColumnEnd("4")
             display = Display.flex
             flexDirection = FlexDirection.row
             flexWrap = FlexWrap.wrap

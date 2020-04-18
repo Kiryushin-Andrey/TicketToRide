@@ -5,6 +5,7 @@ import kotlinx.css.*
 import react.*
 import react.dom.img
 import styled.css
+import ticketToRide.Card
 
 external interface CardProps : RProps {
     var imageUrl: String
@@ -17,7 +18,7 @@ external interface CardState : RState {
     var hovered: Boolean
 }
 
-class Card : RComponent<CardProps, CardState>() {
+class CardComponent : RComponent<CardProps, CardState>() {
     override fun RBuilder.render() {
         mPaper {
             attrs {
@@ -51,9 +52,29 @@ class Card : RComponent<CardProps, CardState>() {
 }
 
 fun RBuilder.card(builder: CardProps.() -> Unit): ReactElement {
-    return child(Card::class) {
+    return child(CardComponent::class) {
         attrs {
             builder()
         }
     }
+}
+
+fun RBuilder.card(card: Card, builder: CardProps.() -> Unit) = card {
+    imageUrl = "/cards/" + when (card) {
+        is Card.Loco -> "loco.jpg"
+        is Card.Car -> when (card.value) {
+            ticketToRide.Color.RED -> "red.png"
+            ticketToRide.Color.GREEN -> "green.png"
+            ticketToRide.Color.BLUE -> "blue.jpg"
+            ticketToRide.Color.BLACK -> "black.jfif"
+            ticketToRide.Color.WHITE -> "white.jfif"
+            ticketToRide.Color.YELLOW -> "yellow.jfif"
+            ticketToRide.Color.ORANGE -> "orange.jpg"
+            ticketToRide.Color.MAGENTO -> "magento.jfif"
+        }
+    }
+    if (card is Card.Car) {
+        color = Color(card.value.rgb).withAlpha(0.5)
+    }
+    builder()
 }

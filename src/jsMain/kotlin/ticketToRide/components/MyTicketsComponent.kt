@@ -66,7 +66,6 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
                 }
             }
             css {
-                minWidth = 300.px
                 borderRadius = 4.px
                 margin = 4.px.toString()
                 paddingLeft = 12.px
@@ -75,22 +74,22 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
             }
             styledDiv {
                 css { +ComponentStyles.ticketRoute }
-                if (withCheckbox) {
-                    mCheckbox {
-                        attrs {
-                            color = MOptionColor.primary
-                            checked = state.ticketsToKeep.contains(ticket)
-                            onChange = { _, value ->
-                                setState {
-                                    ticketsToKeep =
-                                        if (value) (ticketsToKeep + ticket).distinct()
-                                        else ticketsToKeep - ticket
+                mTypography(variant = MTypographyVariant.body2) {
+                    if (withCheckbox) {
+                        mCheckbox {
+                            attrs {
+                                color = MOptionColor.primary
+                                checked = state.ticketsToKeep.contains(ticket)
+                                onChange = { _, value ->
+                                    setState {
+                                        ticketsToKeep =
+                                            if (value) (ticketsToKeep + ticket).distinct()
+                                            else ticketsToKeep - ticket
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                mTypography(variant = MTypographyVariant.body2) {
                     +"${ticket.from.value} - ${ticket.to.value}"
                 }
                 mPaper {
