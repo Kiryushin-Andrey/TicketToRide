@@ -51,4 +51,10 @@ data class GameState(
             me.ticketsForChoice
         )
     }
+
+    fun updatePlayer(name: PlayerName, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
+        GameState(players.map { if (it.name == name && it.predicate()) it.block() else it }, openCards, turn)
+
+    fun updatePlayer(ix: Int, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
+        GameState(players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player }, openCards, turn)
 }

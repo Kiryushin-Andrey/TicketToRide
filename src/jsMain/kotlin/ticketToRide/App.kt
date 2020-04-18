@@ -6,6 +6,7 @@ import kotlinx.serialization.json.*
 import org.w3c.dom.WebSocket
 import react.*
 import ticketToRide.screens.*
+import kotlin.browser.document
 import kotlin.browser.window
 
 enum class ActiveScreen {
@@ -18,7 +19,7 @@ external interface AppState : RState {
     var activeScreen: ActiveScreen
     var joinGameFailure: JoinGameFailure?
     var gameId: GameId
-    var gameState: GameStateView
+    var gameState: GameStateView?
 }
 
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
@@ -52,6 +53,10 @@ class App() : RComponent<RProps, AppState>() {
                             joinGameFailure = req.reason
                         }
                         is GameStateResponse -> {
+                            if (state.gameState?.myTurn == false && req.state.myTurn) {
+                                document.title = "ВАШ ХОД  - Ticket to Ride!"
+                                window.setTimeout({ document.title = "Ticket to Ride!" }, 3000)
+                            }
                             setState {
                                 if (activeScreen == ActiveScreen.Welcome) {
                                     activeScreen = if (req.state.players.size == 1) {
@@ -92,7 +97,7 @@ class App() : RComponent<RProps, AppState>() {
             ActiveScreen.PlayGame ->
                 child(GameScreen::class) {
                     attrs {
-                        gameState = state.gameState
+                        gameState = state.gameState!!
                         sendRequest = { requests.offer(it) }
                     }
                 }

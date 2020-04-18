@@ -4,6 +4,7 @@ import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.mButton
 import kotlinx.css.*
 import react.*
+import react.dom.span
 import styled.*
 import ticketToRide.PendingTicketsChoice
 import ticketToRide.Ticket
@@ -35,18 +36,29 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
                     display = Display.flex
                     flexDirection = FlexDirection.row
                     justifyContent = JustifyContent.spaceBetween
+                    alignItems = Align.baseline
                 }
                 mTypography("Выбор маршрутов", MTypographyVariant.h6) {
                     css {
                         paddingLeft = 10.px
-                        paddingTop = 10.px
                     }
                 }
-                mButton("Готово", MColor.primary) {
+                mTooltip("Надо оставить минимум ${props.pendingChoice!!.minCountToKeep} маршрутов") {
                     attrs {
-                        disabled = !isTicketsChoiceValid
-                        title = if (isTicketsChoiceValid) "" else "Надо оставить минимум ${props.pendingChoice!!.minCountToKeep} маршрутов"
-                        onClick = { if (isTicketsChoiceValid) { props.onConfirmTicketsChoice(state.ticketsToKeep) } }
+                        disableHoverListener = isTicketsChoiceValid
+                    }
+                    span {
+                        mButton("Готово", MColor.primary) {
+                            attrs {
+                                disabled = !isTicketsChoiceValid
+                                onClick = {
+                                    if (isTicketsChoiceValid) {
+                                        props.onConfirmTicketsChoice(state.ticketsToKeep)
+                                        setState { ticketsToKeep = emptyList() }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -22,6 +22,7 @@ class TicketComponent : RComponent<TicketProps, RState>() {
                 alignItems = Align.center
                 flexDirection = FlexDirection.row
                 justifyContent = JustifyContent.spaceBetween
+                cursor = Cursor.default
             }
             mTypography(variant = MTypographyVariant.body2) {
                 +"${props.ticket.from.value} - ${props.ticket.to.value}"

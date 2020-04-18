@@ -3,7 +3,7 @@ package ticketToRide
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class Tests {
+class GameMapTests {
     @Test
     fun testTicketPoints() {
         assertEquals(20, GameMap.longTickets.count())

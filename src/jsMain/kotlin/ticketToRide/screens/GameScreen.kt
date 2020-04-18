@@ -81,6 +81,7 @@ class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, GameScree
             child(CardsDeck::class) {
                 attrs {
                     myTurn = props.gameState.myTurn
+                    pendingTicketsChoice = props.gameState.myPendingTicketsChoice != null
                     openCards = props.gameState.openCards
                     onPickLoco = {
                         props.sendRequest(PickCardsRequest.Loco)
