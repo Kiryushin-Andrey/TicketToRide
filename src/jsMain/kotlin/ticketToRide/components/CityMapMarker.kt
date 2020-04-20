@@ -2,6 +2,7 @@ package ticketToRide.components
 
 import kotlinx.css.*
 import kotlinx.css.properties.*
+import kotlinx.html.js.onClickFunction
 import react.*
 import styled.*
 
@@ -12,11 +13,13 @@ external interface MarkerProps: RProps {
     var name: String
     var displayAllCityNames: Boolean
     var selected: Boolean
+    var partOfSpannedSection: Boolean
+    var onClick: () -> Unit
 }
 
 class CityMapMarker : RComponent<MarkerProps, RState>() {
     override fun RBuilder.render() {
-        val scale = if (props.selected) 1.5 else 1.0
+        val scale = if (props.selected) 1.2 else 1.0
 
         styledDiv {
             css {
@@ -29,9 +32,18 @@ class CityMapMarker : RComponent<MarkerProps, RState>() {
                     zIndex = 150
                 }
             }
+            attrs {
+                onClickFunction = { props.onClick() }
+            }
             styledDiv {
                 css {
                     +ComponentStyle.markerIcon
+                    val img = when {
+                        props.selected -> "city-marker-red"
+                        props.partOfSpannedSection -> "city-marker-green"
+                        else -> "city-marker-blue"
+                    }
+                    backgroundImage = Image("url(/icons/${img}.svg)")
                 }
             }
             if (props.selected || props.displayAllCityNames) {
@@ -65,7 +77,6 @@ class CityMapMarker : RComponent<MarkerProps, RState>() {
             }
             backgroundSize = "${20.px} ${20.px}"
             backgroundRepeat = BackgroundRepeat.noRepeat
-            backgroundImage = Image("url(/icons/city-marker.svg)")
         }
         val popupContainer by css {
             cursor = Cursor.auto

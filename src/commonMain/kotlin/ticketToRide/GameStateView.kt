@@ -33,6 +33,9 @@ sealed class Card {
 }
 
 @Serializable
+data class SpannedSection(val from: CityName, val to: CityName, val player: PlayerName)
+
+@Serializable
 data class Ticket(val from: CityName, val to: CityName, val points: Int) {
     fun sharesCityWith(another: Ticket) = listOf(from, to).intersect(listOf(another.from, another.to)).any()
 }
@@ -64,6 +67,7 @@ data class PlayerView(
 data class GameStateView(
     val players: List<PlayerView>,
     val openCards: List<Card>,
+    val spannedSections: List<SpannedSection>,
     val turn: Int,
     val myName: PlayerName,
     val myCards: List<Card>,

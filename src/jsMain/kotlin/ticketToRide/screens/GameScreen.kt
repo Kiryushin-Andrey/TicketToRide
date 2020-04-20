@@ -17,9 +17,14 @@ external interface GameScreenProps : RProps {
 
 external interface GameScreenState : RState {
     var selectedTicket: Ticket?
+    var constructionInProgress: Set<CityName>
 }
 
-class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, GameScreenState>(props) {
+class GameScreen : RComponent<GameScreenProps, GameScreenState>() {
+    override fun GameScreenState.init() {
+        constructionInProgress = emptySet()
+    }
+
     override fun RBuilder.render() {
         styledDiv {
             css {
@@ -48,7 +53,18 @@ class GameScreen(props: GameScreenProps) : RComponent<GameScreenProps, GameScree
             child(MainMapBlock::class) {
                 attrs {
                     gameMap = GameMap
+                    myName = props.gameState.myName
+                    spannedSections = props.gameState.spannedSections
+
                     selectedTicket = state.selectedTicket
+                    constructionInProgress = state.constructionInProgress
+
+                    onCityClicked = {
+                        setState {
+                            if (constructionInProgress.contains(it)) constructionInProgress - it
+                            else constructionInProgress + it
+                        }
+                    }
                 }
             }
 

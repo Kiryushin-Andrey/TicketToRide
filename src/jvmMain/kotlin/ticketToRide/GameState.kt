@@ -18,12 +18,14 @@ data class Player(
 data class GameState(
     val players: List<Player>,
     val openCards: List<Card>,
+    val spannedSections: List<SpannedSection>,
     val turn: Int
 ) {
     companion object {
         fun initial() = GameState(
             emptyList(),
             (1..5).map { Card.random() },
+            emptyList(),
             0
         )
     }
@@ -44,6 +46,7 @@ data class GameState(
         return GameStateView(
             players.map { it.toPlayerView() },
             openCards,
+            spannedSections,
             turn,
             myName,
             me.cards,
@@ -53,8 +56,8 @@ data class GameState(
     }
 
     fun updatePlayer(name: PlayerName, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        GameState(players.map { if (it.name == name && it.predicate()) it.block() else it }, openCards, turn)
+        GameState(players.map { if (it.name == name && it.predicate()) it.block() else it }, openCards, spannedSections, turn)
 
     fun updatePlayer(ix: Int, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        GameState(players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player }, openCards, turn)
+        GameState(players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player }, openCards, spannedSections, turn)
 }

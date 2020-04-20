@@ -26,3 +26,6 @@ sealed class PickCardsRequest : Request() {
 
 @Serializable
 object PickTicketsRequest : Request()
+
+@Serializable
+class BuildSectionRequest(val from: CityName, val to: CityName, val cards: List<Card>): Request()
