@@ -4,9 +4,7 @@ import io.ktor.http.ContentType
 import kotlinx.css.*
 import kotlinx.html.*
 
-private const val GoogleMapsKey = "AIzaSyCdpAiP1sFvTVh7uPsCKoFuKsE1BYsY-Q0"
-
-fun HTML.indexHtml() {
+fun HTML.indexHtml(googleApiKey: String) {
     head {
         title("Ticket to Ride!")
         styleBlock {
@@ -28,7 +26,7 @@ fun HTML.indexHtml() {
             id = "loading"
             +"Loading..."
         }
-        script(src = "https://maps.googleapis.com/maps/api/js?key=${GoogleMapsKey}") {}
+        script(src = "https://maps.googleapis.com/maps/api/js?key=${googleApiKey}") {}
         script(src = "/ticket-to-ride.js") {}
     }
 }

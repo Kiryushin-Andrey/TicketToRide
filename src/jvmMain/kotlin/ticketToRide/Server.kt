@@ -34,6 +34,7 @@ private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
+    val googleApiKey = environment.config.property("google-api-key").getString()
     install(WebSockets)
     routing {
         static {
@@ -44,11 +45,11 @@ fun Application.module() {
         static("cards") { resources("cards") }
         get("/") {
             call.push("/ticket-to-ride.js")
-            call.respondHtml { indexHtml() }
+            call.respondHtml { indexHtml(googleApiKey) }
         }
         get("/game/{gameId}") {
             call.push("/ticket-to-ride.js")
-            call.respondHtml { indexHtml() }
+            call.respondHtml { indexHtml(googleApiKey) }
         }
         webSocket("ws") {
             incoming.consumeAsFlow()
