@@ -10,7 +10,7 @@ import styled.*
 import ticketToRide.*
 import kotlin.browser.window
 
-external interface ShowGameIdScreenProps : RProps {
+interface ShowGameIdScreenProps : RProps {
     var gameId: GameId
     var onClosed: () -> Unit
 }
@@ -45,6 +45,14 @@ class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
             mDialogActions {
                 mButton("OK", MColor.primary, MButtonVariant.contained, onClick = { props.onClosed() })
             }
+        }
+    }
+}
+
+fun RBuilder.showGameIdScreen(builder: ShowGameIdScreenProps.() -> Unit) {
+    child(ShowGameIdScreen::class) {
+        attrs {
+            builder()
         }
     }
 }

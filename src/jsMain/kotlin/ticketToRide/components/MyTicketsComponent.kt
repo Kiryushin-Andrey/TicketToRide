@@ -6,31 +6,23 @@ import kotlinx.css.*
 import react.*
 import react.dom.span
 import styled.*
-import ticketToRide.PendingTicketsChoice
+import ticketToRide.CityName
+import ticketToRide.playerState.PlayerState
 import ticketToRide.Ticket
 
-external interface MyTicketsProps : RProps {
-    var tickets: List<Ticket>
-    var pendingChoice: PendingTicketsChoice?
-    var hoveredTicket: Ticket?
-    var onHoveredTicketChanged: (Ticket?) -> Unit
-    var onConfirmTicketsChoice: (List<Ticket>) -> Unit
+interface MyTicketsProps : ComponentBaseProps {
+    var citiesToHighlight: Set<CityName>
+    var onTicketMouseOver: (Ticket) -> Unit
+    var onTicketMouseOut: (Ticket) -> Unit
 }
 
-external interface MyTicketsState : RState {
-    var ticketsToKeep: List<Ticket>
-}
-
-class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
-    override fun MyTicketsState.init() {
-        ticketsToKeep = emptyList()
-    }
-
+class MyTickets : ComponentBase<MyTicketsProps, RState>() {
     override fun RBuilder.render() {
-        for (ticket in props.tickets) {
-            render(ticket, false)
+        for (ticket in myTickets) {
+            render(ticket)
         }
-        if (props.pendingChoice != null) {
+
+        (playerState as? PlayerState.ChoosingTickets)?.let { choice ->
             styledDiv {
                 css {
                     display = Display.flex
@@ -43,38 +35,47 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
                         paddingLeft = 10.px
                     }
                 }
-                mTooltip("Надо оставить минимум ${props.pendingChoice!!.minCountToKeep} маршрутов") {
+                mTooltip("Надо оставить минимум ${choice.minCountToKeep} маршрутов") {
                     attrs {
-                        disableHoverListener = isTicketsChoiceValid
+                        disableHoverListener = choice.isValid
                     }
                     span {
                         mButton("Готово", MColor.primary) {
                             attrs {
-                                disabled = !isTicketsChoiceValid
+                                disabled = !choice.isValid
                                 onClick = {
-                                    if (isTicketsChoiceValid) {
-                                        props.onConfirmTicketsChoice(state.ticketsToKeep)
-                                        setState { ticketsToKeep = emptyList() }
-                                    }
+                                    if (choice.isValid)
+                                        act { choice.confirm() }
                                 }
                             }
                         }
                     }
                 }
             }
-            for (ticket in props.pendingChoice!!.tickets) {
-                render(ticket, true)
+            for (item in choice.items) {
+                render(item.ticket) {
+                    mCheckbox {
+                        attrs {
+                            color = MOptionColor.primary
+                            checked = item.keep
+                            onChange = { _, _ ->
+                                act { choice.toggleTicket(item.ticket) }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    private fun RBuilder.render(ticket: Ticket, withCheckbox: Boolean) {
+    private fun RBuilder.render(ticket: Ticket, renderCheckbox: StyledElementBuilder<*>.() -> Unit = {}) {
+        val highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
         mPaper {
             attrs {
-                elevation = if (props.hoveredTicket == ticket) 6 else 2
+                elevation = if (highlighted) 6 else 2
                 with(asDynamic()) {
-                    onMouseOver = { props.onHoveredTicketChanged(ticket) }
-                    onMouseOut = { props.onHoveredTicketChanged(null) }
+                    onMouseOver = { props.onTicketMouseOver(ticket) }
+                    onMouseOut = { props.onTicketMouseOut(ticket) }
                 }
             }
             css {
@@ -85,23 +86,15 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
                 backgroundColor = Color.chocolate.withAlpha(0.2)
             }
             styledDiv {
-                css { +ComponentStyles.ticketRoute }
+                css {
+                    minHeight = 40.px
+                    display = Display.flex
+                    alignItems = Align.center
+                    flexDirection = FlexDirection.row
+                    justifyContent = JustifyContent.spaceBetween
+                }
                 mTypography(variant = MTypographyVariant.body2) {
-                    if (withCheckbox) {
-                        mCheckbox {
-                            attrs {
-                                color = MOptionColor.primary
-                                checked = state.ticketsToKeep.contains(ticket)
-                                onChange = { _, value ->
-                                    setState {
-                                        ticketsToKeep =
-                                            if (value) (ticketsToKeep + ticket).distinct()
-                                            else ticketsToKeep - ticket
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    renderCheckbox()
                     +"${ticket.from.value} - ${ticket.to.value}"
                 }
                 mPaper {
@@ -120,19 +113,13 @@ class MyTickets : RComponent<MyTicketsProps, MyTicketsState>() {
             }
         }
     }
+}
 
-    private val isTicketsChoiceValid
-        get() =
-            if (props.pendingChoice != null) state.ticketsToKeep.size >= props.pendingChoice!!.minCountToKeep
-            else false
-
-    private object ComponentStyles : StyleSheet("MyTickets", isStatic = true) {
-        val ticketRoute by css {
-            minHeight = 40.px
-            display = Display.flex
-            alignItems = Align.center
-            flexDirection = FlexDirection.row
-            justifyContent = JustifyContent.spaceBetween
-        }
+fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsProps.() -> Unit) = child(MyTickets::class) {
+    attrs {
+        gameState = props.gameState
+        playerState = props.playerState
+        onAction = props.onAction
+        block()
     }
 }

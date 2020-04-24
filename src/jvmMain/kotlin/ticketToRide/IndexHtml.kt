@@ -8,11 +8,9 @@ fun HTML.indexHtml(googleApiKey: String) {
     head {
         title("Ticket to Ride!")
         styleBlock {
-            rule("#loading") {
+            rule("#app") {
                 width = 100.pct
                 height = 100.pct
-                textAlign = TextAlign.center
-                verticalAlign = VerticalAlign.middle
             }
             rule("html, body") {
                 height = 100.pct
@@ -23,7 +21,7 @@ fun HTML.indexHtml(googleApiKey: String) {
     }
     body {
         div {
-            id = "loading"
+            id = "app"
             +"Loading..."
         }
         script(src = "https://maps.googleapis.com/maps/api/js?key=${googleApiKey}") {}

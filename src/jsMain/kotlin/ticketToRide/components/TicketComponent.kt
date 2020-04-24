@@ -9,7 +9,7 @@ import styled.css
 import styled.styledDiv
 import ticketToRide.Ticket
 
-external interface TicketProps : RProps {
+interface TicketProps : RProps {
     var ticket: Ticket
 }
 

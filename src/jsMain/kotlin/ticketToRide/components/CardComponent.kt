@@ -11,7 +11,7 @@ import styled.css
 import styled.styledImg
 import ticketToRide.Card
 
-external interface CardProps : RProps {
+interface CardProps : RProps {
     var imageUrl: String
     var color: Color?
     var enabled: Boolean
@@ -20,7 +20,7 @@ external interface CardProps : RProps {
     var onClick: () -> Unit
 }
 
-external interface CardState : RState {
+interface CardState : RState {
     var hovered: Boolean
 }
 
@@ -110,7 +110,7 @@ fun RBuilder.openCard(
         checked = cardIx == chosenCardIx
         imageUrl = "/cards/" + when (card) {
             is Card.Loco -> "loco.jpg"
-            is Card.Car -> when (card.value) {
+            is Card.Car -> when (card.color) {
                 ticketToRide.Color.RED -> "red.png"
                 ticketToRide.Color.GREEN -> "green.png"
                 ticketToRide.Color.BLUE -> "blue.jpg"
@@ -122,7 +122,7 @@ fun RBuilder.openCard(
             }
         }
         if (card is Card.Car) {
-            color = Color(card.value.rgb).withAlpha(0.5)
+            color = Color(card.color.rgb).withAlpha(0.5)
         }
         onClick = clickHandler
     }

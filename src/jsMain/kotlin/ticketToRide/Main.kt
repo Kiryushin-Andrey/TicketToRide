@@ -4,7 +4,7 @@ import react.dom.render
 import kotlin.browser.document
 
 fun main() {
-    render(document.body) {
+    render(document.getElementById("app")) {
         child(App::class) {}
     }
 }

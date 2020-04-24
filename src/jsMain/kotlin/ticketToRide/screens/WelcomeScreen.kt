@@ -9,13 +9,13 @@ import styled.*
 import ticketToRide.*
 import kotlin.browser.window
 
-external interface WelcomeScreenProps : RProps {
+interface WelcomeScreenProps : RProps {
     var onStartGame: (PlayerName) -> Unit
     var onJoinGame: (GameId, PlayerName) -> Unit
     var joinGameFailure: JoinGameFailure?
 }
 
-external interface WelcomeScreenState : RState {
+interface WelcomeScreenState : RState {
     var playerName: String
     var joinGameFailure: JoinGameFailure?
 }
@@ -77,6 +77,14 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
         val welcomeDialog by css {
             width = 100.pct
             margin = "0"
+        }
+    }
+}
+
+fun RBuilder.welcomeScreen(builder: WelcomeScreenProps.() -> Unit) {
+    child(WelcomeScreen::class) {
+        attrs {
+            builder()
         }
     }
 }

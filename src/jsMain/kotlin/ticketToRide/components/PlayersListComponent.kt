@@ -8,7 +8,7 @@ import react.dom.*
 import styled.*
 import ticketToRide.PlayerView
 
-external interface PlayersListProps : RProps {
+interface PlayersListProps : RProps {
     var players: List<PlayerView>
     var turn: Int
 }
@@ -73,5 +73,12 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
             width = 150.px
             justifyContent = JustifyContent.spaceEvenly
         }
+    }
+}
+
+fun RBuilder.playersList(players: List<PlayerView>, turn: Int) = child(PlayersList::class) {
+    attrs {
+        this.players = players
+        this.turn = turn
     }
 }

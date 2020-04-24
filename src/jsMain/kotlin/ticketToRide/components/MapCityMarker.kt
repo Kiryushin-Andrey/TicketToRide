@@ -6,18 +6,18 @@ import kotlinx.html.js.onClickFunction
 import react.*
 import styled.*
 
-external interface MarkerProps: RProps {
+interface MapCityMarkerProps: RProps {
     var lat: Number
     var lng: Number
 
     var name: String
     var displayAllCityNames: Boolean
     var selected: Boolean
-    var partOfSpannedSection: Boolean
+    var hasOccupiedSegment: Boolean
     var onClick: () -> Unit
 }
 
-class CityMapMarker : RComponent<MarkerProps, RState>() {
+class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
     override fun RBuilder.render() {
         val scale = if (props.selected) 1.2 else 1.0
 
@@ -40,14 +40,14 @@ class CityMapMarker : RComponent<MarkerProps, RState>() {
                     +ComponentStyle.markerIcon
                     val img = when {
                         props.selected -> "city-marker-red"
-                        props.partOfSpannedSection -> "city-marker-green"
+                        props.hasOccupiedSegment -> "city-marker-green"
                         else -> "city-marker-blue"
                     }
                     backgroundImage = Image("url(/icons/${img}.svg)")
                 }
             }
             if (props.selected || props.displayAllCityNames) {
-                // marker style taken from https://developers.google.com/maps/documentation/javascript/examples/overlay-popup
+                // popup bubble style taken from https://developers.google.com/maps/documentation/javascript/examples/overlay-popup
                 styledDiv {
                     css {
                         +ComponentStyle.popupContainer
@@ -134,8 +134,8 @@ class CityMapMarker : RComponent<MarkerProps, RState>() {
     }
 }
 
-fun RBuilder.marker(block: MarkerProps.() -> Unit): ReactElement {
-    return child(CityMapMarker::class) {
+fun RBuilder.marker(block: MapCityMarkerProps.() -> Unit): ReactElement {
+    return child(MapCityMarker::class) {
         attrs(block)
     }
 }

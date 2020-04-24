@@ -82,7 +82,7 @@ fun Application.module() {
                             connection
                         }
                         else -> {
-                            games[conn!!.gameId]?.apply { requestsQueue.send(req to conn!!) }
+                            games[conn!!.gameId]?.apply { requestsQueue.send(req to conn) }
                             conn
                         }
                     }

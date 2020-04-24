@@ -16,7 +16,7 @@ data class PlayerName(val value: String)
 sealed class Card {
 
     @Serializable
-    data class Car(val value: Color) : Card()
+    data class Car(val color: Color) : Card()
 
     @Serializable
     object Loco : Card()
@@ -33,7 +33,10 @@ sealed class Card {
 }
 
 @Serializable
-data class SpannedSection(val from: CityName, val to: CityName, val player: PlayerName)
+data class Segment(val from: CityName, val to: CityName, val color: Color?, val points: Int)
+
+fun Segment.connects(cityName1: String, cityName2: String) =
+    (from.value == cityName1 && to.value == cityName2) || (from.value == cityName2 && to.value == cityName1)
 
 @Serializable
 data class Ticket(val from: CityName, val to: CityName, val points: Int) {
@@ -59,6 +62,7 @@ data class PlayerView(
     val carsLeft: Int,
     val cardsOnHand: Int,
     val ticketsOnHand: Int,
+    val occupiedSegments: List<Segment>,
     val pendingTicketsChoice: PendingTicketsChoiceState,
     val away: Boolean
 )
@@ -67,7 +71,6 @@ data class PlayerView(
 data class GameStateView(
     val players: List<PlayerView>,
     val openCards: List<Card>,
-    val spannedSections: List<SpannedSection>,
     val turn: Int,
     val myName: PlayerName,
     val myCards: List<Card>,

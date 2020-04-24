@@ -2,12 +2,13 @@ package ticketToRide
 
 data class LatLong(val lat: Number, val lng: Number)
 data class City(val name: String, val latLng: LatLong, val routes: List<Route> = emptyList())
-data class Route(val destination: String, val color: Color?, val segments: Int, val ferries: Int = 0)
+data class Route(val destination: String, val color: Color?, val points: Int)
 
 object GameMap {
     val mapCenter = RussiaMap.mapCenter
     val mapZoom = RussiaMap.mapZoom
     val cities = RussiaMap.cities
+    val citiesByName = cities.associateBy { it.name }
     val longTickets: List<Ticket>
     val shortTickets: List<Ticket>
 
@@ -18,9 +19,15 @@ object GameMap {
     }
 }
 
+fun GameMap.getSegmentBetween(from: CityName, to: CityName) : Segment? {
+    val route = citiesByName[from.value]!!.routes.firstOrNull { it.destination == to.value }
+        ?: citiesByName[to.value]!!.routes.firstOrNull { it.destination == from.value }
+    return if (route != null) Segment(from, to, route.color, route.points) else null
+}
+
 private fun getAllTickets(cities: List<City>): List<Ticket> {
     val ixByCityName = cities.withIndex().associate { (ix, city) -> city.name to ix }
-    fun ixByCityName(cityName: String) = ixByCityName[cityName]!!
+    fun ixByCityName(cityName: String) = ixByCityName[cityName] ?: throw Error("City ${cityName} not exists on game map")
 
     val citiesCount = cities.size
     val dist = Array(citiesCount) { IntArray(citiesCount) { Int.MAX_VALUE } }
@@ -28,8 +35,8 @@ private fun getAllTickets(cities: List<City>): List<Ticket> {
         dist[ix][ix] = 0
         for (route in city.routes) {
             val targetIx = ixByCityName(route.destination)
-            dist[ix][targetIx] = route.segments
-            dist[targetIx][ix] = route.segments
+            dist[ix][targetIx] = route.points
+            dist[targetIx][ix] = route.points
         }
     }
     for (k in (0 until citiesCount))

@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.w3c.dom.WebSocket
 import react.*
+import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
 import kotlin.browser.document
 import kotlin.browser.window
@@ -15,11 +16,13 @@ enum class ActiveScreen {
     PlayGame
 }
 
-external interface AppState : RState {
+interface AppState : RState {
     var activeScreen: ActiveScreen
     var joinGameFailure: JoinGameFailure?
     var gameId: GameId
+    var gameMap: GameMap
     var gameState: GameStateView?
+    var playerState: PlayerState?
 }
 
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
@@ -29,11 +32,11 @@ class App() : RComponent<RProps, AppState>() {
     private lateinit var requests: Channel<Request>
 
     override fun componentWillUnmount() {
-        super.componentWillUnmount()
         scope.cancel()
     }
 
     override fun AppState.init() {
+        gameMap = GameMap
         activeScreen = ActiveScreen.Welcome
         scope = CoroutineScope(Dispatchers.Default + Job())
         requests = Channel()
@@ -46,7 +49,7 @@ class App() : RComponent<RProps, AppState>() {
                 }
             }
             webSocket.onmessage = {
-                (it.data as String?)?.let {
+                (it.data as? String)?.let {
                     when (val req = json.parse(Response.serializer(), it)) {
                         is FailureResponse -> setState {
                             activeScreen = ActiveScreen.Welcome
@@ -69,6 +72,9 @@ class App() : RComponent<RProps, AppState>() {
                                     joinGameFailure = null
                                     gameId = req.gameId
                                 }
+                                if (!(playerState is PlayerState.ChoosingTickets)) {
+                                    playerState = PlayerState.initial(gameMap, req.state, requests)
+                                }
                                 gameState = req.state
                             }
                         }
@@ -81,25 +87,21 @@ class App() : RComponent<RProps, AppState>() {
     override fun RBuilder.render() {
         when (state.activeScreen) {
             ActiveScreen.Welcome ->
-                child(WelcomeScreen::class) {
-                    attrs {
-                        onStartGame = ::startGame
-                        onJoinGame = ::joinGame
-                    }
+                welcomeScreen {
+                    onStartGame = ::startGame
+                    onJoinGame = ::joinGame
                 }
             ActiveScreen.ShowGameId ->
-                child(ShowGameIdScreen::class) {
-                    attrs {
-                        gameId = state.gameId
-                        onClosed = { setState { activeScreen = ActiveScreen.PlayGame } }
-                    }
+                showGameIdScreen {
+                    gameId = state.gameId
+                    onClosed = { setState { activeScreen = ActiveScreen.PlayGame } }
                 }
             ActiveScreen.PlayGame ->
-                child(GameScreen::class) {
-                    attrs {
-                        gameState = state.gameState!!
-                        sendRequest = { requests.offer(it) }
-                    }
+                gameScreen {
+                    gameMap = state.gameMap
+                    gameState = state.gameState!!
+                    playerState = state.playerState!!
+                    onAction = { setState { playerState = it } }
                 }
         }
     }

@@ -9,20 +9,20 @@ import styled.css
 import styled.styledDiv
 import ticketToRide.*
 import ticketToRide.components.*
+import ticketToRide.playerState.BuildingSegment
+import ticketToRide.playerState.BuildingSegmentFrom
 
-external interface GameScreenProps : RProps {
-    var gameState: GameStateView
-    var sendRequest: (Request) -> Unit
+interface GameScreenProps : ComponentBaseProps {
+    var gameMap: GameMap
 }
 
-external interface GameScreenState : RState {
-    var selectedTicket: Ticket?
-    var constructionInProgress: Set<CityName>
+interface GameScreenState : RState {
+    var citiesToHighlight: Set<CityName>
 }
 
-class GameScreen : RComponent<GameScreenProps, GameScreenState>() {
+class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
     override fun GameScreenState.init() {
-        constructionInProgress = emptySet()
+        citiesToHighlight = emptySet()
     }
 
     override fun RBuilder.render() {
@@ -36,79 +36,47 @@ class GameScreen : RComponent<GameScreenProps, GameScreenState>() {
                     +ComponentStyles.verticalPanel
                     put("resize", "horizontal")
                 }
-                child(PlayersList::class) {
-                    attrs {
-                        players = props.gameState.players
-                        turn = props.gameState.turn
-                    }
-                }
-                mDivider(variant = MDividerVariant.fullWidth) {
-                    css {
-                        margin = 5.px.toString()
-                    }
-                }
-                child(ChatComponent::class) { }
+
+                playersList(players, turn)
+                divider()
+                chat { }
             }
 
-            child(MainMapBlock::class) {
-                attrs {
-                    gameMap = GameMap
-                    myName = props.gameState.myName
-                    spannedSections = props.gameState.spannedSections
-
-                    selectedTicket = state.selectedTicket
-                    constructionInProgress = state.constructionInProgress
-
-                    onCityClicked = {
-                        setState {
-                            if (constructionInProgress.contains(it)) constructionInProgress - it
-                            else constructionInProgress + it
-                        }
-                    }
-                }
+            mainMap(props) {
+                gameMap = props.gameMap
+                citiesToHighlight = state.citiesToHighlight
+                onCityMouseOver = { setState { citiesToHighlight += it } }
+                onCityMouseOut = { setState { citiesToHighlight -= it } }
             }
 
             styledDiv {
                 css {
                     +ComponentStyles.verticalPanel
                 }
-                child(MyCardsComponent::class) {
-                    attrs {
-                        cards = props.gameState.myCards
-                        myTurn = props.gameState.myTurn
-                    }
+
+                myCards(props)
+                divider()
+
+                if (playerState is BuildingSegmentFrom || playerState is BuildingSegment) {
+                    buildingSegment(props)
+                    divider()
                 }
-                mDivider(variant = MDividerVariant.fullWidth) {
-                    css {
-                        margin = 5.px.toString()
-                    }
-                }
-                child(MyTickets::class) {
-                    attrs {
-                        tickets = props.gameState.myTicketsOnHand
-                        pendingChoice = props.gameState.myPendingTicketsChoice
-                        hoveredTicket = state.selectedTicket
-                        onHoveredTicketChanged = { setState { selectedTicket = it } }
-                        onConfirmTicketsChoice = { tickets -> props.sendRequest(ConfirmTicketsChoiceRequest(tickets)) }
-                    }
+
+                myTickets(props) {
+                    citiesToHighlight = state.citiesToHighlight
+                    onTicketMouseOver = { setState { citiesToHighlight += listOf(it.from, it.to) } }
+                    onTicketMouseOut = { setState { citiesToHighlight -= listOf(it.from, it.to) } }
                 }
             }
 
-            child(CardsDeck::class) {
-                attrs {
-                    myTurn = props.gameState.myTurn
-                    pendingTicketsChoice = props.gameState.myPendingTicketsChoice != null
-                    openCards = props.gameState.openCards
-                    onPickLoco = {
-                        props.sendRequest(PickCardsRequest.Loco)
-                    }
-                    onPickCards = {
-                        props.sendRequest(PickCardsRequest.TwoCards(it))
-                    }
-                    onPickTickets = {
-                        props.sendRequest(PickTicketsRequest)
-                    }
-                }
+            cardsDeck(props)
+        }
+    }
+
+    private fun RBuilder.divider() {
+        mDivider(variant = MDividerVariant.fullWidth) {
+            css {
+                margin = 5.px.toString()
             }
         }
     }
@@ -128,6 +96,14 @@ class GameScreen : RComponent<GameScreenProps, GameScreenState>() {
             minWidth = 300.px
             minHeight = LinearDimension.minContent
             overflow = Overflow.auto
+        }
+    }
+}
+
+fun RBuilder.gameScreen(builder: GameScreenProps.() -> Unit) {
+    child(GameScreen::class) {
+        attrs {
+            builder()
         }
     }
 }

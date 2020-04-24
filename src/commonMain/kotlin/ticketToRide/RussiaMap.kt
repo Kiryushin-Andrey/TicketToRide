@@ -21,8 +21,8 @@ object RussiaMap {
             )),
         City("Мурманск", LatLong(68.970665, 33.07497),
             listOf(
-                Route("Архангельск", Color.BLACK, 4, 1),
-                Route("Нарьян-Мар", null, 6, 2)
+                Route("Архангельск", Color.BLACK, 4),
+                Route("Нарьян-Мар", null, 6)
             )),
         City("Архангельск", LatLong(64.543022, 40.537121),
             listOf(
@@ -135,7 +135,7 @@ object RussiaMap {
             listOf(
                 Route("Петрозаводск", Color.BLUE, 4),
                 Route("Мурманск", Color.GREEN, 2),
-                Route("Архангельск", Color.YELLOW, 4, 1)
+                Route("Архангельск", Color.YELLOW, 4)
             )),
         City("Челябинск", LatLong(55.1598408, 61.4025547),
             listOf(

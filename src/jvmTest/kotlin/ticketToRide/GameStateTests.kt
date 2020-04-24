@@ -60,8 +60,17 @@ class GameStateTests {
 
     private fun createGameState(playersCount: Int) =
         GameState(
-            (1..playersCount).map { Player(PlayerName(it.toString()), Color.values().random(), 45, (1..4).map { Card.random() }, null) },
+            (1..playersCount).map {
+                Player(
+                    PlayerName(it.toString()),
+                    Color.values().random(),
+                    45,
+                    (1..4).map { Card.random() },
+                    emptyList(),
+                    null
+                )
+            },
             (1..5).map { Card.random() },
-            emptyList(),
-        0)
+            0
+        )
 }
