@@ -5,6 +5,8 @@ data class City(val name: String, val latLng: LatLong, val routes: List<Route> =
 data class Route(val destination: String, val color: Color?, val points: Int)
 
 object GameMap {
+    val longTicketMinPoints = RussiaMap.longTicketMinPoints
+    val shortTicketsPointsRange = RussiaMap.shortTicketsPointsRange
     val mapCenter = RussiaMap.mapCenter
     val mapZoom = RussiaMap.mapZoom
     val cities = RussiaMap.cities
@@ -14,8 +16,10 @@ object GameMap {
 
     init {
         val tickets = getAllTickets(cities)
-        longTickets = tickets.takeWhile { it.points >= 20 }
-        shortTickets = tickets.reversed().dropWhile { it.points < 5 }.takeWhile { it.points <= 12 }
+        longTickets = tickets.takeWhile { it.points >= longTicketMinPoints }
+        shortTickets = tickets.reversed()
+            .dropWhile { it.points < shortTicketsPointsRange.first }
+            .takeWhile { it.points <= shortTicketsPointsRange.second }
     }
 }
 

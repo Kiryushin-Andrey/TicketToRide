@@ -31,10 +31,10 @@ data class GameState(
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
         val available = (if (long) GameMap.longTickets else GameMap.shortTickets)
-            .filter {
+            .filter { ticket ->
                 !players
                     .flatMap { p -> p.ticketsOnHand + (p.ticketsForChoice?.tickets ?: emptyList()) }
-                    .contains(it)
+                    .any { it == ticket || (long && it.points >= GameMap.longTicketMinPoints && it.sharesCityWith(ticket)) }
             }
             .distinct()
         return (1..count).map { available.random() }

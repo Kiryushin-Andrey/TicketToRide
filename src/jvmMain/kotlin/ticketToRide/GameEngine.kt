@@ -79,11 +79,12 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
     )
 
 fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
-    val cardsToDrop = cardsToDrop.toMutableList()
+    val list = cardsToDrop.toMutableList()
     return copy(
         cards = cards.filter {
-            if (cardsToDrop.contains(it)) { cardsToDrop -= it; false } else true
+            if (list.contains(it)) { list -= it; false } else true
         },
+        carsLeft = carsLeft - cardsToDrop.size,
         occupiedSegments = occupiedSegments + segment)
 }
 

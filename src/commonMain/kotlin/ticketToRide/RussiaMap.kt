@@ -3,6 +3,8 @@ package ticketToRide
 object RussiaMap {
     val mapCenter = LatLong(57.6012967,40.4744424)
     const val mapZoom = 4
+    const val longTicketMinPoints = 20
+    val shortTicketsPointsRange = 5 to 12
     val cities = listOf(
         City("Москва", LatLong(55.7504461, 37.61749431),
             listOf(

@@ -26,7 +26,7 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
                     if (ix == props.turn) {
                         borderColor = Color.red
                         borderStyle = BorderStyle.solid
-                        borderWidth = 2.px
+                        borderWidth = 4.px
                     }
                 }
                 mTypography(variant = MTypographyVariant.h6) {

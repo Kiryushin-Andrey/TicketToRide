@@ -105,6 +105,7 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, BuildingSeg
                                     alignItems = Align.center
                                     borderRadius = 4.px
                                     paddingLeft = 10.px
+                                    marginBottom = 8.px
                                 }
                                 mRadio {
                                     attrs {
