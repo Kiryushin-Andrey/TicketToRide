@@ -93,8 +93,8 @@ kotlin {
 }
 
 jvmJar {
-    dependsOn(jsBrowserProductionWebpack)
-    from(jsBrowserProductionWebpack.outputFile)
+    dependsOn(jsBrowserDevelopmentWebpack)
+    from(jsBrowserDevelopmentWebpack.outputFile)
 }
 
 task run(type: JavaExec, dependsOn: [jvmJar]) {
