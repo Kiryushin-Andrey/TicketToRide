@@ -67,9 +67,18 @@ sealed class PlayerState {
 
         class BuildingSegmentFrom internal constructor(prev: MyTurn, val from: CityName) : MyTurn(prev)
 
-        class BuildingSegment internal constructor(prev: BuildingSegmentFrom, val segment: Segment) : MyTurn(prev) {
+        class BuildingSegment private constructor(prev: MyTurn, val segment: Segment, val chosenCardsToDropIx: Int?) :
+            MyTurn(prev) {
 
-            val optionsForCardsToDrop = getOptionsForCardToDrop()
+            internal constructor(prev: BuildingSegmentFrom, segment: Segment) : this(prev, segment, null)
+
+            internal constructor(prev: ticketToRide.playerState.BuildingSegment, chosenCardsToDropIx: Int) : this(
+                prev,
+                prev.segment,
+                chosenCardsToDropIx
+            )
+
+            val optionsForCardsToDrop by lazy { getOptionsForCardToDrop() }
 
             private fun getOptionsForCardToDrop(): List<List<Card>> {
                 val countByCar = myCards.filterIsInstance<Card.Car>().groupingBy { it }.eachCount()
@@ -82,10 +91,15 @@ sealed class PlayerState {
                     }
 
                 val locoCount = myCards.filterIsInstance<Card.Loco>().count()
-                return  (0..locoCount).flatMap { getOptionsForCars(it) }
+                return (0..locoCount).flatMap { getOptionsForCars(it) }
             }
 
-            fun confirm(cards: List<Card>) = sendAndResetState(BuildSegmentRequest(segment.from, segment.to, cards))
+            fun chooseCardsToDrop(ix: Int) = BuildingSegment(this, ix)
+
+            fun confirm() =
+                (if (optionsForCardsToDrop.size == 1) 0 else chosenCardsToDropIx)?.let {
+                    sendAndResetState(BuildSegmentRequest(segment.from, segment.to, optionsForCardsToDrop[it]))
+                } ?: this
         }
 
         val openCards get() = gameState.openCards

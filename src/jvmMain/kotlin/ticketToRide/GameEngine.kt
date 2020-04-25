@@ -78,6 +78,35 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
         ticketsForChoice = null
     )
 
+fun Player.canBuildSegment(segment: Segment, cardsToDrop: List<Card>) =
+    segment.points <= carsLeft && segment.canBuildWith(cardsToDrop)
+
+fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
+    if (cardsToDrop.size != points) {
+        return false
+    }
+
+    val cardsCount = cardsToDrop.groupingBy { it }.eachCount()
+    return when (cardsCount.size) {
+        1 -> {
+            when (val card = cardsCount.keys.single()) {
+                is Card.Loco -> true
+                is Card.Car -> color == null || color == card.color
+            }
+        }
+        2 -> {
+            points == cardsCount.entries.sumBy { (card, count) ->
+                when {
+                    card is Card.Loco -> count
+                    card is Card.Car && (color == null || color == card.color) -> count
+                    else -> 0
+                }
+            }
+        }
+        else -> false
+    }
+}
+
 fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
     val list = cardsToDrop.toMutableList()
     return copy(
@@ -90,5 +119,8 @@ fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
 
 fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>) =
     GameMap.getSegmentBetween(from, to)?.let {
-        updatePlayer(name) { occupySegment(it, cards) }.advanceTurn()
+        if (playerByName(name).canBuildSegment(it, cards))
+            updatePlayer(name) { occupySegment(it, cards) }.advanceTurn()
+        else
+            this
     } ?: this

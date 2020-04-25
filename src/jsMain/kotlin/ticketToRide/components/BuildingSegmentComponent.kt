@@ -13,11 +13,7 @@ interface BuildingSegmentProps : ComponentBaseProps {
     var to: CityName?
 }
 
-interface BuildingSegmentState : RState {
-    var cardsToDropIx: Int?
-}
-
-class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, BuildingSegmentState>() {
+class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, RState>() {
 
     override fun RBuilder.render() {
         styledDiv {
@@ -61,8 +57,13 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, BuildingSeg
         val optionsForCardsToDrop = playerState.optionsForCardsToDrop
 
         when {
+            me.carsLeft < playerState.segment.points ->
+                mTypography("Не хватает вагонов \uD83D\uDE1E", MTypographyVariant.body1) {
+                    css { marginTop = 10.px }
+                }
+
             optionsForCardsToDrop.isEmpty() ->
-                mTypography("Не хватает карт на строительство \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography("Не хватает карт \uD83D\uDE1E", MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
@@ -109,8 +110,8 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, BuildingSeg
                                 }
                                 mRadio {
                                     attrs {
-                                        checked = ix == state.cardsToDropIx
-                                        onClick = { setState { cardsToDropIx = ix } }
+                                        checked = ix == playerState.chosenCardsToDropIx
+                                        onClick = { act { playerState.chooseCardsToDrop(ix) } }
                                     }
                                 }
                                 cards.forEach(::myCard)
@@ -125,28 +126,22 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, BuildingSeg
 
     private fun RBuilder.confirmButton(playerState: BuildingSegment) {
         val options = playerState.optionsForCardsToDrop
-        val cardsToDropIx = if (options.size > 1) state.cardsToDropIx else 0
         mButton("Строю!", MColor.primary) {
             if (options.size > 1) {
                 css { marginTop = 10.px }
             }
             attrs {
-                disabled = cardsToDropIx == null
-                onClick = {
-                    cardsToDropIx?.let {
-                        act { playerState.confirm(playerState.optionsForCardsToDrop[it]) }
-                    }
-                }
+                disabled = options.size > 1 && playerState.chosenCardsToDropIx == null
+                onClick = { act { playerState.confirm() } }
             }
         }
     }
 }
 
 fun RBuilder.buildingSegment(props: ComponentBaseProps) {
-    val playerState = props.playerState
-    val (from, to) = when (playerState) {
+    val (from, to) = when (val playerState = props.playerState) {
         is BuildingSegmentFrom -> playerState.from to null
-        is BuildingSegment -> with (playerState.segment) { from to to }
+        is BuildingSegment -> with(playerState.segment) { from to to }
         else -> throw Error("BuildingSegment attempted to render in an unexpected state")
     }
 
