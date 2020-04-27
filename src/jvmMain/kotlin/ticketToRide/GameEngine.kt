@@ -5,19 +5,21 @@ import kotlinx.coroutines.flow.*
 fun runGame(firstPlayerName: PlayerName, requests: Flow<Pair<Request, Connection>>): Flow<GameState> {
     val initialState = GameState.initial().joinPlayer(firstPlayerName)
     return requests.scan(initialState) { game, (req, conn) ->
-        when (req) {
-            is JoinGameRequest ->
-                game.joinPlayer(conn.playerName)
-            is ConfirmTicketsChoiceRequest ->
-                game.updatePlayer(conn.playerName) { confirmTicketsChoice(req.ticketsToKeep) }
-            is PickCardsRequest ->
-                game.pickCards(conn.playerName, req)
-            is PickTicketsRequest ->
-                game.pickTickets(conn.playerName)
-            is BuildSegmentRequest ->
-                game.buildSegment(conn.playerName, req.from, req.to, req.cards)
-            else -> game
-        }
+        if (game.turn != game.endsOnPlayer) {
+            when (req) {
+                is JoinGameRequest ->
+                    game.joinPlayer(conn.playerName)
+                is ConfirmTicketsChoiceRequest ->
+                    game.updatePlayer(conn.playerName) { confirmTicketsChoice(req.ticketsToKeep) }
+                is PickCardsRequest ->
+                    game.pickCards(conn.playerName, req)
+                is PickTicketsRequest ->
+                    game.pickTickets(conn.playerName)
+                is BuildSegmentRequest ->
+                    game.buildSegment(conn.playerName, req.from, req.to, req.cards)
+                else -> game
+            }
+        } else game
     }
 }
 
@@ -33,16 +35,22 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
         name, color, CarsCountPerPlayer, cards, emptyList(),
         PendingTicketsChoice(tickets, 2, true)
     )
-    return GameState(players + newPlayer, openCards, turn)
+    return copy(players = players + newPlayer)
 }
 
 fun GameState.advanceTurn(): GameState {
+    if (players.flatMap { it.occupiedSegments }.sumBy { it.points } == GameMap.totalSegmentsLength) {
+        return copy(endsOnPlayer = turn)
+    }
+
+    val gameEndsOnPlayer = endsOnPlayer ?: if (players[turn].carsLeft < 3) turn else null
     val nextTurn = (turn + 1) % players.size
     val ticketsChoice = players[nextTurn].ticketsForChoice
     val skipsMove = ticketsChoice != null && !ticketsChoice.shouldChooseOnNextTurn;
-    val nextState = GameState(players, openCards, nextTurn).updatePlayer(nextTurn) {
-        copy(ticketsForChoice = ticketsForChoice?.copy(shouldChooseOnNextTurn = true))
-    }
+    val nextState = copy(turn = nextTurn, endsOnPlayer = gameEndsOnPlayer)
+        .updatePlayer(nextTurn) {
+            copy(ticketsForChoice = ticketsForChoice?.copy(shouldChooseOnNextTurn = true))
+        }
     return if (skipsMove) nextState.advanceTurn() else nextState
 }
 
@@ -71,6 +79,14 @@ fun GameState.pickTickets(playerName: PlayerName): GameState {
     return if (inTurn) state.advanceTurn() else state
 }
 
+fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>) =
+    GameMap.getSegmentBetween(from, to)?.let {
+        if (playerByName(name).canBuildSegment(it, cards))
+            updatePlayer(name) { occupySegment(it, cards) }.advanceTurn()
+        else
+            this
+    } ?: this
+
 fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
     if (ticketsForChoice == null) this
     else copy(
@@ -80,6 +96,16 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
 
 fun Player.canBuildSegment(segment: Segment, cardsToDrop: List<Card>) =
     segment.points <= carsLeft && segment.canBuildWith(cardsToDrop)
+
+fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
+    val list = cardsToDrop.toMutableList()
+    return copy(
+        cards = cards.filter {
+            if (list.contains(it)) { list -= it; false } else true
+        },
+        carsLeft = carsLeft - cardsToDrop.size,
+        occupiedSegments = occupiedSegments + segment)
+}
 
 fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
     if (cardsToDrop.size != points) {
@@ -106,21 +132,3 @@ fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
         else -> false
     }
 }
-
-fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
-    val list = cardsToDrop.toMutableList()
-    return copy(
-        cards = cards.filter {
-            if (list.contains(it)) { list -= it; false } else true
-        },
-        carsLeft = carsLeft - cardsToDrop.size,
-        occupiedSegments = occupiedSegments + segment)
-}
-
-fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>) =
-    GameMap.getSegmentBetween(from, to)?.let {
-        if (playerByName(name).canBuildSegment(it, cards))
-            updatePlayer(name) { occupySegment(it, cards) }.advanceTurn()
-        else
-            this
-    } ?: this

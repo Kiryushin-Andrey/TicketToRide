@@ -18,9 +18,7 @@ interface MyTicketsProps : ComponentBaseProps {
 
 class MyTickets : ComponentBase<MyTicketsProps, RState>() {
     override fun RBuilder.render() {
-        for (ticket in myTickets) {
-            render(ticket)
-        }
+        myTickets.forEach { render(it) }
 
         (playerState as? PlayerState.ChoosingTickets)?.let { choice ->
             styledDiv {
@@ -52,65 +50,21 @@ class MyTickets : ComponentBase<MyTicketsProps, RState>() {
                     }
                 }
             }
-            for (item in choice.items) {
-                render(item.ticket) {
-                    mCheckbox {
-                        attrs {
-                            color = MOptionColor.primary
-                            checked = item.keep
-                            onChange = { _, _ ->
-                                act { choice.toggleTicket(item.ticket) }
-                            }
-                        }
-                    }
-                }
+
+            choice.items.forEach {
+                render(it.ticket, TicketCheckbox(it.keep) {
+                    act { choice.toggleTicket(it.ticket) }
+                })
             }
         }
     }
 
-    private fun RBuilder.render(ticket: Ticket, renderCheckbox: StyledElementBuilder<*>.() -> Unit = {}) {
-        val highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
-        mPaper {
-            attrs {
-                elevation = if (highlighted) 6 else 2
-                with(asDynamic()) {
-                    onMouseOver = { props.onTicketMouseOver(ticket) }
-                    onMouseOut = { props.onTicketMouseOut(ticket) }
-                }
-            }
-            css {
-                borderRadius = 4.px
-                margin = 4.px.toString()
-                paddingLeft = 12.px
-                paddingRight = 12.px
-                backgroundColor = Color.chocolate.withAlpha(0.2)
-            }
-            styledDiv {
-                css {
-                    minHeight = 40.px
-                    display = Display.flex
-                    alignItems = Align.center
-                    flexDirection = FlexDirection.row
-                    justifyContent = JustifyContent.spaceBetween
-                }
-                mTypography(variant = MTypographyVariant.body2) {
-                    renderCheckbox()
-                    +"${ticket.from.value} - ${ticket.to.value}"
-                }
-                mPaper {
-                    attrs { elevation = 4 }
-                    css {
-                        width = 20.px
-                        height = 20.px
-                        textAlign = TextAlign.center
-                        verticalAlign = VerticalAlign.middle
-                        padding = 3.px.toString()
-                        borderRadius = 50.pct
-                        backgroundColor = Color.orange.withAlpha(0.7)
-                    }
-                    +ticket.points.toString()
-                }
-            }
+    private fun RBuilder.render(ticket: Ticket, checkbox: TicketCheckbox? = null) {
+        ticket(ticket) {
+            highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
+            onMouseOver = { props.onTicketMouseOver(ticket) }
+            onMouseOut = { props.onTicketMouseOut(ticket) }
+            this.checkbox = checkbox
         }
     }
 }

@@ -60,7 +60,7 @@ fun Application.module() {
                     when (req) {
                         is StartGameRequest -> {
                             val gameId = startGame(req.playerName) { id, state ->
-                                send(GameStateResponse(id, state.toPlayerView(req.playerName)))
+                                notifyOnGameStateChange(id, req.playerName, state)
                             }
                             Connection(gameId, req.playerName)
                         }
@@ -69,13 +69,8 @@ fun Application.module() {
                             if (game == null) send(FailureResponse(JoinGameFailure.GameNotExists))
                             val connection = Connection(req.gameId, req.playerName)
                             game?.apply {
-                                notifyCallbacks += { gameId, state ->
-                                    send(
-                                        GameStateResponse(
-                                            gameId,
-                                            state.toPlayerView(req.playerName)
-                                        )
-                                    )
+                                notifyCallbacks += { id, state ->
+                                    notifyOnGameStateChange(id, req.playerName, state)
                                 }
                                 requestsQueue.send(req to connection)
                             }
@@ -91,6 +86,13 @@ fun Application.module() {
     }
 }
 
+suspend fun WebSocketSession.notifyOnGameStateChange(id: GameId, playerName: PlayerName, state: GameState) {
+    send(
+        if (state.turn != state.endsOnPlayer) GameStateResponse(id, state.toPlayerView(playerName))
+        else GameEndResponse(id, state.players.map { it.toPlayerView() to it.ticketsOnHand })
+    )
+}
+
 suspend fun WebSocketSession.send(resp: Response) = send(json.stringify(Response.serializer(), resp))
 
 fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: PlayerCallback) : GameId {
@@ -98,9 +100,8 @@ fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: P
     val subscriptions = mutableListOf(firstPlayerCallback)
     val gameId = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
     launch {
-        runGame(firstPlayerName, requestsQueue.consumeAsFlow()).collect { state ->
-            for (notify in subscriptions) notify(gameId, state)
-        }
+        runGame(firstPlayerName, requestsQueue.consumeAsFlow())
+            .collect { state -> for (notify in subscriptions) notify(gameId, state) }
     }
     games[gameId] = Game(requestsQueue, subscriptions)
     return gameId

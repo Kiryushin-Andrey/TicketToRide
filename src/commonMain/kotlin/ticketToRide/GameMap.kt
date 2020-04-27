@@ -13,6 +13,7 @@ object GameMap {
     val citiesByName = cities.associateBy { it.name }
     val longTickets: List<Ticket>
     val shortTickets: List<Ticket>
+    val totalSegmentsLength by lazy { cities.flatMap { it.routes }.sumBy { it.points } }
 
     init {
         val tickets = getAllTickets(cities)

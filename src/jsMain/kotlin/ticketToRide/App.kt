@@ -13,16 +13,12 @@ import kotlin.browser.window
 enum class ActiveScreen {
     Welcome,
     ShowGameId,
-    PlayGame
+    PlayGame,
+    TheEnd
 }
 
 interface AppState : RState {
-    var activeScreen: ActiveScreen
-    var joinGameFailure: JoinGameFailure?
-    var gameId: GameId
-    var gameMap: GameMap
-    var gameState: GameStateView?
-    var playerState: PlayerState?
+    var screen: Screen
 }
 
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
@@ -36,11 +32,10 @@ class App() : RComponent<RProps, AppState>() {
     }
 
     override fun AppState.init() {
-        gameMap = GameMap
-        activeScreen = ActiveScreen.Welcome
+        screen = Screen.Welcome()
         scope = CoroutineScope(Dispatchers.Default + Job())
         requests = Channel()
-
+        
         scope.launch {
             val webSocket = WebSocket("ws://" + window.location.host + "/ws")
             launch {
@@ -48,34 +43,53 @@ class App() : RComponent<RProps, AppState>() {
                     webSocket.send(json.stringify(Request.serializer(), req))
                 }
             }
-            webSocket.onmessage = {
-                (it.data as? String)?.let {
-                    when (val req = json.parse(Response.serializer(), it)) {
+            webSocket.onmessage = { msg ->
+                (msg.data as? String)?.let { reqStr ->
+                    when (val req = json.parse(Response.serializer(), reqStr)) {
                         is FailureResponse -> setState {
-                            activeScreen = ActiveScreen.Welcome
-                            joinGameFailure = req.reason
+                            screen = Screen.Welcome(req.reason)
                         }
-                        is GameStateResponse -> {
-                            if (state.gameState?.myTurn == false && req.state.myTurn) {
-                                document.title = "ВАШ ХОД  - Ticket to Ride!"
-                                window.setTimeout({ document.title = "Ticket to Ride!" }, 3000)
-                            }
-                            setState {
-                                if (activeScreen == ActiveScreen.Welcome) {
-                                    activeScreen = if (req.state.players.size == 1) {
-                                        val url = "${window.location.origin}/game/${req.gameId.value}"
-                                        window.history.pushState(null, window.document.title, url)
-                                        ActiveScreen.ShowGameId
-                                    } else {
-                                        ActiveScreen.PlayGame
+                        is GameStateResponse -> with (state.screen) {
+                            when (this) {
+                                is Screen.Welcome -> {
+                                    setState {
+                                        screen = if (req.state.players.size == 1) {
+                                            val url = "${window.location.origin}/game/${req.gameId.value}"
+                                            window.history.pushState(null, window.document.title, url)
+                                            Screen.ShowGameId(req.gameId, req.state)
+                                        } else {
+                                            Screen.GameInProgress(
+                                                req.gameId,
+                                                GameMap,
+                                                req.state,
+                                                PlayerState.initial(GameMap, req.state, requests)
+                                            )
+                                        }
                                     }
-                                    joinGameFailure = null
-                                    gameId = req.gameId
                                 }
-                                if (!(playerState is PlayerState.ChoosingTickets)) {
-                                    playerState = PlayerState.initial(gameMap, req.state, requests)
+                                is Screen.ShowGameId -> {
+                                    setState {
+                                        screen = copy(gameState = req.state)
+                                    }
                                 }
-                                gameState = req.state
+                                is Screen.GameInProgress -> {
+                                    if (!gameState.myTurn && req.state.myTurn) {
+                                        document.title = "ВАШ ХОД  - Ticket to Ride!"
+                                        window.setTimeout({ document.title = "Ticket to Ride!" }, 3000)
+                                    }
+                                    val newPlayerState =
+                                        if (playerState is PlayerState.ChoosingTickets) playerState
+                                        else PlayerState.initial(gameMap, req.state, requests)
+                                    setState {
+                                        screen = copy(gameState = req.state, playerState = newPlayerState)
+                                    }
+                                }
+                                is Screen.GameOver -> {}
+                            }
+                        }
+                        is GameEndResponse -> {
+                            setState {
+                                screen = Screen.GameOver(req.gameId, GameMap, req.players)
                             }
                         }
                     }
@@ -84,24 +98,38 @@ class App() : RComponent<RProps, AppState>() {
         }
     }
 
-    override fun RBuilder.render() {
-        when (state.activeScreen) {
-            ActiveScreen.Welcome ->
+    override fun RBuilder.render() = state.screen.let {
+        when (it) {
+            is Screen.Welcome ->
                 welcomeScreen {
                     onStartGame = ::startGame
                     onJoinGame = ::joinGame
                 }
-            ActiveScreen.ShowGameId ->
+            is Screen.ShowGameId ->
                 showGameIdScreen {
-                    gameId = state.gameId
-                    onClosed = { setState { activeScreen = ActiveScreen.PlayGame } }
+                    gameId = it.gameId
+                    onClosed = {
+                        setState {
+                            screen = Screen.GameInProgress(
+                                it.gameId,
+                                GameMap,
+                                it.gameState,
+                                PlayerState.initial(GameMap, it.gameState, requests)
+                            )
+                        }
+                    }
                 }
-            ActiveScreen.PlayGame ->
+            is Screen.GameInProgress ->
                 gameScreen {
-                    gameMap = state.gameMap
-                    gameState = state.gameState!!
-                    playerState = state.playerState!!
-                    onAction = { setState { playerState = it } }
+                    gameMap = it.gameMap
+                    gameState = it.gameState
+                    playerState = it.playerState
+                    onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
+                }
+            is Screen.GameOver ->
+                endScreen {
+                    gameMap = it.gameMap
+                    players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets) }
                 }
         }
     }

@@ -1,7 +1,6 @@
 package ticketToRide.screens
 
-import com.ccfraser.muirwik.components.MDividerVariant
-import com.ccfraser.muirwik.components.mDivider
+import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
 import react.*
 import styled.StyleSheet
@@ -28,7 +27,11 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
     override fun RBuilder.render() {
         styledDiv {
             css {
-                +ComponentStyles.screen
+                height = 100.pct
+                width = 100.pct
+                display = Display.grid
+                gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
+                gridTemplateRows = GridTemplateRows(GridAutoRows.auto, GridAutoRows(120.px))
             }
 
             styledDiv {
@@ -37,12 +40,21 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     put("resize", "horizontal")
                 }
 
+                if (lastRound) {
+                    mTypography("Последний круг", MTypographyVariant.h6, color = MTypographyColor.primary) {
+                        css {
+                            marginLeft = 5.px
+                        }
+                    }
+                    horizontalDivider()
+                }
+
                 playersList(players, turn)
-                divider()
+                horizontalDivider()
                 chat { }
             }
 
-            mainMap(props) {
+            gameMap(props) {
                 gameMap = props.gameMap
                 citiesToHighlight = state.citiesToHighlight
                 onCityMouseOver = { setState { citiesToHighlight += it } }
@@ -55,11 +67,11 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 }
 
                 myCards(props)
-                divider()
+                horizontalDivider()
 
                 if (playerState is BuildingSegmentFrom || playerState is BuildingSegment) {
                     buildingSegment(props)
-                    divider()
+                    horizontalDivider()
                 }
 
                 myTickets(props) {
@@ -73,22 +85,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
         }
     }
 
-    private fun RBuilder.divider() {
-        mDivider(variant = MDividerVariant.fullWidth) {
-            css {
-                margin = 5.px.toString()
-            }
-        }
-    }
-
     private object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
-        val screen by css {
-            height = 100.pct
-            width = 100.pct
-            display = Display.grid
-            gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
-            gridTemplateRows = GridTemplateRows(GridAutoRows.auto, GridAutoRows(120.px))
-        }
         val verticalPanel by css {
             display = Display.flex
             flexDirection = FlexDirection.column
@@ -96,6 +93,14 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             minWidth = 300.px
             minHeight = LinearDimension.minContent
             overflow = Overflow.auto
+        }
+    }
+}
+
+fun RBuilder.horizontalDivider() {
+    mDivider(variant = MDividerVariant.fullWidth) {
+        css {
+            margin = 5.px.toString()
         }
     }
 }

@@ -22,6 +22,7 @@ abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBasePro
 
     val players get() = gameState.players
     val me get() = players.find { it.name == gameState.myName }!!
+    val lastRound get() = gameState.lastRound
     val turn get() = gameState.turn
     val myTurn get() = gameState.myTurn
     val myCards get() = gameState.myCards

@@ -1,6 +1,6 @@
 package ticketToRide
 
-const val CarsCountPerPlayer = 45
+const val CarsCountPerPlayer = 5
 
 data class Player(
     val name: PlayerName,
@@ -9,24 +9,20 @@ data class Player(
     val cards: List<Card>,
     val occupiedSegments: List<Segment>,
     val ticketsForChoice: PendingTicketsChoice?,
-    val ticketsOnHand: List<Ticket> = emptyList(),
-    val away: Boolean = false
+    val ticketsOnHand: List<Ticket> = emptyList()
 ) {
     fun toPlayerView() =
-        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, occupiedSegments, ticketsForChoice.toState(), away)
+        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, occupiedSegments, ticketsForChoice.toState())
 }
 
 data class GameState(
     val players: List<Player>,
     val openCards: List<Card>,
-    val turn: Int
+    val turn: Int,
+    val endsOnPlayer: Int?
 ) {
     companion object {
-        fun initial() = GameState(
-            emptyList(),
-            (1..5).map { Card.random() },
-            0
-        )
+        fun initial() = GameState(emptyList(), (1..5).map { Card.random() }, 0, null)
     }
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
@@ -46,6 +42,7 @@ data class GameState(
             players.map { it.toPlayerView() },
             openCards,
             turn,
+            endsOnPlayer != null,
             myName,
             me.cards,
             me.ticketsOnHand,
@@ -54,8 +51,8 @@ data class GameState(
     }
 
     fun updatePlayer(name: PlayerName, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        GameState(players.map { if (it.name == name && it.predicate()) it.block() else it }, openCards, turn)
+        copy(players = players.map { if (it.name == name && it.predicate()) it.block() else it })
 
     fun updatePlayer(ix: Int, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        GameState(players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player }, openCards, turn)
+        copy(players = players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player })
 }

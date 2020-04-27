@@ -42,19 +42,7 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
         }
     }
 
-    private fun RDOMBuilder<*>.playerCardIcon(iconUrl: String, number: Int) {
-        img {
-            attrs {
-                src = iconUrl
-                width = 24.px.toString()
-            }
-        }
-        mTypography(variant = MTypographyVariant.body1) {
-            +number.toString()
-        }
-    }
-
-    private object ComponentStyles : StyleSheet("PlayersList", isStatic = true) {
+    object ComponentStyles : StyleSheet("PlayersList", isStatic = true) {
         val playerCard by css {
             minHeight = 40.px
             display = Display.flex
@@ -73,6 +61,18 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
             width = 150.px
             justifyContent = JustifyContent.spaceEvenly
         }
+    }
+}
+
+fun RBuilder.playerCardIcon(iconUrl: String, number: Int) {
+    img {
+        attrs {
+            src = iconUrl
+            width = 24.px.toString()
+        }
+    }
+    mTypography(variant = MTypographyVariant.body1) {
+        +number.toString()
     }
 }
 

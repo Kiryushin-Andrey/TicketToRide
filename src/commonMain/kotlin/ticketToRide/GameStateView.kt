@@ -63,8 +63,7 @@ data class PlayerView(
     val cardsOnHand: Int,
     val ticketsOnHand: Int,
     val occupiedSegments: List<Segment>,
-    val pendingTicketsChoice: PendingTicketsChoiceState,
-    val away: Boolean
+    val pendingTicketsChoice: PendingTicketsChoiceState
 )
 
 @Serializable
@@ -72,6 +71,7 @@ data class GameStateView(
     val players: List<PlayerView>,
     val openCards: List<Card>,
     val turn: Int,
+    val lastRound: Boolean,
     val myName: PlayerName,
     val myCards: List<Card>,
     val myTicketsOnHand: List<Ticket>,

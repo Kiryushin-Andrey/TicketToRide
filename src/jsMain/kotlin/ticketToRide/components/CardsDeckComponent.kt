@@ -29,7 +29,7 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
                 }
             }
             styledDiv {
-                ticketsCard(myTurn, canPickCards) {
+                ticketsCard(myTurn, canPickCards, lastRound) {
                     act { pickedTickets() }
                 }
             }

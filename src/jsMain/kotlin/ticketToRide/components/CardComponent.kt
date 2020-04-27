@@ -135,10 +135,12 @@ fun RBuilder.closedCard(myTurn: Boolean, canPickCards: Boolean, clickHandler: ()
     onClick = clickHandler
 }
 
-fun RBuilder.ticketsCard(myTurn: Boolean, canPickCards: Boolean, clickHandler: () -> Unit) =
-    card(myTurn) {
+fun RBuilder.ticketsCard(myTurn: Boolean, canPickCards: Boolean, lastRound: Boolean, clickHandler: () -> Unit) {
+    val tooltip = if (lastRound) "Идет последний круг" else null
+    card(myTurn, tooltip) {
         imageUrl = "/cards/routeFaceDown.png"
         color = blackAlpha(0.1)
         enabled = canPickCards
         onClick = clickHandler
     }
+}
