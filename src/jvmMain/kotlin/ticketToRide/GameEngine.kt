@@ -39,7 +39,7 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
 }
 
 fun GameState.advanceTurn(): GameState {
-    if (players.flatMap { it.occupiedSegments }.sumBy { it.points } == GameMap.totalSegmentsLength) {
+    if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == GameMap.totalSegmentsLength) {
         return copy(endsOnPlayer = turn)
     }
 
@@ -95,7 +95,7 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
     )
 
 fun Player.canBuildSegment(segment: Segment, cardsToDrop: List<Card>) =
-    segment.points <= carsLeft && segment.canBuildWith(cardsToDrop)
+    segment.length <= carsLeft && segment.canBuildWith(cardsToDrop)
 
 fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
     val list = cardsToDrop.toMutableList()
@@ -108,7 +108,7 @@ fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
 }
 
 fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
-    if (cardsToDrop.size != points) {
+    if (cardsToDrop.size != length) {
         return false
     }
 
@@ -121,7 +121,7 @@ fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
             }
         }
         2 -> {
-            points == cardsCount.entries.sumBy { (card, count) ->
+            length == cardsCount.entries.sumBy { (card, count) ->
                 when {
                     card is Card.Loco -> count
                     card is Card.Car && (color == null || color == card.color) -> count

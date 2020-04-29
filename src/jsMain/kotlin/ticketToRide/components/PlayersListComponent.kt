@@ -64,8 +64,11 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
     }
 }
 
-fun RBuilder.playerCardIcon(iconUrl: String, number: Int) {
-    img {
+fun RBuilder.playerCardIcon(iconUrl: String, number: Int, style: RuleSet = {}) {
+    styledImg {
+        css {
+            style()
+        }
         attrs {
             src = iconUrl
             width = 24.px.toString()

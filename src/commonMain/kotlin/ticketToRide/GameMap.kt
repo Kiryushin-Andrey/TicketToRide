@@ -5,8 +5,13 @@ data class City(val name: String, val latLng: LatLong, val routes: List<Route> =
 data class Route(val destination: String, val color: Color?, val points: Int)
 
 object GameMap {
+    private val pointsForSegments = mapOf(1 to 1, 2 to 2, 3 to 4, 4 to 7, 5 to 12, 6 to 15, 7 to 18, 8 to 21)
+    fun getPointsForSegments(length: Int) =
+        pointsForSegments[length] ?: throw Error("Points for ${length}-length segments not defined")
+
     val longTicketMinPoints = RussiaMap.longTicketMinPoints
     val shortTicketsPointsRange = RussiaMap.shortTicketsPointsRange
+    val pointsForLongestPath = 10
     val mapCenter = RussiaMap.mapCenter
     val mapZoom = RussiaMap.mapZoom
     val cities = RussiaMap.cities

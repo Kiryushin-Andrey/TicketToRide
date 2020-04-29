@@ -83,9 +83,9 @@ fun <T> Graph<T>.getFirstSubgraph(): Graph<T> {
     }
 }
 
-fun <T> Graph<T>.isConnected() = size > getFirstSubgraph().size
+fun <T> Graph<T>.isConnected() = size == getFirstSubgraph().size
 
-fun <T> Graph<T>.splitIntoConnectedSubGraphs(): Sequence<Graph<T>> =
+fun <T> Graph<T>.splitIntoConnectedSubgraphs(): Sequence<Graph<T>> =
     if (isEmpty()) emptySequence()
     else this.let {
         sequence {
@@ -93,7 +93,7 @@ fun <T> Graph<T>.splitIntoConnectedSubGraphs(): Sequence<Graph<T>> =
             yield(subGraph)
             if (subGraph.size < it.size) {
                 val another = it - subGraph.map { it.key }
-                yieldAll(another.splitIntoConnectedSubGraphs())
+                yieldAll(another.splitIntoConnectedSubgraphs())
             }
         }
     }
@@ -102,11 +102,8 @@ fun <T> Graph<T>.isEulerian() = values.count { it.size % 2 == 1 }.let { it == 0 
 
 fun <T> Graph<T>.removePath(from: T, to: T, distances: Distances<T>) =
     distances.getPath(from, to).let { segments ->
-        mapValues { (a, edges) ->
-            edges.filter { (b, _) -> !segments.any { it.covers(a, b) } }
-        }.filter {
-            (it.key != from || nodeDegree(from) > 1) && (it.key != to || nodeDegree(to) > 1)
-        }
+        mapValues { (a, edges) -> edges.filter { (b, _) -> !segments.any { it.covers(a, b) } } }
+            .filterNot { it.value.isEmpty() }
     }
 
 fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
@@ -114,13 +111,18 @@ fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
     else {
         val distances = Distances(this)
         val oddDegreeVertices = entries.filter { it.value.size % 2 == 1 }.map { it.key }
-        val oddPairs = oddDegreeVertices.flatMap { a ->
-            oddDegreeVertices.map { b -> GraphSegment(a, b, distances.getDist(a, b)) }
-        }.sortedBy { s -> s.weight }
-        oddPairs.asSequence()
+        val pathsToRemove = oddDegreeVertices.asSequence()
+            .flatMap { a ->
+                oddDegreeVertices.asSequence().map { b -> GraphSegment(a, b, distances.getDist(a, b)) }
+            }
+            .filter { s -> s.from != s.to }
+            .sortedBy { s -> s.weight }
+            .toList()
+
+        pathsToRemove
             .map { removePath(it.from, it.to, distances) }
-            .filter { isConnected() }
-            .first()
+            .first { it.isConnected() }
+            .getMaxEulerianSubgraph()
     }
 
-fun <T> Graph<T>.getTotalPoints() = flatMap { it.value }.sumBy { (_, points) -> points }
+fun <T> Graph<T>.getTotalWeight() = flatMap { it.value }.sumBy { (_, points) -> points } / 2

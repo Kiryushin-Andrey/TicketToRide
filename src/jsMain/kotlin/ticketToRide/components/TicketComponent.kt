@@ -9,6 +9,7 @@ import ticketToRide.Ticket
 interface TicketProps : RProps {
     var ticket: Ticket
     var highlighted: Boolean
+    var fulfilled: Boolean?
     var checkbox: TicketCheckbox?
     var onMouseOver: () -> Unit
     var onMouseOut: () -> Unit
@@ -31,7 +32,7 @@ class TicketComponent : RComponent<TicketProps, RState>() {
                 margin = 4.px.toString()
                 paddingLeft = 12.px
                 paddingRight = 12.px
-                backgroundColor = Color.chocolate.withAlpha(0.2)
+                backgroundColor = Color.linen
             }
             styledDiv {
                 css {
@@ -53,18 +54,13 @@ class TicketComponent : RComponent<TicketProps, RState>() {
                     }
                     +"${props.ticket.from.value} - ${props.ticket.to.value}"
                 }
-                mPaper {
-                    attrs { elevation = 4 }
-                    css {
-                        width = 20.px
-                        height = 20.px
-                        textAlign = TextAlign.center
-                        verticalAlign = VerticalAlign.middle
-                        padding = 3.px.toString()
-                        borderRadius = 50.pct
-                        backgroundColor = Color.orange.withAlpha(0.7)
-                    }
-                    +props.ticket.points.toString()
+                when (props.fulfilled) {
+                    true ->
+                        pointsLabel("+${props.ticket.points}", Color.lightGreen)
+                    false ->
+                        pointsLabel("-${props.ticket.points}", Color.lightCoral)
+                    null ->
+                        pointsLabel(props.ticket.points, Color.orange)
                 }
             }
         }

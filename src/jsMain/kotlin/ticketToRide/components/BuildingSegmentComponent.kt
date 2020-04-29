@@ -57,7 +57,7 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, RState>() {
         val optionsForCardsToDrop = playerState.optionsForCardsToDrop
 
         when {
-            me.carsLeft < playerState.segment.points ->
+            me.carsLeft < playerState.segment.length ->
                 mTypography("Не хватает вагонов \uD83D\uDE1E", MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }

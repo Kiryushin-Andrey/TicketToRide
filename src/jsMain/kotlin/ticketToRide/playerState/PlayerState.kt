@@ -2,6 +2,7 @@ package ticketToRide.playerState
 
 import kotlinx.coroutines.channels.Channel
 import ticketToRide.*
+import kotlin.math.min
 
 typealias PickedFirstCard = PlayerState.MyTurn.PickedFirstCard
 typealias BuildingSegmentFrom = PlayerState.MyTurn.BuildingSegmentFrom
@@ -82,15 +83,18 @@ sealed class PlayerState {
 
             private fun getOptionsForCardToDrop(): List<List<Card>> {
                 val countByCar = myCards.filterIsInstance<Card.Car>().groupingBy { it }.eachCount()
-                fun getOptionsForCars(locoCount: Int) = countByCar
-                    .filter { it.value >= segment.points - locoCount && (segment.color == null || it.key.color == segment.color) }
-                    .map { (car, _) ->
-                        val carsCount = segment.points - locoCount
-                        if (locoCount > 0) List(locoCount) { Card.Loco } + List(carsCount) { car }
-                        else List(carsCount) { car }
-                    }
+                fun getOptionsForCars(locoCount: Int) =
+                    if (locoCount == segment.length)
+                        listOf(List(locoCount) { Card.Loco })
+                    else countByCar
+                        .filter { it.value >= segment.length - locoCount && (segment.color == null || it.key.color == segment.color) }
+                        .map { (car, _) ->
+                            val carsCount = segment.length - locoCount
+                            if (locoCount > 0) List(locoCount) { Card.Loco } + List(carsCount) { car }
+                            else List(carsCount) { car }
+                        }
 
-                val locoCount = myCards.filterIsInstance<Card.Loco>().count()
+                val locoCount = min(segment.length, myCards.filterIsInstance<Card.Loco>().count())
                 return (0..locoCount).flatMap { getOptionsForCars(it) }
             }
 

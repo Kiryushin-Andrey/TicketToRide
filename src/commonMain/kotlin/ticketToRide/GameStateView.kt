@@ -33,7 +33,7 @@ sealed class Card {
 }
 
 @Serializable
-data class Segment(val from: CityName, val to: CityName, val color: Color?, val points: Int)
+data class Segment(val from: CityName, val to: CityName, val color: Color?, val length: Int)
 
 fun Segment.connects(cityName1: String, cityName2: String) =
     (from.value == cityName1 && to.value == cityName2) || (from.value == cityName2 && to.value == cityName1)

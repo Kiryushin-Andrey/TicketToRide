@@ -14,7 +14,7 @@ interface MapCityMarkerProps: RProps {
     var displayAllCityNames: Boolean
     var selected: Boolean
     var hasOccupiedSegment: Boolean
-    var onClick: () -> Unit
+    var onClick: (() -> Unit)?
 }
 
 class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
@@ -33,7 +33,7 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
                 }
             }
             attrs {
-                onClickFunction = { props.onClick() }
+                onClickFunction = { props.onClick?.let { it() } }
             }
             styledDiv {
                 css {
