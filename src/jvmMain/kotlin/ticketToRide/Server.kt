@@ -23,10 +23,13 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import kotlin.random.Random
 
-private typealias PlayerCallback = suspend (GameId, GameState) -> Unit
+private data class Game(val requestsQueue: Channel<Pair<GameRequest, Connection>>, val players: MutableList<Connection>)
 
-private data class Game(val requestsQueue: Channel<Pair<Request, Connection>>, val notifyCallbacks: MutableList<PlayerCallback>)
-data class Connection(val gameId: GameId, val playerName: PlayerName)
+data class Connection(
+    val gameId: GameId,
+    val playerName: PlayerName,
+    val send: suspend (Response) -> Unit
+)
 
 private val games = mutableMapOf<GameId, Game>()
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
@@ -55,30 +58,41 @@ fun Application.module() {
             incoming.consumeAsFlow()
                 .mapNotNull { (it as? Frame.Text)?.readText() }
                 .map { json.parse(Request.serializer(), it) }
-                .fold<Request, Connection?>(null) {
-                    conn, req ->
+                .fold<Request, Connection?>(null) { conn, req ->
                     when (req) {
+
                         is StartGameRequest -> {
-                            val gameId = startGame(req.playerName) { id, state ->
-                                notifyOnGameStateChange(id, req.playerName, state)
+                            val gameId = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
+                            val connection = Connection(gameId, req.playerName) { resp ->
+                                send(resp)
                             }
-                            Connection(gameId, req.playerName)
+                            games[gameId] = startGame(gameId, connection)
+                            connection
                         }
+
                         is JoinGameRequest -> {
                             val game = games[req.gameId]
-                            if (game == null) send(FailureResponse(JoinGameFailure.GameNotExists))
-                            val connection = Connection(req.gameId, req.playerName)
+                            if (game == null) send(Response.Error(JoinGameFailure.GameNotExists))
+                            val connection = Connection(req.gameId, req.playerName) { resp -> send(resp) }
                             game?.apply {
-                                notifyCallbacks += { id, state ->
-                                    notifyOnGameStateChange(id, req.playerName, state)
-                                }
+                                players += connection
                                 requestsQueue.send(req to connection)
                             }
                             connection
                         }
-                        else -> {
-                            games[conn!!.gameId]?.apply { requestsQueue.send(req to conn) }
-                            conn
+
+                        is ChatMessageRequest -> {
+                            conn!!.also { conn ->
+                                games[conn.gameId]!!.players.forEach {
+                                    it.send(Response.ChatMessage(conn.playerName, req.message))
+                                }
+                            }
+                        }
+
+                        is GameRequest -> {
+                            conn!!.also {
+                                games[conn.gameId]?.apply { requestsQueue.send(req to conn) }
+                            }
                         }
                     }
                 }
@@ -86,23 +100,22 @@ fun Application.module() {
     }
 }
 
-suspend fun WebSocketSession.notifyOnGameStateChange(id: GameId, playerName: PlayerName, state: GameState) {
-    send(
-        if (state.turn != state.endsOnPlayer) GameStateResponse(id, state.toPlayerView(playerName))
-        else GameEndResponse(id, state.players.map { it.toPlayerView() to it.ticketsOnHand })
-    )
-}
-
 suspend fun WebSocketSession.send(resp: Response) = send(json.stringify(Response.serializer(), resp))
 
-fun CoroutineScope.startGame(firstPlayerName: PlayerName, firstPlayerCallback: PlayerCallback) : GameId {
-    val requestsQueue = Channel<Pair<Request, Connection>>()
-    val subscriptions = mutableListOf(firstPlayerCallback)
-    val gameId = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
+private fun CoroutineScope.startGame(gameId: GameId, firstPlayer: Connection): Game {
+    val requestsQueue = Channel<Pair<GameRequest, Connection>>(Channel.BUFFERED)
+    requestsQueue.offer(JoinGameRequest(gameId, firstPlayer.playerName) to firstPlayer)
+    val players = mutableListOf(firstPlayer)
     launch {
-        runGame(firstPlayerName, requestsQueue.consumeAsFlow())
-            .collect { state -> for (notify in subscriptions) notify(gameId, state) }
+        runGame(gameId, requestsQueue.consumeAsFlow())
+            .collect { message ->
+                when (message) {
+                    is SendResponse.ForAll ->
+                        players.forEach { conn -> conn.send(message(conn.playerName)) }
+                    is SendResponse.ForPlayer ->
+                        players.find { it.playerName == message.to }?.send?.invoke(message.resp)
+                }
+            }
     }
-    games[gameId] = Game(requestsQueue, subscriptions)
-    return gameId
+    return Game(requestsQueue, players)
 }

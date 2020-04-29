@@ -18,6 +18,7 @@ sealed class Screen {
     data class GameOver(
         val gameId: GameId,
         val gameMap: GameMap,
-        val players: List<Pair<PlayerView, List<Ticket>>>
+        val players: List<Pair<PlayerView, List<Ticket>>>,
+        val me: PlayerView
     ) : Screen()
 }

@@ -18,6 +18,7 @@ fun HTML.indexHtml(googleApiKey: String) {
                 padding = "0"
             }
         }
+        link("https://fonts.googleapis.com/icon?family=Material+Icons", "stylesheet")
     }
     body {
         div {

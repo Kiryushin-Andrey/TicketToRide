@@ -12,6 +12,8 @@ import ticketToRide.components.*
 interface EndScreenProps : RProps {
     var gameMap: GameMap
     var players: List<PlayerFinalStats>
+    var chatMessages: List<Response.ChatMessage>
+    var onSendMessage: (String) -> Unit
 }
 
 interface EndScreenState : RState {
@@ -58,7 +60,7 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                     +ComponentStyles.verticalPanel
                 }
 
-                chat { }
+                chat(props.chatMessages, props.onSendMessage)
             }
         }
     }
@@ -73,12 +75,11 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
 
         mPaper {
             attrs { elevation = 2 }
-            css {
-                margin = 4.px.toString()
-                backgroundColor = Color(player.color.rgb).withAlpha(0.4)
-            }
+            css { margin = 4.px.toString() }
 
             mExpansionPanel {
+                css { backgroundColor = Color(player.color.rgb).withAlpha(0.4) }
+
                 mExpansionPanelSummary {
                     attrs {
                         withClasses(

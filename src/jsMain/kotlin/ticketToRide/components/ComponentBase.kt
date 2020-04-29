@@ -15,13 +15,12 @@ interface ComponentBaseProps : RProps {
 abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBaseProps, S : RState {
 
     constructor() : super()
-    constructor(props: P) : super(props)
 
     private val gameState get() = props.gameState
     open val playerState get() = props.playerState
 
     val players get() = gameState.players
-    val me get() = players.find { it.name == gameState.myName }!!
+    val me get() = gameState.me
     val lastRound get() = gameState.lastRound
     val turn get() = gameState.turn
     val myTurn get() = gameState.myTurn

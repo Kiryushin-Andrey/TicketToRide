@@ -77,6 +77,6 @@ data class GameStateView(
     val myTicketsOnHand: List<Ticket>,
     val myPendingTicketsChoice: PendingTicketsChoice?
 ) {
-    val myTurn: Boolean
-        get() = players[turn].name == myName
+    val me get() = players.find { it.name == myName }!!
+    val myTurn get() = players[turn].name == myName
 }

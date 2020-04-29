@@ -87,7 +87,9 @@ sealed class PlayerState {
                     if (locoCount == segment.length)
                         listOf(List(locoCount) { Card.Loco })
                     else countByCar
-                        .filter { it.value >= segment.length - locoCount && (segment.color == null || it.key.color == segment.color) }
+                        .filter {
+                            it.value >= segment.length - locoCount && (segment.color == null || it.key.color == segment.color)
+                        }
                         .map { (car, _) ->
                             val carsCount = segment.length - locoCount
                             if (locoCount > 0) List(locoCount) { Card.Loco } + List(carsCount) { car }
@@ -110,7 +112,7 @@ sealed class PlayerState {
 
         val myCards get() = gameState.myCards
 
-        internal fun sendAndResetState(req: Request): PlayerState {
+        internal fun sendAndResetState(req: GameRequest): PlayerState {
             requests.offer(req)
             return None
         }
@@ -119,8 +121,11 @@ sealed class PlayerState {
 
     fun pickedOpenCard(cardIx: Int) = when {
         this is PickedFirstCard && openCards[cardIx] is Card.Car ->
-            if (cardIx != chosenCardIx)
-                sendAndResetState(PickCardsRequest.TwoCards(openCards[chosenCardIx] to openCards[cardIx]))
+            if (cardIx != chosenCardIx) {
+                val card1 = openCards[chosenCardIx] as Card.Car
+                val card2 = openCards[cardIx] as Card.Car
+                sendAndResetState(PickCardsRequest.TwoCards(card1 to card2))
+            }
             else
                 MyTurn.Blank(this)
         this is MyTurn ->
@@ -134,7 +139,7 @@ sealed class PlayerState {
 
     fun pickedClosedCard() = when (this) {
         is PickedFirstCard ->
-            sendAndResetState(PickCardsRequest.TwoCards(openCards[chosenCardIx] to null))
+            sendAndResetState(PickCardsRequest.TwoCards((openCards[chosenCardIx] as Card.Car) to null))
         is MyTurn ->
             sendAndResetState(PickCardsRequest.TwoCards(null to null))
         else ->

@@ -1,6 +1,6 @@
 package ticketToRide
 
-const val CarsCountPerPlayer = 5
+const val CarsCountPerPlayer = 10
 
 data class Player(
     val name: PlayerName,
@@ -16,13 +16,14 @@ data class Player(
 }
 
 data class GameState(
+    val id: GameId,
     val players: List<Player>,
     val openCards: List<Card>,
     val turn: Int,
     val endsOnPlayer: Int?
 ) {
     companion object {
-        fun initial() = GameState(emptyList(), (1..5).map { Card.random() }, 0, null)
+        fun initial(id: GameId) = GameState(id, emptyList(), (1..5).map { Card.random() }, 0, null)
     }
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {

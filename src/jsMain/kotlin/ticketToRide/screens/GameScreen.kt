@@ -7,12 +7,15 @@ import styled.StyleSheet
 import styled.css
 import styled.styledDiv
 import ticketToRide.*
+import ticketToRide.Color
 import ticketToRide.components.*
 import ticketToRide.playerState.BuildingSegment
 import ticketToRide.playerState.BuildingSegmentFrom
 
 interface GameScreenProps : ComponentBaseProps {
     var gameMap: GameMap
+    var chatMessages: List<Response.ChatMessage>
+    var onSendMessage: (String) -> Unit
 }
 
 interface GameScreenState : RState {
@@ -51,7 +54,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
 
                 playersList(players, turn)
                 horizontalDivider()
-                chat { }
+                chat(props.chatMessages, props.onSendMessage)
             }
 
             gameMap(props) {

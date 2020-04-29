@@ -54,6 +54,7 @@ class GameStateTests: StringSpec({
 
 fun createGameState(playersCount: Int) =
     GameState(
+        GameId("gameId"),
         (1..playersCount).map {
             Player(
                 PlayerName(it.toString()),

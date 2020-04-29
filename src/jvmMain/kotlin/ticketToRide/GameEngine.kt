@@ -1,26 +1,56 @@
 package ticketToRide
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
-fun runGame(firstPlayerName: PlayerName, requests: Flow<Pair<Request, Connection>>): Flow<GameState> {
-    val initialState = GameState.initial().joinPlayer(firstPlayerName)
-    return requests.scan(initialState) { game, (req, conn) ->
-        if (game.turn != game.endsOnPlayer) {
-            when (req) {
-                is JoinGameRequest ->
-                    game.joinPlayer(conn.playerName)
-                is ConfirmTicketsChoiceRequest ->
-                    game.updatePlayer(conn.playerName) { confirmTicketsChoice(req.ticketsToKeep) }
-                is PickCardsRequest ->
-                    game.pickCards(conn.playerName, req)
-                is PickTicketsRequest ->
-                    game.pickTickets(conn.playerName)
-                is BuildSegmentRequest ->
-                    game.buildSegment(conn.playerName, req.from, req.to, req.cards)
-                else -> game
-            }
-        } else game
+sealed class SendResponse {
+    data class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse() {
+        operator fun invoke(to: PlayerName) = resp(to)
     }
+    data class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
+}
+
+fun Response.toAll() = SendResponse.ForAll { this }
+
+@OptIn(FlowPreview::class)
+fun runGame(gameId: GameId, requests: Flow<Pair<GameRequest, Connection>>): Flow<SendResponse> {
+    val initial = GameState.initial(gameId) to emptyList<SendResponse>()
+    return requests
+        .scan(initial) { (state, _), (req, conn) ->
+            state.processRequest(req, conn.playerName)
+        }
+        .flatMapConcat { (_, messages) -> messages.asFlow() }
+}
+
+fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair<GameState, List<SendResponse>> {
+    if (turn == endsOnPlayer)
+        return this to listOf(Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }).toAll())
+
+    val newState = when (req) {
+        is JoinGameRequest ->
+            joinPlayer(fromPlayerName)
+        is ConfirmTicketsChoiceRequest ->
+            updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }
+        is PickCardsRequest ->
+            pickCards(fromPlayerName, req)
+        is PickTicketsRequest ->
+            pickTickets(fromPlayerName)
+        is BuildSegmentRequest ->
+            buildSegment(fromPlayerName, req.from, req.to, req.cards)
+    }
+    val message = with(newState) {
+        SendResponse.ForAll { toPlayerName ->
+            if (turn != endsOnPlayer)
+                Response.GameState(id, toPlayerView(toPlayerName), req.toAction(fromPlayerName))
+            else
+                Response.GameEnd(
+                    id,
+                    players.map { it.toPlayerView() to it.ticketsOnHand },
+                    req.toAction(fromPlayerName)
+                )
+        }
+    }
+    return newState to listOf(message)
 }
 
 fun GameState.playerByName(name: PlayerName) = players.single { it.name == name }
@@ -59,12 +89,16 @@ fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
         is PickCardsRequest.Loco -> listOf(Card.Loco)
         is PickCardsRequest.TwoCards -> req.cards.toList().map { it ?: Card.randomNoLoco() }
     }
-    val openCardsToReplace =
+    val openCardsToReplace: MutableList<Card> =
         (if (req is PickCardsRequest.TwoCards) req.cards.toList().filterNotNull().toMutableList()
-        else mutableListOf<Card>(Card.Loco))
+        else mutableListOf(Card.Loco))
     val cardsToOpen = openCardsToReplace.map { Card.random() }
     val newOpenCards = cardsToOpen + openCards
-        .filter { if (openCardsToReplace.contains(it)) { openCardsToReplace -= it; false } else true }
+        .filter {
+            if (openCardsToReplace.contains(it)) {
+                openCardsToReplace -= it; false
+            } else true
+        }
 
     return updatePlayer(name) { copy(cards = cards + cardsToPick) }
         .copy(openCards = newOpenCards)
@@ -101,10 +135,13 @@ fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
     val list = cardsToDrop.toMutableList()
     return copy(
         cards = cards.filter {
-            if (list.contains(it)) { list -= it; false } else true
+            if (list.contains(it)) {
+                list -= it; false
+            } else true
         },
         carsLeft = carsLeft - cardsToDrop.size,
-        occupiedSegments = occupiedSegments + segment)
+        occupiedSegments = occupiedSegments + segment
+    )
 }
 
 fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {

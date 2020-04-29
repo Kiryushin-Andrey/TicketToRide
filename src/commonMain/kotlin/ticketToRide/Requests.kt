@@ -9,23 +9,29 @@ sealed class Request
 class StartGameRequest(val playerName: PlayerName) : Request()
 
 @Serializable
-class JoinGameRequest(val gameId: GameId, val playerName: PlayerName): Request()
+class ChatMessageRequest(val message: String) : Request()
 
 @Serializable
-class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : Request()
+sealed class GameRequest: Request()
 
 @Serializable
-sealed class PickCardsRequest : Request() {
+class JoinGameRequest(val gameId: GameId, val playerName: PlayerName) : GameRequest()
+
+@Serializable
+class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : GameRequest()
+
+@Serializable
+sealed class PickCardsRequest : GameRequest() {
 
     @Serializable
     object Loco : PickCardsRequest()
 
     @Serializable
-    class TwoCards(val cards: Pair<Card?, Card?>) : PickCardsRequest()
+    class TwoCards(val cards: Pair<Card.Car?, Card.Car?>) : PickCardsRequest()
 }
 
 @Serializable
-object PickTicketsRequest : Request()
+object PickTicketsRequest : GameRequest()
 
 @Serializable
-class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>): Request()
+class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>) : GameRequest()
