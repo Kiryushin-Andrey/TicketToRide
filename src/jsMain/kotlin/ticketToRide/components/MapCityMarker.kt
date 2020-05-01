@@ -129,7 +129,7 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
             fontSize = 14.px
             overflowY = Overflow.auto
             maxHeight = 60.px
-            boxShadow(Color.black.withAlpha(0.5), 0.px, 2.px, 10.px, 1.px)
+            boxShadow(Color.grey, 0.px, 2.px, 10.px, 1.px)
         }
     }
 }

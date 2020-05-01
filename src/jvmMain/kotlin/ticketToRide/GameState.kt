@@ -9,10 +9,11 @@ data class Player(
     val cards: List<Card>,
     val occupiedSegments: List<Segment>,
     val ticketsForChoice: PendingTicketsChoice?,
-    val ticketsOnHand: List<Ticket> = emptyList()
+    val ticketsOnHand: List<Ticket> = emptyList(),
+    val away: Boolean = false
 ) {
     fun toPlayerView() =
-        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, occupiedSegments, ticketsForChoice.toState())
+        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, away, occupiedSegments, ticketsForChoice.toState())
 }
 
 data class GameState(

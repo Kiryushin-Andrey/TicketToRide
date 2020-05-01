@@ -22,6 +22,7 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
                 }
                 css {
                     +ComponentStyles.playerCard
+                    color = if (player.away) Color.black.withAlpha(0.4) else Color.black
                     backgroundColor = Color(player.color.rgb).withAlpha(0.4)
                     if (ix == props.turn) {
                         borderColor = Color.red

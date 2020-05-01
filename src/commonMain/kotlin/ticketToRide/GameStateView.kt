@@ -62,6 +62,7 @@ data class PlayerView(
     val carsLeft: Int,
     val cardsOnHand: Int,
     val ticketsOnHand: Int,
+    val away: Boolean,
     val occupiedSegments: List<Segment>,
     val pendingTicketsChoice: PendingTicketsChoiceState
 )

@@ -18,6 +18,9 @@ sealed class GameRequest: Request()
 class JoinGameRequest(val gameId: GameId, val playerName: PlayerName) : GameRequest()
 
 @Serializable
+object LeaveGameRequest : GameRequest()
+
+@Serializable
 class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : GameRequest()
 
 @Serializable

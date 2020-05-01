@@ -43,6 +43,10 @@ class App() : RComponent<RProps, AppState>() {
                 }
             }
         }
+
+        window.onunload = {
+            requests.offer(LeaveGameRequest)
+        }
     }
 
     override fun RBuilder.render() = state.screen.let {

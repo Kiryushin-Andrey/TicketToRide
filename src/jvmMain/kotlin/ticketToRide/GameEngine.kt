@@ -4,20 +4,18 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 sealed class SendResponse {
-    data class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse() {
-        operator fun invoke(to: PlayerName) = resp(to)
-    }
+    data class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
     data class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
 }
 
 fun Response.toAll() = SendResponse.ForAll { this }
 
 @OptIn(FlowPreview::class)
-fun runGame(gameId: GameId, requests: Flow<Pair<GameRequest, Connection>>): Flow<SendResponse> {
+fun runGame(gameId: GameId, requests: Flow<Pair<GameRequest, PlayerConnection>>): Flow<SendResponse> {
     val initial = GameState.initial(gameId) to emptyList<SendResponse>()
     return requests
         .scan(initial) { (state, _), (req, conn) ->
-            state.processRequest(req, conn.playerName)
+            state.processRequest(req, conn.name)
         }
         .flatMapConcat { (_, messages) -> messages.asFlow() }
 }
@@ -29,6 +27,8 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
     val newState = when (req) {
         is JoinGameRequest ->
             joinPlayer(fromPlayerName)
+        is LeaveGameRequest ->
+            leavePlayer(fromPlayerName)
         is ConfirmTicketsChoiceRequest ->
             updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }
         is PickCardsRequest ->
@@ -56,6 +56,10 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
 fun GameState.playerByName(name: PlayerName) = players.single { it.name == name }
 
 fun GameState.joinPlayer(name: PlayerName): GameState {
+    if (players.any { it.name == name && it.away }) {
+        return updatePlayer(name) { copy(away = false) }
+    }
+
     val color = Color.values()
         .filter { color -> !players.map { it.color }.contains(color) }
         .random()
@@ -68,15 +72,20 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
     return copy(players = players + newPlayer)
 }
 
+fun GameState.leavePlayer(name: PlayerName) =
+    updatePlayer(name) { copy(away = true) }.let {
+        if (players[turn].name == name) it.advanceTurn() else it
+    }
+
 fun GameState.advanceTurn(): GameState {
     if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == GameMap.totalSegmentsLength) {
         return copy(endsOnPlayer = turn)
     }
 
     val gameEndsOnPlayer = endsOnPlayer ?: if (players[turn].carsLeft < 3) turn else null
-    val nextTurn = (turn + 1) % players.size
-    val ticketsChoice = players[nextTurn].ticketsForChoice
-    val skipsMove = ticketsChoice != null && !ticketsChoice.shouldChooseOnNextTurn;
+    val nextTurn = generateSequence(turn) { prev -> (prev + 1) % players.size }.drop(1)
+        .dropWhile { players[it].away && it != turn }.first()
+    val skipsMove = with(players[nextTurn]) { ticketsForChoice?.shouldChooseOnNextTurn == false }
     val nextState = copy(turn = nextTurn, endsOnPlayer = gameEndsOnPlayer)
         .updatePlayer(nextTurn) {
             copy(ticketsForChoice = ticketsForChoice?.copy(shouldChooseOnNextTurn = true))

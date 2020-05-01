@@ -7,6 +7,8 @@ import kotlin.Error
 fun PlayerAction.chatMessage() = when (this) {
     is JoinGame ->
         ChatMessage(playerName, "всем привет :)")
+    is LeaveGame ->
+        ChatMessage(playerName, "отключился")
     is ConfirmTicketsChoice ->
         ChatMessage(playerName, "оставляю $ticketsToKeep маршрутов")
     is PickCards.Loco ->
