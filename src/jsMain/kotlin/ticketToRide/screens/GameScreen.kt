@@ -2,12 +2,14 @@ package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
+import kotlinx.html.js.onChangeFunction
+import org.w3c.dom.HTMLSelectElement
 import react.*
-import styled.StyleSheet
-import styled.css
-import styled.styledDiv
+import react.dom.option
+import react.dom.select
+import styled.*
 import ticketToRide.*
-import ticketToRide.Color
+import ticketToRide.CardColor
 import ticketToRide.components.*
 import ticketToRide.playerState.BuildingSegment
 import ticketToRide.playerState.BuildingSegmentFrom
@@ -20,6 +22,7 @@ interface GameScreenProps : ComponentBaseProps {
 
 interface GameScreenState : RState {
     var citiesToHighlight: Set<CityName>
+    var testColor: PlayerColor?
 }
 
 class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
@@ -43,8 +46,28 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     put("resize", "horizontal")
                 }
 
+                select {
+                    attrs {
+                        onChangeFunction = { e ->
+                            val value = (e.target as HTMLSelectElement).value
+                            setState { testColor = PlayerColor.valueOf(value) }
+                        }
+                    }
+                    PlayerColor.values().forEach {
+                        option {
+                            attrs {
+                                selected = state.testColor?.name == it.name
+                                label = it.name
+                                value = it.name
+                            }
+                        }
+                    }
+                }
+
+                horizontalDivider()
+
                 if (lastRound) {
-                    mTypography("Последний круг", MTypographyVariant.h6, color = MTypographyColor.primary) {
+                    mTypography("Последний круг", MTypographyVariant.h6, color = MTypographyColor.secondary) {
                         css {
                             marginLeft = 5.px
                         }
@@ -62,6 +85,8 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 citiesToHighlight = state.citiesToHighlight
                 onCityMouseOver = { setState { citiesToHighlight += it } }
                 onCityMouseOut = { setState { citiesToHighlight -= it } }
+
+                testColor = state.testColor
             }
 
             styledDiv {

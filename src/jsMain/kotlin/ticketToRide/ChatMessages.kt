@@ -2,7 +2,6 @@ package ticketToRide
 
 import ticketToRide.Response.*
 import ticketToRide.Response.PlayerAction.*
-import kotlin.Error
 
 fun PlayerAction.chatMessage() = when (this) {
     is JoinGame ->
@@ -32,13 +31,13 @@ val Card?.name get() = when(this) {
     null -> "закрытая"
     is Card.Loco -> "паровоз"
     is Card.Car -> when (this.color) {
-        Color.RED -> "красная"
-        Color.GREEN -> "зеленая"
-        Color.BLUE -> "синяя"
-        Color.BLACK -> "черная"
-        Color.WHITE -> "белая"
-        Color.YELLOW -> "желтая"
-        Color.ORANGE -> "оранжевая"
-        Color.MAGENTO -> "фиолетовая"
+        CardColor.RED -> "красная"
+        CardColor.GREEN -> "зеленая"
+        CardColor.BLUE -> "синяя"
+        CardColor.BLACK -> "черная"
+        CardColor.WHITE -> "белая"
+        CardColor.YELLOW -> "желтая"
+        CardColor.ORANGE -> "оранжевая"
+        CardColor.MAGENTO -> "фиолетовая"
     }
 }

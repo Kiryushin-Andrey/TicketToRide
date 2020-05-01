@@ -4,7 +4,7 @@ const val CarsCountPerPlayer = 10
 
 data class Player(
     val name: PlayerName,
-    val color: Color,
+    val color: PlayerColor,
     val carsLeft: Int,
     val cards: List<Card>,
     val occupiedSegments: List<Segment>,

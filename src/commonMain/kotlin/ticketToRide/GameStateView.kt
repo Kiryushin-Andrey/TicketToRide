@@ -16,24 +16,24 @@ data class PlayerName(val value: String)
 sealed class Card {
 
     @Serializable
-    data class Car(val color: Color) : Card()
+    data class Car(val color: CardColor) : Card()
 
     @Serializable
     object Loco : Card()
 
     companion object {
         fun random(): Card {
-            val colors = Color.values()
+            val colors = CardColor.values()
             val value = Random.nextInt(colors.size + 1)
             return if (value < colors.size) Car(colors[value]) else Loco
         }
 
-        fun randomNoLoco() = Car(Color.values().random())
+        fun randomNoLoco() = Car(CardColor.values().random())
     }
 }
 
 @Serializable
-data class Segment(val from: CityName, val to: CityName, val color: Color?, val length: Int)
+data class Segment(val from: CityName, val to: CityName, val color: CardColor?, val length: Int)
 
 fun Segment.connects(cityName1: String, cityName2: String) =
     (from.value == cityName1 && to.value == cityName2) || (from.value == cityName2 && to.value == cityName1)
@@ -58,7 +58,7 @@ enum class PendingTicketsChoiceState { None, TookInAdvance, Choosing }
 @Serializable
 data class PlayerView(
     val name: PlayerName,
-    val color: Color,
+    val color: PlayerColor,
     val carsLeft: Int,
     val cardsOnHand: Int,
     val ticketsOnHand: Int,

@@ -111,14 +111,14 @@ fun RBuilder.openCard(
         imageUrl = "/cards/" + when (card) {
             is Card.Loco -> "loco.jpg"
             is Card.Car -> when (card.color) {
-                ticketToRide.Color.RED -> "red.png"
-                ticketToRide.Color.GREEN -> "green.png"
-                ticketToRide.Color.BLUE -> "blue.jpg"
-                ticketToRide.Color.BLACK -> "black.jfif"
-                ticketToRide.Color.WHITE -> "white.jfif"
-                ticketToRide.Color.YELLOW -> "yellow.jfif"
-                ticketToRide.Color.ORANGE -> "orange.jpg"
-                ticketToRide.Color.MAGENTO -> "magento.jfif"
+                ticketToRide.CardColor.RED -> "red.png"
+                ticketToRide.CardColor.GREEN -> "green.png"
+                ticketToRide.CardColor.BLUE -> "blue.jpg"
+                ticketToRide.CardColor.BLACK -> "black.jfif"
+                ticketToRide.CardColor.WHITE -> "white.jfif"
+                ticketToRide.CardColor.YELLOW -> "yellow.jfif"
+                ticketToRide.CardColor.ORANGE -> "orange.jpg"
+                ticketToRide.CardColor.MAGENTO -> "magento.jfif"
             }
         }
         if (card is Card.Car) {

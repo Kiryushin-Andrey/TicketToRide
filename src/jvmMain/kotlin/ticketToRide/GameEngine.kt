@@ -60,9 +60,10 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
         return updatePlayer(name) { copy(away = false) }
     }
 
-    val color = Color.values()
-        .filter { color -> !players.map { it.color }.contains(color) }
-        .random()
+    val availableColors = PlayerColor.values().filter { color -> !players.map { it.color }.contains(color) }
+    if (availableColors.isEmpty()) throw Error("Нет свободных мест!")
+
+    val color = availableColors.random()
     val cards = (1..4).map { Card.random() }
     val tickets = getRandomTickets(1, true) + getRandomTickets(3, false)
     val newPlayer = Player(

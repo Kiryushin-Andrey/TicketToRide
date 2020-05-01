@@ -15,6 +15,8 @@ interface MapComponentBaseProps : RProps {
     var citiesToHighlight: Set<CityName>
     var onCityMouseOver: (CityName) -> Unit
     var onCityMouseOut: (CityName) -> Unit
+
+    var testColor: PlayerColor?
 }
 
 interface MapComponentBaseState : RState {
@@ -49,7 +51,7 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         name = city.name
         lat = city.latLng.lat
         lng = city.latLng.lng
-        displayAllCityNames = state.mapZoom > 5
+        displayAllCityNames = state.mapZoom > 4
         selected = props.citiesToHighlight.contains(CityName(city.name))
     }
 
