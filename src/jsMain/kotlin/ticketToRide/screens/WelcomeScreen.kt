@@ -4,7 +4,11 @@ import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
 import kotlinx.css.*
+import org.w3c.notifications.DEFAULT
+import org.w3c.notifications.Notification
+import org.w3c.notifications.NotificationPermission
 import react.*
+import react.dom.b
 import styled.*
 import ticketToRide.*
 import kotlin.browser.window
@@ -17,14 +21,10 @@ interface WelcomeScreenProps : RProps {
 
 interface WelcomeScreenState : RState {
     var playerName: String
-    var joinGameFailure: JoinGameFailure?
+    var errorText: String?
 }
 
 class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
-    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
-        joinGameFailure = props.joinGameFailure
-    }
-
     override fun RBuilder.render() {
         val gameId =
             if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
@@ -41,28 +41,30 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
             mDialogContent {
                 mTextField("Your name is", fullWidth = true) {
                     attrs {
-                        error = state.joinGameFailure != null
-                        helperText = when (state.joinGameFailure) {
-                            JoinGameFailure.GameNotExists -> "Game not found"
-                            JoinGameFailure.PlayerNameEmpty -> "Enter your name"
-                            JoinGameFailure.PlayerNameTaken -> "This name is already taken"
-                            null -> ""
-                        }
+                        error = state.errorText != null
+                        helperText = state.errorText ?: ""
                         onChange = {
                             val value = it.targetInputValue.trim()
                             setState {
                                 playerName = value
-                                joinGameFailure = if (value == "") JoinGameFailure.PlayerNameEmpty else null
+                                errorText = if (value.isBlank()) "Enter your name" else null
                             }
                         }
+                    }
+                }
+                if (Notification.permission == NotificationPermission.DEFAULT) {
+                    mTypography(variant = MTypographyVariant.body1) {
+                        b { +"Note: " }
+                        +" allow notifications to be notified when it's your turn to move even if the browser tab is inactive"
                     }
                 }
             }
             mDialogActions {
                 val btnTitle = if (gameId == null) "Start the Game!" else "Join the Game!"
                 mButton(btnTitle, MColor.primary, MButtonVariant.contained,
-                    disabled = state.joinGameFailure != null,
+                    disabled = state.errorText != null,
                     onClick = {
+                        Notification.requestPermission()
                         val playerName = PlayerName(state.playerName)
                         if (gameId == null)
                             props.onStartGame(playerName)

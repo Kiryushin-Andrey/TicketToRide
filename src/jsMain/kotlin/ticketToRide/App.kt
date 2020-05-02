@@ -1,16 +1,18 @@
 package ticketToRide
 
 import com.ccfraser.muirwik.components.*
+import kotlinext.js.jsObject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.css.*
 import kotlinx.serialization.json.*
 import org.w3c.dom.WebSocket
+import org.w3c.notifications.Notification
 import react.*
 import styled.css
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
-import kotlin.browser.window
+import kotlin.browser.*
 
 interface AppState : RState {
     var screen: Screen
@@ -190,8 +192,12 @@ class App() : RComponent<RProps, AppState>() {
 
                 is Screen.GameInProgress -> {
                     if (!gameState.myTurn && msg.state.myTurn) {
-                        kotlin.browser.document.title = "ВАШ ХОД  - Ticket to Ride!"
-                        kotlin.browser.window.setTimeout({ kotlin.browser.document.title = "Ticket to Ride!" }, 3000)
+                        Notification("Ticket to Ride", jsObject {
+                            body = "It's your turn to make a move!"
+                            icon = "/favicon.ico"
+                            this.actions
+
+                        })
                     }
                     val newPlayerState =
                         if (playerState is PlayerState.ChoosingTickets) playerState

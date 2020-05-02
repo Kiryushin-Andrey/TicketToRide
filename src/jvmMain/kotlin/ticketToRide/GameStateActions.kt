@@ -87,20 +87,18 @@ fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
         is PickCardsRequest.Loco -> listOf(Card.Loco)
         is PickCardsRequest.TwoCards -> req.cards.toList().map { it ?: Card.randomNoLoco() }
     }
-    val openCardsToReplace: MutableList<Card> =
-        (if (req is PickCardsRequest.TwoCards) req.cards.toList().filterNotNull().toMutableList()
-        else mutableListOf(Card.Loco))
-    val cardsToOpen = openCardsToReplace.map { Card.random() }
-    val newOpenCards = cardsToOpen + openCards
-        .filter {
-            if (openCardsToReplace.contains(it)) {
-                openCardsToReplace -= it; false
-            } else true
-        }
-        .let {
-            if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random() }
-            else it
-        }
+    val replacements =
+        if (req is PickCardsRequest.TwoCards)
+            req.cards.toList().filterNotNull().map { it to Card.random() }.toMutableList()
+        else
+            mutableListOf(Card.Loco to Card.random())
+
+    val newOpenCards = openCards.map {
+        replacements.find { (old, _) -> old == it }?.second ?: it
+    }.let {
+        if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random() }
+        else it
+    }
 
     return updatePlayer(name) { copy(cards = cards + cardsToPick) }
         .copy(openCards = newOpenCards)
@@ -134,7 +132,8 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
     else ->
         copy(
             ticketsOnHand = ticketsOnHand + ticketsToKeep,
-            ticketsForChoice = null)
+            ticketsForChoice = null
+        )
 }
 
 fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
