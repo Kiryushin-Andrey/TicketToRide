@@ -20,25 +20,13 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 
         val cityName = CityName(city.name)
         selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(cityName)
-        hasOccupiedSegment = if (props.testColor != null) true else me.occupiedSegments.any { it.from == cityName || it.to == cityName }
+        hasOccupiedSegment = me.occupiedSegments.any { it.from == cityName || it.to == cityName }
         onClick = { act { onCityClick(cityName) } }
     }
 
     override fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) = with(segmentProps) {
         super.segmentProps(this, from, to, route)
-        occupiedBy =
-            if (props.testColor != null)
-                PlayerView(
-                    PlayerName("Test"),
-                    props.testColor!!,
-                    1,
-                    1,
-                    1,
-                    false,
-                    emptyList(),
-                    PendingTicketsChoiceState.None
-                )
-            else players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
+        occupiedBy = players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
     }
 }
 

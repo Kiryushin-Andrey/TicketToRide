@@ -22,7 +22,6 @@ interface GameScreenProps : ComponentBaseProps {
 
 interface GameScreenState : RState {
     var citiesToHighlight: Set<CityName>
-    var testColor: PlayerColor?
 }
 
 class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
@@ -46,26 +45,6 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     put("resize", "horizontal")
                 }
 
-                select {
-                    attrs {
-                        onChangeFunction = { e ->
-                            val value = (e.target as HTMLSelectElement).value
-                            setState { testColor = PlayerColor.valueOf(value) }
-                        }
-                    }
-                    PlayerColor.values().forEach {
-                        option {
-                            attrs {
-                                selected = state.testColor?.name == it.name
-                                label = it.name
-                                value = it.name
-                            }
-                        }
-                    }
-                }
-
-                horizontalDivider()
-
                 if (lastRound) {
                     mTypography("Последний круг", MTypographyVariant.h6, color = MTypographyColor.secondary) {
                         css {
@@ -85,8 +64,6 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 citiesToHighlight = state.citiesToHighlight
                 onCityMouseOver = { setState { citiesToHighlight += it } }
                 onCityMouseOut = { setState { citiesToHighlight -= it } }
-
-                testColor = state.testColor
             }
 
             styledDiv {

@@ -1,7 +1,11 @@
 package ticketToRide
 
-const val CarsCountPerPlayer = 10
+import kotlinx.serialization.Serializable
 
+const val CarsCountPerPlayer = 10
+const val OpenCardsCount = 5
+
+@Serializable
 data class Player(
     val name: PlayerName,
     val color: PlayerColor,
@@ -13,9 +17,19 @@ data class Player(
     val away: Boolean = false
 ) {
     fun toPlayerView() =
-        PlayerView(name, color, carsLeft, cards.size, ticketsOnHand.size, away, occupiedSegments, ticketsForChoice.toState())
+        PlayerView(
+            name,
+            color,
+            carsLeft,
+            cards.size,
+            ticketsOnHand.size,
+            away,
+            occupiedSegments,
+            ticketsForChoice.toState()
+        )
 }
 
+@Serializable
 data class GameState(
     val id: GameId,
     val players: List<Player>,
@@ -24,7 +38,7 @@ data class GameState(
     val endsOnPlayer: Int?
 ) {
     companion object {
-        fun initial(id: GameId) = GameState(id, emptyList(), (1..5).map { Card.random() }, 0, null)
+        fun initial(id: GameId) = GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random() }, 0, null)
     }
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
@@ -35,7 +49,8 @@ data class GameState(
                     .any { it == ticket || (long && it.points >= GameMap.longTicketMinPoints && it.sharesCityWith(ticket)) }
             }
             .distinct()
-        return (1..count).map { available.random() }
+        return if (available.size >= count) (1..count).map { available.random() }
+        else throw InvalidActionError("Game full, no more players allowed (no tickets left)")
     }
 
     fun toPlayerView(myName: PlayerName): GameStateView {
@@ -52,9 +67,9 @@ data class GameState(
         )
     }
 
-    fun updatePlayer(name: PlayerName, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        copy(players = players.map { if (it.name == name && it.predicate()) it.block() else it })
+    fun updatePlayer(name: PlayerName, block: Player.() -> Player) =
+        copy(players = players.map { if (it.name == name) it.block() else it })
 
-    fun updatePlayer(ix: Int, predicate: Player.() -> Boolean = { true }, block: Player.() -> Player) =
-        copy(players = players.mapIndexed { i, player -> if (i == ix && player.predicate()) player.block() else player })
+    fun updatePlayer(ix: Int, block: Player.() -> Player) =
+        copy(players = players.mapIndexed { i, player -> if (i == ix) player.block() else player })
 }

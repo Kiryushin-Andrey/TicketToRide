@@ -1,10 +1,13 @@
 package ticketToRide
 
+import com.ccfraser.muirwik.components.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.css.*
 import kotlinx.serialization.json.*
 import org.w3c.dom.WebSocket
 import react.*
+import styled.css
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
 import kotlin.browser.window
@@ -12,13 +15,20 @@ import kotlin.browser.window
 interface AppState : RState {
     var screen: Screen
     var chatMessages: MutableList<Response.ChatMessage>
+    var errorMessage: String
+    var showErrorMessage: Boolean
+    var secsToReconnect: Int
 }
 
+private const val ErrorMessageTimeoutSecs = 4
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 
 class App() : RComponent<RProps, AppState>() {
-    private lateinit var scope: CoroutineScope
-    private lateinit var requests: Channel<Request>
+    private val scope = CoroutineScope(Dispatchers.Default + Job())
+    private val requests = Channel<Request>().also {
+        connectToServer(it)
+        window.onunload = { _ -> it.offer(LeaveGameRequest) }
+    }
 
     override fun componentWillUnmount() {
         scope.cancel()
@@ -27,74 +37,125 @@ class App() : RComponent<RProps, AppState>() {
     override fun AppState.init() {
         screen = Screen.Welcome()
         chatMessages = mutableListOf()
-        scope = CoroutineScope(Dispatchers.Default + Job())
-        requests = Channel()
+        errorMessage = ""
+        secsToReconnect = 0
+    }
 
-        scope.launch {
-            val webSocket = WebSocket("ws://" + window.location.host + "/ws")
-            launch {
+    private fun connectToServer(requests: Channel<Request>) {
+        with(WebSocket("ws://" + window.location.host + "/ws")) {
+            val job = scope.launch {
                 for (req in requests) {
-                    webSocket.send(json.stringify(Request.serializer(), req))
+                    send(json.stringify(Request.serializer(), req))
                 }
             }
-            webSocket.onmessage = { msg ->
+
+            onmessage = { msg ->
                 (msg.data as? String)?.let { reqStr ->
                     processMessageFromServer(json.parse(Response.serializer(), reqStr))
                 }
             }
-        }
 
-        window.onunload = {
-            requests.offer(LeaveGameRequest)
+            onclose = { e ->
+                fun errorMessage(reason: String, secsToReconnect: Int) =
+                    "Disconnected from server: $reason. Trying to reconnect in $secsToReconnect seconds..."
+
+                job.cancel()
+                var handle = 0
+                handle = window.setInterval({
+                    setState {
+                        secsToReconnect -= 1
+                        errorMessage = errorMessage(e.asDynamic().reason, secsToReconnect)
+                        if (secsToReconnect == 0) {
+                            showErrorMessage = false
+                            window.clearInterval(handle)
+                            connectToServer(requests)
+                        }
+                    }
+                }, 1000)
+                setState {
+                    secsToReconnect = ErrorMessageTimeoutSecs
+                    errorMessage = errorMessage(e.asDynamic().reason, secsToReconnect)
+                    showErrorMessage = true
+                }
+            }
         }
     }
 
-    override fun RBuilder.render() = state.screen.let {
-        when (it) {
-            is Screen.Welcome ->
-                welcomeScreen {
-                    onStartGame = ::startGame
-                    onJoinGame = ::joinGame
-                }
+    override fun RBuilder.render() {
+        state.screen.let {
+            when (it) {
+                is Screen.Welcome ->
+                    welcomeScreen {
+                        onStartGame = ::startGame
+                        onJoinGame = ::joinGame
+                    }
 
-            is Screen.ShowGameId ->
-                showGameIdScreen {
-                    gameId = it.gameId
-                    onClosed = {
-                        setState {
-                            screen = Screen.GameInProgress(
-                                it.gameId,
-                                GameMap,
-                                it.gameState,
-                                PlayerState.initial(GameMap, it.gameState, requests)
-                            )
+                is Screen.ShowGameId ->
+                    showGameIdScreen {
+                        gameId = it.gameId
+                        onClosed = {
+                            setState {
+                                screen = Screen.GameInProgress(
+                                    it.gameId,
+                                    GameMap,
+                                    it.gameState,
+                                    PlayerState.initial(GameMap, it.gameState, requests)
+                                )
+                            }
                         }
                     }
-                }
 
-            is Screen.GameInProgress ->
-                gameScreen {
-                    gameMap = it.gameMap
-                    gameState = it.gameState
-                    playerState = it.playerState
-                    onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
-                    chatMessages = state.chatMessages
-                    onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
-                }
+                is Screen.GameInProgress ->
+                    gameScreen {
+                        gameMap = it.gameMap
+                        gameState = it.gameState
+                        playerState = it.playerState
+                        onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
+                        chatMessages = state.chatMessages
+                        onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
+                    }
 
-            is Screen.GameOver ->
-                endScreen {
-                    gameMap = it.gameMap
-                    players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets) }
-                    chatMessages = state.chatMessages
-                    onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
+                is Screen.GameOver ->
+                    endScreen {
+                        gameMap = it.gameMap
+                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets) }
+                        chatMessages = state.chatMessages
+                        onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
+                    }
+            }
+        }
+
+        errorMessage()
+    }
+
+    private fun RBuilder.errorMessage() {
+        mSnackbar(state.errorMessage, state.showErrorMessage, autoHideDuration = 4000) {
+            attrs {
+                autoHideDuration = ErrorMessageTimeoutSecs * 1000
+                onClose = { _, _ -> setState { showErrorMessage = false } }
+            }
+            mPaper(elevation = 6) {
+                css {
+                    display = Display.flex
+                    flexDirection = FlexDirection.row
+                    padding = 10.px.toString()
+                    color = Color.white
+                    backgroundColor = Color.orangeRed
+                    minWidth = 300.px
+                    maxWidth = 600.px
                 }
+                mIcon("error_outline") {
+                    css { marginRight = 12.px }
+                }
+                mTypography(state.errorMessage, MTypographyVariant.body1)
+            }
         }
     }
 
     private fun processMessageFromServer(msg: Response) = when (msg) {
-        is Response.Error -> setState {
-            screen = Screen.Welcome(msg.reason)
+        is Response.ErrorMessage -> setState {
+            errorMessage = msg.text
+            showErrorMessage = true
         }
 
         is Response.ChatMessage -> setState {

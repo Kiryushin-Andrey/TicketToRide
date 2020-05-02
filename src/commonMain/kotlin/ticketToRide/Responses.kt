@@ -18,7 +18,7 @@ sealed class Response {
     class GameEnd(val gameId: GameId, val players: List<Pair<PlayerView, List<Ticket>>>, val action: PlayerAction? = null) : Response()
 
     @Serializable
-    class Error(val reason: JoinGameFailure) : Response()
+    class ErrorMessage(val text: String) : Response()
 
     @Serializable
     class ChatMessage(val from: PlayerName, val message: String) : Response()

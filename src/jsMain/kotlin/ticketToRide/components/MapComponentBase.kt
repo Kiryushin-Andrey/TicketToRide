@@ -15,8 +15,6 @@ interface MapComponentBaseProps : RProps {
     var citiesToHighlight: Set<CityName>
     var onCityMouseOver: (CityName) -> Unit
     var onCityMouseOut: (CityName) -> Unit
-
-    var testColor: PlayerColor?
 }
 
 interface MapComponentBaseState : RState {

@@ -1,24 +1,11 @@
 package ticketToRide
 
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
-
 sealed class SendResponse {
     data class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
     data class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
 }
 
 fun Response.toAll() = SendResponse.ForAll { this }
-
-@OptIn(FlowPreview::class)
-fun runGame(gameId: GameId, requests: Flow<Pair<GameRequest, PlayerConnection>>): Flow<SendResponse> {
-    val initial = GameState.initial(gameId) to emptyList<SendResponse>()
-    return requests
-        .scan(initial) { (state, _), (req, conn) ->
-            state.processRequest(req, conn.name)
-        }
-        .flatMapConcat { (_, messages) -> messages.asFlow() }
-}
 
 fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair<GameState, List<SendResponse>> {
     if (turn == endsOnPlayer)
@@ -31,12 +18,12 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
             leavePlayer(fromPlayerName)
         is ConfirmTicketsChoiceRequest ->
             updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }
-        is PickCardsRequest ->
-            pickCards(fromPlayerName, req)
         is PickTicketsRequest ->
             pickTickets(fromPlayerName)
+        is PickCardsRequest ->
+            inTurnOnly(fromPlayerName) { pickCards(fromPlayerName, req) }
         is BuildSegmentRequest ->
-            buildSegment(fromPlayerName, req.from, req.to, req.cards)
+            inTurnOnly(fromPlayerName) { buildSegment(fromPlayerName, req.from, req.to, req.cards) }
     }
     val message = with(newState) {
         SendResponse.ForAll { toPlayerName ->
@@ -53,15 +40,13 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
     return newState to listOf(message)
 }
 
-fun GameState.playerByName(name: PlayerName) = players.single { it.name == name }
-
 fun GameState.joinPlayer(name: PlayerName): GameState {
-    if (players.any { it.name == name && it.away }) {
-        return updatePlayer(name) { copy(away = false) }
+    if (players.any { it.name == name }) {
+        return updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") }
     }
 
     val availableColors = PlayerColor.values().filter { color -> !players.map { it.color }.contains(color) }
-    if (availableColors.isEmpty()) throw Error("Нет свободных мест!")
+    if (availableColors.isEmpty()) throw InvalidActionError("Game full, no more players allowed")
 
     val color = availableColors.random()
     val cards = (1..4).map { Card.random() }
@@ -77,6 +62,9 @@ fun GameState.leavePlayer(name: PlayerName) =
     updatePlayer(name) { copy(away = true) }.let {
         if (players[turn].name == name) it.advanceTurn() else it
     }
+
+fun GameState.inTurnOnly(name: PlayerName, block: GameState.() -> GameState) =
+    if (players[turn].name == name) block() else throw InvalidActionError("Not your turn")
 
 fun GameState.advanceTurn(): GameState {
     if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == GameMap.totalSegmentsLength) {
@@ -109,6 +97,10 @@ fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
                 openCardsToReplace -= it; false
             } else true
         }
+        .let {
+            if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random() }
+            else it
+        }
 
     return updatePlayer(name) { copy(cards = cards + cardsToPick) }
         .copy(openCards = newOpenCards)
@@ -117,41 +109,55 @@ fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
 
 fun GameState.pickTickets(playerName: PlayerName): GameState {
     val inTurn = players[turn].name == playerName
-    val state = updatePlayer(playerName, { ticketsForChoice == null }) {
-        copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(3, false), 1, inTurn))
+    val state = updatePlayer(playerName) {
+        if (ticketsForChoice == null)
+            copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(3, false), 1, inTurn))
+        else
+            throw InvalidActionError("Decide on your tickets first")
     }
     return if (inTurn) state.advanceTurn() else state
 }
 
-fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>) =
-    GameMap.getSegmentBetween(from, to)?.let {
-        if (playerByName(name).canBuildSegment(it, cards))
-            updatePlayer(name) { occupySegment(it, cards) }.advanceTurn()
-        else
-            this
-    } ?: this
+fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>): GameState {
+    val segment = GameMap.getSegmentBetween(from, to)
+        ?: throw InvalidActionError("There is no segment from ${from.value} - ${to.value} on the map")
+    return updatePlayer(name) { occupySegment(segment, cards) }
+}
 
-fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) =
-    if (ticketsForChoice == null) this
-    else copy(
-        ticketsOnHand = ticketsOnHand + ticketsForChoice.tickets.intersect(ticketsToKeep),
-        ticketsForChoice = null
-    )
+fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
+    ticketsForChoice == null ->
+        throw InvalidActionError("You do not have any pending tickets choice")
+    ticketsToKeep.any { !ticketsForChoice.tickets.contains(it) } ->
+        throw InvalidActionError("Invalid ticket chosen")
+    ticketsToKeep.size < ticketsForChoice.minCountToKeep ->
+        throw InvalidActionError("You should keep at least ${ticketsForChoice.minCountToKeep} tickets")
+    else ->
+        copy(
+            ticketsOnHand = ticketsOnHand + ticketsToKeep,
+            ticketsForChoice = null)
+}
 
-fun Player.canBuildSegment(segment: Segment, cardsToDrop: List<Card>) =
-    segment.length <= carsLeft && segment.canBuildWith(cardsToDrop)
+fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
+    segment.length > carsLeft ->
+        throw InvalidActionError("Not enough wagons ($carsLeft) to build ${segment.from.value} - ${segment.to.value} segment")
 
-fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>): Player {
-    val list = cardsToDrop.toMutableList()
-    return copy(
-        cards = cards.filter {
-            if (list.contains(it)) {
-                list -= it; false
-            } else true
-        },
-        carsLeft = carsLeft - cardsToDrop.size,
-        occupiedSegments = occupiedSegments + segment
-    )
+    !segment.canBuildWith(cardsToDrop) -> {
+        val cardsDesc = cards.groupingBy { it }.eachCount().entries.joinToString { "${it.key} - ${it.value}" }
+        throw InvalidActionError("You cannot build ${segment.from.value} - ${segment.to.value} segment with the cards $cardsDesc")
+    }
+
+    else -> {
+        val list = cardsToDrop.toMutableList()
+        copy(
+            cards = cards.filter {
+                if (list.contains(it)) {
+                    list -= it; false
+                } else true
+            },
+            carsLeft = carsLeft - cardsToDrop.size,
+            occupiedSegments = occupiedSegments + segment
+        )
+    }
 }
 
 fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
