@@ -1,0 +1,1 @@
+web: java -jar build/libs/ticket-to-ride-jvm.jar

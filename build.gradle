@@ -92,8 +92,13 @@ kotlin {
 }
 
 jvmJar {
-    dependsOn(jsBrowserDevelopmentWebpack)
-    from(jsBrowserDevelopmentWebpack.outputFile)
+    dependsOn(jsBrowserProductionWebpack)
+    from(jsBrowserProductionWebpack.outputFile)
+    manifest {
+        attributes(
+                'Main-Class': 'ticketToRide.ServerKt'
+        )
+    }
 }
 
 task run(type: JavaExec, dependsOn: [jvmJar]) {
