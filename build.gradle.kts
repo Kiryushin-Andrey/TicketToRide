@@ -7,9 +7,12 @@ buildscript {
 }
 
 plugins {
+    application
     id("org.jetbrains.kotlin.multiplatform") version "1.3.71"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.3.71"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
 }
+
 repositories {
     jcenter()
     maven("https://dl.bintray.com/kotlin/ktor")
@@ -17,6 +20,10 @@ repositories {
     maven("https://kotlin.bintray.com/kotlin-js-wrappers/")
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     mavenCentral()
+}
+
+application {
+    mainClassName = "ticketToRide.ServerKt"
 }
 
 val ktor_version = "1.3.2"
@@ -107,6 +114,18 @@ tasks {
     val devJs = named<KotlinWebpack>("jsBrowserDevelopmentWebpack")
     val prodJs = named<KotlinWebpack>("jsBrowserProductionWebpack")
 
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        manifest {
+            attributes("Main-Class" to application.mainClassName)
+        }
+        archiveFileName.set("ticket-to-ride.fat.jar")
+        val jvmCompilation = kotlin.jvm().compilations["main"]
+        configurations = mutableListOf(jvmCompilation.compileDependencyFiles as Configuration)
+        from(jvmCompilation.output)
+        dependsOn(prodJs)
+        from(prodJs.get().outputFile)
+    }
+
     val prodJar = create<Jar>("productionJar") {
         archiveFileName.set("ticket-to-ride.prod.jar")
         dependsOn(prodJs)
@@ -124,15 +143,6 @@ tasks {
         manifest {
             attributes("Main-Class" to "ticketToRide.ServerKt")
         }
-    }
-
-    val copyDependencies = create<Copy>("copyDependencies") {
-        into("$buildDir/libs")
-        from(configurations["jvmRuntimeClasspath"])
-    }
-
-    named("build").configure {
-        dependsOn(prodJar, copyDependencies)
     }
 
     create<JavaExec>("runProd") {

@@ -18,7 +18,7 @@ interface ShowGameIdScreenProps : RProps {
 class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
     override fun RBuilder.render() {
         val gameUrl = window.location.href
-        window.navigator.clipboard.writeText(gameUrl)
+        window.navigator.clipboard?.writeText(gameUrl)
         mDialog {
             css {
                 +WelcomeScreen.ComponentStyles.welcomeDialog
@@ -30,7 +30,9 @@ class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
             }
             mDialogContent {
                 p {
-                    +"Send this link to other players (it is already in your clipboard)"
+                    +"Send this link to other players"
+                    if (window.navigator.clipboard != undefined)
+                        +" (it is already in your clipboard)"
                 }
                 p {
                     a {

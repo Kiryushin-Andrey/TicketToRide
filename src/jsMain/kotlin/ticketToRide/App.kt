@@ -44,7 +44,8 @@ class App() : RComponent<RProps, AppState>() {
     }
 
     private fun connectToServer(requests: Channel<Request>) {
-        with(WebSocket("ws://" + window.location.host + "/ws")) {
+        val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
+        with(WebSocket("$protocol//" + window.location.host + "/ws")) {
             val job = scope.launch {
                 for (req in requests) {
                     send(json.stringify(Request.serializer(), req))

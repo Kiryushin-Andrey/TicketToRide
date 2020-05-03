@@ -11,7 +11,6 @@ import io.ktor.routing.get
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
-import io.ktor.util.KtorExperimentalAPI
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.*
@@ -44,11 +43,9 @@ fun Application.module() {
         static("cards") { resources("cards") }
 
         get("/") {
-            call.push("/ticket-to-ride.js")
             call.respondHtml { indexHtml(googleApiKey) }
         }
         get("/game/{gameId}") {
-            call.push("/ticket-to-ride.js")
             call.respondHtml { indexHtml(googleApiKey) }
         }
 
