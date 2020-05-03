@@ -1,1 +1,1 @@
-web: java -jar build/libs/ticket-to-ride-jvm.jar
+web: java -cp build/libs/* -jar build/libs/ticket-to-ride.prod.jar

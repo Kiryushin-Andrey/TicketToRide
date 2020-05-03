@@ -11,6 +11,7 @@ import io.ktor.routing.get
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
+import io.ktor.util.KtorExperimentalAPI
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.*
@@ -30,7 +31,6 @@ private val logger = KotlinLogging.logger("Server")
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
-@FlowPreview
 fun Application.module() {
     val googleApiKey = environment.config.property("google-api-key").getString()
     install(WebSockets)

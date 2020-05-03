@@ -68,7 +68,6 @@ fun <T> Graph<T>.edges(v: T) = this[v] ?: throw Error("Node ${v} not found in gr
 
 fun <T> Graph<T>.nodeDegree(v: T) = edges(v).size
 
-@OptIn(ExperimentalStdlibApi::class)
 fun <T> Graph<T>.getFirstSubgraph(): Graph<T> {
     val queue = ArrayDeque<T>()
     queue.addFirst(keys.firstOrNull() ?: return this)
