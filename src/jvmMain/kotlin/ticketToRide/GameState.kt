@@ -2,7 +2,7 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 
-const val CarsCountPerPlayer = 10
+const val CarsCountPerPlayer = 45
 const val OpenCardsCount = 5
 
 @Serializable
