@@ -1,11 +1,15 @@
 package ticketToRide
 
 import io.ktor.application.*
+import io.ktor.features.CachingHeaders
 import io.ktor.features.ContentNegotiation
 import io.ktor.html.respondHtml
+import io.ktor.http.CacheControl
+import io.ktor.http.ContentType
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.http.push
+import io.ktor.response.cacheControl
 import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.route
@@ -34,6 +38,21 @@ fun Application.module() {
     val googleApiKey = environment.config.property("google-api-key").getString()
     install(WebSockets)
     install(ContentNegotiation) { json(json) }
+    install(CachingHeaders) {
+        options { outgoingContent ->
+            outgoingContent.contentType?.withoutParameters()?.let {
+                if (it == ContentType.Application.JavaScript || it.contentType == ContentType.Image.Any.contentType)
+                    CachingOptions(
+                        CacheControl.MaxAge(
+                            maxAgeSeconds = 24 * 60 * 60 * 30,
+                            visibility = CacheControl.Visibility.Public,
+                            mustRevalidate = true
+                        )
+                    )
+                else null
+            }
+        }
+    }
     routing {
         static {
             resource("ticket-to-ride.js")
