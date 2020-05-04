@@ -196,8 +196,9 @@ class App() : RComponent<RProps, AppState>() {
                         Notification("Ticket to Ride", jsObject {
                             body = "It's your turn to make a move!"
                             icon = "/favicon.ico"
-                            this.actions
-
+                            silent = true
+                            renotify = false
+                            tag = "your-turn"
                         })
                     }
                     val newPlayerState =
