@@ -122,15 +122,13 @@ sealed class PlayerState {
     fun pickedOpenCard(cardIx: Int) = when {
         this is PickedFirstCard && openCards[cardIx] is Card.Car ->
             if (cardIx != chosenCardIx) {
-                val card1 = openCards[chosenCardIx] as Card.Car
-                val card2 = openCards[cardIx] as Card.Car
-                sendAndResetState(PickCardsRequest.TwoCards(card1 to card2))
+                sendAndResetState(PickCardsRequest.TwoCards.bothOpen(chosenCardIx, cardIx, openCards))
             }
             else
                 MyTurn.Blank(this)
         this is MyTurn ->
             if (openCards[cardIx] is Card.Loco)
-                sendAndResetState(PickCardsRequest.Loco)
+                sendAndResetState(PickCardsRequest.Loco(cardIx))
             else
                 PickedFirstCard(this, cardIx)
         else ->
@@ -139,9 +137,9 @@ sealed class PlayerState {
 
     fun pickedClosedCard() = when (this) {
         is PickedFirstCard ->
-            sendAndResetState(PickCardsRequest.TwoCards((openCards[chosenCardIx] as Card.Car) to null))
+            sendAndResetState(PickCardsRequest.TwoCards.openAndClosed(chosenCardIx, openCards))
         is MyTurn ->
-            sendAndResetState(PickCardsRequest.TwoCards(null to null))
+            sendAndResetState(PickCardsRequest.TwoCards.bothClosed())
         else ->
             this
     }

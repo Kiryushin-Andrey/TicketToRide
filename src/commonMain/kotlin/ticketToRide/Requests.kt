@@ -24,13 +24,50 @@ object LeaveGameRequest : GameRequest()
 class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : GameRequest()
 
 @Serializable
+sealed class PickedCard {
+
+    @Serializable
+    data class Open(val ix: Int, val card: Card.Car) : PickedCard()
+
+    @Serializable
+    object Closed : PickedCard()
+}
+
+@Serializable
 sealed class PickCardsRequest : GameRequest() {
 
     @Serializable
-    object Loco : PickCardsRequest()
+    class Loco(val ix: Int) : PickCardsRequest()
 
     @Serializable
-    class TwoCards(val cards: Pair<Card.Car?, Card.Car?>) : PickCardsRequest()
+    class TwoCards private constructor(val cards: Pair<PickedCard, PickedCard>) : PickCardsRequest() {
+        companion object {
+            fun bothOpen(ix1: Int, ix2: Int, openCards: List<Card>) = TwoCards(
+                PickedCard.Open(ix1, openCards[ix1] as Card.Car) to PickedCard.Open(ix2, openCards[ix2] as Card.Car)
+            )
+
+            fun openAndClosed(ix: Int, openCards: List<Card>) = TwoCards(
+                PickedCard.Open(ix, openCards[ix] as Card.Car) to PickedCard.Closed
+            )
+
+            fun bothClosed() = TwoCards(PickedCard.Closed to PickedCard.Closed)
+        }
+    }
+
+    fun getCardsToPick() = when (this) {
+        is Loco -> listOf(Card.Loco)
+        is TwoCards -> cards.toList().map {
+            when (it) {
+                is PickedCard.Open -> it.card
+                is PickedCard.Closed -> Card.random()
+            }
+        }
+    }
+
+    fun getIndicesToReplace() = when (this) {
+        is Loco -> listOf(ix)
+        is TwoCards -> cards.toList().filterIsInstance<PickedCard.Open>().map { it.ix }
+    }
 }
 
 @Serializable

@@ -42,7 +42,7 @@ sealed class Response {
             class Loco(val playerName: PlayerName) : PickCards()
 
             @Serializable
-            class TwoCards(val playerName: PlayerName, val cards: Pair<Card.Car?, Card.Car?>) : PickCards()
+            class TwoCards(val playerName: PlayerName, val cards: Pair<PickedCard, PickedCard>) : PickCards()
         }
 
         @Serializable

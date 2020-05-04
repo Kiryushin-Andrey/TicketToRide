@@ -14,7 +14,7 @@ fun PlayerAction.chatMessage() = when (this) {
         ChatMessage(playerName, "беру паровоз")
     is PickCards.TwoCards ->
         ChatMessage(playerName,
-            if (cards.first == null && cards.second == null) "беру две закрытые карты"
+            if (cards.first is PickedCard.Closed && cards.second is PickedCard.Closed) "беру две закрытые карты"
             else "беру карты - ${cards.first.name} и ${cards.second.name}")
     is PickTickets ->
         ChatMessage(playerName, "беру еще маршруты")
@@ -27,10 +27,14 @@ fun PlayerAction.chatMessage() = when (this) {
     }
 }
 
-val Card?.name get() = when(this) {
-    null -> "закрытая"
+val PickedCard.name get() = when(this) {
+    is PickedCard.Closed -> "закрытая"
+    is PickedCard.Open -> card.name
+}
+
+val Card.name get() = when(this) {
     is Card.Loco -> "паровоз"
-    is Card.Car -> when (this.color) {
+    is Card.Car -> when (color) {
         CardColor.RED -> "красная"
         CardColor.GREEN -> "зеленая"
         CardColor.BLUE -> "синяя"

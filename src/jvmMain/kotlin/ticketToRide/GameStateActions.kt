@@ -83,24 +83,15 @@ fun GameState.advanceTurn(): GameState {
 }
 
 fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
-    val cardsToPick = when (req) {
-        is PickCardsRequest.Loco -> listOf(Card.Loco)
-        is PickCardsRequest.TwoCards -> req.cards.toList().map { it ?: Card.randomNoLoco() }
-    }
-    val replacements =
-        if (req is PickCardsRequest.TwoCards)
-            req.cards.toList().filterNotNull().map { it to Card.random() }.toMutableList()
-        else
-            mutableListOf(Card.Loco to Card.random())
-
-    val newOpenCards = openCards.map {
-        replacements.find { (old, _) -> old == it }?.second ?: it
+    val indicesToReplace = req.getIndicesToReplace()
+    val newOpenCards = openCards.mapIndexed { ix, card ->
+        if (indicesToReplace.contains(ix)) Card.random() else card
     }.let {
         if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random() }
         else it
     }
 
-    return updatePlayer(name) { copy(cards = cards + cardsToPick) }
+    return updatePlayer(name) { copy(cards = cards + req.getCardsToPick()) }
         .copy(openCards = newOpenCards)
         .advanceTurn()
 }
