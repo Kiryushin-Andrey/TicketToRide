@@ -27,8 +27,6 @@ sealed class Card {
             val value = Random.nextInt(colors.size + 1)
             return if (value < colors.size) Car(colors[value]) else Loco
         }
-
-        fun randomNoLoco() = Car(CardColor.values().random())
     }
 }
 
