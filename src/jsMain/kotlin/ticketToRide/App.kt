@@ -52,9 +52,12 @@ class App() : RComponent<RProps, AppState>() {
                 }
             }
 
+            val pingHandle = window.setInterval({ send(Request.Ping) }, 10000)
+
             onmessage = { msg ->
                 (msg.data as? String)?.let { reqStr ->
-                    processMessageFromServer(json.parse(Response.serializer(), reqStr))
+                    if (reqStr != Response.Pong)
+                        processMessageFromServer(json.parse(Response.serializer(), reqStr))
                 }
             }
 
@@ -62,6 +65,7 @@ class App() : RComponent<RProps, AppState>() {
                 fun errorMessage(reason: String, secsToReconnect: Int) =
                     "Disconnected from server: $reason. Trying to reconnect in $secsToReconnect seconds..."
 
+                window.clearInterval(pingHandle)
                 job.cancel()
                 var handle = 0
                 handle = window.setInterval({

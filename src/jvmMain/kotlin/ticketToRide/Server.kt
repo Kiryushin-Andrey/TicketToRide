@@ -85,6 +85,10 @@ fun Application.module() {
             var connection: PlayerConnection? = null
             incoming.consumeAsFlow()
                 .mapNotNull { (it as? Frame.Text)?.readText() }
+                .filter {
+                    if (it == Request.Ping) send(Response.Pong)
+                    it != Request.Ping
+                }
                 .mapNotNull { req ->
                     kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
                         logger.info { "Received $req from ${connection?.name?.value}" }
