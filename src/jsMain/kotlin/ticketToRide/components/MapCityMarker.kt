@@ -55,9 +55,15 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
                     styledDiv {
                         css {
                             +ComponentStyle.popupBubbleAnchor
+                            after {
+                                borderTopColor = if (props.selected) Color.lightPink else Color.white
+                            }
                         }
                         styledDiv {
-                            css { +ComponentStyle.popupBubble }
+                            css {
+                                +ComponentStyle.popupBubble
+                                backgroundColor = if (props.selected) Color.lightPink else Color.white
+                            }
                             +props.name
                         }
                     }
@@ -111,7 +117,6 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
                 borderRightColor = Color.transparent
                 borderTopWidth = 8.px /* tip height */
                 borderTopStyle = BorderStyle.solid
-                borderTopColor = Color.white
             }
         }
         val popupBubble by css {
@@ -123,7 +128,6 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
                 translate((-50).pct, (-100).pct)
             }
             /* Style the bubble. */
-            backgroundColor = Color.white
             padding = 5.px.toString()
             borderRadius = 5.px
             fontSize = 14.px

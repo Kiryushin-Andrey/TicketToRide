@@ -6,6 +6,7 @@ import react.RState
 import styled.StyleSheet
 import styled.css
 import styled.styledDiv
+import ticketToRide.Card
 import ticketToRide.playerState.*
 
 class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
@@ -14,22 +15,31 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
             css {
                 +ComponentStyles.cardsDeck
             }
+            val disabledTooltip = when {
+                !myTurn -> "Ждем своего хода"
+                playerState is PlayerState.ChoosingTickets -> "Сначала надо выбрать маршруты"
+                else -> null
+            }
             styledDiv {
                 css {
                     +ComponentStyles.cards
                 }
                 val chosenCardIx = (playerState as? PickedFirstCard)?.chosenCardIx
                 for ((ix, card) in openCards.withIndex()) {
-                    openCard(card, myTurn, canPickCards, ix, chosenCardIx) {
+                    val tooltipForCard = disabledTooltip
+                        ?: if (card is Card.Loco && chosenCardIx != null) "Уже выбрана другая карта, локомотив брать нельзя"
+                        else null
+                    openCard(card, canPickCards, ix, chosenCardIx, tooltipForCard) {
                         act { pickedOpenCard(ix) }
                     }
                 }
-                closedCard(myTurn, canPickCards) {
+                closedCard(disabledTooltip) {
                     act { pickedClosedCard() }
                 }
             }
             styledDiv {
-                ticketsCard(myTurn, canPickCards, lastRound) {
+                val tooltipForTickets = disabledTooltip ?: if (lastRound) "Идет последний круг" else null
+                ticketsCard(tooltipForTickets) {
                     act { pickedTickets() }
                 }
             }

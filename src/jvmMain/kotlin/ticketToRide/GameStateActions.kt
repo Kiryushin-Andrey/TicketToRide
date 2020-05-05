@@ -109,7 +109,10 @@ fun GameState.pickTickets(playerName: PlayerName): GameState {
 
 fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>): GameState {
     val segment = GameMap.getSegmentBetween(from, to)
-        ?: throw InvalidActionError("There is no segment from ${from.value} - ${to.value} on the map")
+        ?: throw InvalidActionError("There is no segment ${from.value} - ${to.value} on the map")
+    players.find { it.occupiedSegments.contains(segment) }?.let {
+        throw InvalidActionError("Segment ${from.value} - ${to.value} is already occupied by ${it.name.value}")
+    }
     return updatePlayer(name) { occupySegment(segment, cards) }.advanceTurn()
 }
 

@@ -1,5 +1,7 @@
 package ticketToRide.components
 
+import com.ccfraser.muirwik.components.MTypographyVariant
+import com.ccfraser.muirwik.components.mTypography
 import kotlinx.css.*
 import react.RBuilder
 import react.RState
@@ -8,6 +10,9 @@ import styled.styledDiv
 
 class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
+        mTypography("Мои карты", variant = MTypographyVariant.h6) {
+            css { paddingLeft = 10.px }
+        }
         styledDiv {
             css {
                 display = Display.flex

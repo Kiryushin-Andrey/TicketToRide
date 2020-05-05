@@ -31,7 +31,22 @@ sealed class Card {
 }
 
 @Serializable
-data class Segment(val from: CityName, val to: CityName, val color: CardColor?, val length: Int)
+class Segment constructor(val from: CityName, val to: CityName, val color: CardColor?, val length: Int) {
+    override fun equals(other: Any?) =
+        if (other is Segment)
+            ((from == other.from && to == other.to) || (from == other.to && to == other.from))
+                    && color == other.color && length == other.length
+        else false
+
+    override fun hashCode(): Int {
+        var result =
+            if (from.value < to.value) 31 * from.hashCode() + to.hashCode()
+            else 31 * to.hashCode() + from.hashCode()
+        result = 31 * result + (color?.hashCode() ?: 0)
+        result = 31 * result + length.hashCode()
+        return result
+    }
+}
 
 fun Segment.connects(cityName1: String, cityName2: String) =
     (from.value == cityName1 && to.value == cityName2) || (from.value == cityName2 && to.value == cityName1)

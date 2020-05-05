@@ -180,7 +180,7 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                     flexDirection = FlexDirection.column
                     flexWrap = FlexWrap.nowrap
                 }
-                for ((length, count) in player.occupiedSegments.groupingBy { it.length }.eachCount()) {
+                for ((length, count) in player.occupiedSegments.groupingBy { it.length }.eachCount().entries.sortedByDescending { it.key }) {
                     styledDiv {
                         css {
                             display = Display.flex

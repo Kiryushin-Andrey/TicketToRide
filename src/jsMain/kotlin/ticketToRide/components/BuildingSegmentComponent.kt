@@ -54,10 +54,22 @@ class BuildingSegmentComponent : ComponentBase<BuildingSegmentProps, RState>() {
     }
 
     private fun RBuilder.chooseCardsToDrop(playerState: BuildingSegment) {
+        val segment = playerState.segment
         val optionsForCardsToDrop = playerState.optionsForCardsToDrop
+        val occupiedBy = props.gameState.players.find { it.occupiedSegments.contains(segment) }
 
         when {
-            me.carsLeft < playerState.segment.length ->
+            occupiedBy == me ->
+                mTypography("Сегмент уже построен \uD83D\uDE0A", MTypographyVariant.body1) {
+                    css { marginTop = 10.px }
+                }
+
+            occupiedBy != null ->
+                mTypography("Сегмент уже занят другим игроком \uD83D\uDE1E", MTypographyVariant.body1) {
+                    css { marginTop = 10.px }
+                }
+
+            me.carsLeft < segment.length ->
                 mTypography("Не хватает вагонов \uD83D\uDE1E", MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }

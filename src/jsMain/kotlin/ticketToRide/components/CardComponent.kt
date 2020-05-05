@@ -16,7 +16,7 @@ interface CardProps : RProps {
     var color: Color?
     var enabled: Boolean
     var checked: Boolean
-    var tooltip: String
+    var tooltip: String?
     var onClick: () -> Unit
 }
 
@@ -50,7 +50,7 @@ class CardComponent : RComponent<CardProps, CardState>() {
                     transform { translate(3.px, (-3).px) }
                 }
             }
-            mTooltip(props.tooltip) {
+            mTooltip(props.tooltip ?: "") {
                 attrs {
                     disableHoverListener = props.enabled
                 }
@@ -81,31 +81,24 @@ class CardComponent : RComponent<CardProps, CardState>() {
 }
 
 private fun RBuilder.card(
-    myTurn: Boolean,
     disabledTooltip: String? = null,
     builder: CardProps.() -> Unit
 ) = child(CardComponent::class) {
     attrs {
-        tooltip = when {
-            disabledTooltip != null -> disabledTooltip
-            myTurn -> "Сначала надо выбрать маршруты"
-            else -> "Ждем своего хода"
-        }
+        tooltip = disabledTooltip
         builder()
     }
 }
 
 fun RBuilder.openCard(
     card: Card,
-    myTurn: Boolean,
     canPickCards: Boolean,
     cardIx: Int,
     chosenCardIx: Int?,
+    disabledTooltip: String?,
     clickHandler: () -> Unit
 ): ReactElement {
-    val cannotPickLoco = canPickCards && card is Card.Loco && (chosenCardIx != null)
-    val tooltip = if (cannotPickLoco) "Уже выбрана другая карта, локомотив брать нельзя" else null
-    return card(myTurn, tooltip) {
+    return card(disabledTooltip) {
         enabled = canPickCards && (card is Card.Car || chosenCardIx == null)
         checked = cardIx == chosenCardIx
         imageUrl = "/cards/" + when (card) {
@@ -128,19 +121,19 @@ fun RBuilder.openCard(
     }
 }
 
-fun RBuilder.closedCard(myTurn: Boolean, canPickCards: Boolean, clickHandler: () -> Unit) = card(myTurn) {
-    imageUrl = "/cards/faceDown.png"
-    color = blackAlpha(0.1)
-    enabled = canPickCards
-    onClick = clickHandler
-}
+fun RBuilder.closedCard(disabledTooltip: String?, clickHandler: () -> Unit) =
+    card(disabledTooltip) {
+        imageUrl = "/cards/faceDown.png"
+        color = blackAlpha(0.1)
+        this.enabled = (disabledTooltip == null)
+        onClick = clickHandler
+    }
 
-fun RBuilder.ticketsCard(myTurn: Boolean, canPickCards: Boolean, lastRound: Boolean, clickHandler: () -> Unit) {
-    val tooltip = if (lastRound) "Идет последний круг" else null
-    card(myTurn, tooltip) {
+fun RBuilder.ticketsCard(disabledTooltip: String?, clickHandler: () -> Unit) {
+    card(disabledTooltip) {
         imageUrl = "/cards/routeFaceDown.png"
         color = blackAlpha(0.1)
-        enabled = canPickCards
+        enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
 }
