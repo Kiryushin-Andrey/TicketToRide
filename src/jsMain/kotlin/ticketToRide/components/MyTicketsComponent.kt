@@ -18,6 +18,14 @@ interface MyTicketsProps : ComponentBaseProps {
 
 class MyTickets : ComponentBase<MyTicketsProps, RState>() {
     override fun RBuilder.render() {
+        if (playerState !is PlayerState.ChoosingTickets) {
+            mTypography("Мои маршруты", MTypographyVariant.h6) {
+                css {
+                    paddingLeft = 10.px
+                }
+            }
+        }
+
         myTickets.forEach { render(it) }
 
         (playerState as? PlayerState.ChoosingTickets)?.let { choice ->

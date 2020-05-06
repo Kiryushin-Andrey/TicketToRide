@@ -2,17 +2,11 @@ package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
-import kotlinx.html.js.onChangeFunction
-import org.w3c.dom.HTMLSelectElement
 import react.*
-import react.dom.option
-import react.dom.select
 import styled.*
 import ticketToRide.*
-import ticketToRide.CardColor
 import ticketToRide.components.*
-import ticketToRide.playerState.BuildingSegment
-import ticketToRide.playerState.BuildingSegmentFrom
+import ticketToRide.playerState.*
 
 interface GameScreenProps : ComponentBaseProps {
     var gameMap: GameMap

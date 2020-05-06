@@ -1,18 +1,17 @@
 package ticketToRide.components
 
-import com.ccfraser.muirwik.components.mPaper
-import com.ccfraser.muirwik.components.mTooltip
+import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
-import kotlinx.css.properties.transform
-import kotlinx.css.properties.translate
+import kotlinx.css.properties.*
 import react.*
-import react.dom.img
-import styled.css
-import styled.styledImg
+import react.dom.*
+import styled.*
 import ticketToRide.Card
+import ticketToRide.name
 
 interface CardProps : RProps {
     var imageUrl: String
+    var assignedKey: String?
     var color: Color?
     var enabled: Boolean
     var checked: Boolean
@@ -50,9 +49,10 @@ class CardComponent : RComponent<CardProps, CardState>() {
                     transform { translate(3.px, (-3).px) }
                 }
             }
-            mTooltip(props.tooltip ?: "") {
+
+            mTooltip("") {
                 attrs {
-                    disableHoverListener = props.enabled
+                    title = tooltip
                 }
                 img {
                     attrs {
@@ -62,32 +62,50 @@ class CardComponent : RComponent<CardProps, CardState>() {
                     }
                 }
             }
-            if (props.checked) {
-                styledImg {
-                    css {
-                        position = Position.absolute
-                        left = 130.px
-                        top = (-10).px
-                    }
-                    attrs {
-                        src = "/icons/card-check.svg"
-                        width = 32.px.toString()
-                        height = 32.px.toString()
-                    }
+
+            checkedMark()
+            assignedKeyHint()
+        }
+    }
+
+    private val tooltip
+        get() = props.tooltip?.let { msg ->
+            if (props.enabled) props.assignedKey?.let { "$msg (клавиша $it)" } ?: msg else msg
+        } ?: ""
+
+    private fun RBuilder.checkedMark() {
+        if (props.checked) {
+            styledImg {
+                css {
+                    position = Position.absolute
+                    left = 130.px
+                    top = (-10).px
                 }
+                attrs {
+                    src = "/icons/card-check.svg"
+                    width = 32.px.toString()
+                    height = 32.px.toString()
+                }
+            }
+        }
+    }
+
+    private fun RBuilder.assignedKeyHint() {
+        props.assignedKey?.let { ch ->
+            styledDiv {
+                css {
+                    position = Position.absolute
+                    left = 5.px
+                    top = 80.px
+                }
+                +ch
             }
         }
     }
 }
 
-private fun RBuilder.card(
-    disabledTooltip: String? = null,
-    builder: CardProps.() -> Unit
-) = child(CardComponent::class) {
-    attrs {
-        tooltip = disabledTooltip
-        builder()
-    }
+private fun RBuilder.card(builder: CardProps.() -> Unit) = child(CardComponent::class) {
+    attrs { builder() }
 }
 
 fun RBuilder.openCard(
@@ -98,7 +116,9 @@ fun RBuilder.openCard(
     disabledTooltip: String?,
     clickHandler: () -> Unit
 ): ReactElement {
-    return card(disabledTooltip) {
+    return card {
+        this.assignedKey = (cardIx + 1).toString()
+        tooltip = disabledTooltip ?: card.name
         enabled = canPickCards && (card is Card.Car || chosenCardIx == null)
         checked = cardIx == chosenCardIx
         imageUrl = "/cards/" + when (card) {
@@ -121,18 +141,21 @@ fun RBuilder.openCard(
     }
 }
 
-fun RBuilder.closedCard(disabledTooltip: String?, clickHandler: () -> Unit) =
-    card(disabledTooltip) {
+fun RBuilder.closedCard(disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
+    card {
+        assignedKey = "0"
         imageUrl = "/cards/faceDown.png"
         color = blackAlpha(0.1)
+        tooltip = disabledTooltip ?: (if (hasChosenCard) "Взять закрытую карты" else "Взять 2 закрытые карты")
         this.enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
 
 fun RBuilder.ticketsCard(disabledTooltip: String?, clickHandler: () -> Unit) {
-    card(disabledTooltip) {
+    card {
         imageUrl = "/cards/routeFaceDown.png"
         color = blackAlpha(0.1)
+        tooltip = disabledTooltip ?: "Взять маршруты"
         enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
