@@ -112,6 +112,10 @@ kotlin {
 tasks {
     configure<BuildKonfigExtension> {
         fun getGitHash(): String {
+            val versionFromEnv = System.getenv("SOURCE_VERSION")
+            if (versionFromEnv != null)
+                return versionFromEnv
+
             val stdout = ByteArrayOutputStream()
             exec {
                 commandLine("git", "rev-parse", "--short", "HEAD")
