@@ -3,8 +3,15 @@ package ticketToRide
 import io.ktor.http.ContentType
 import kotlinx.css.*
 import kotlinx.html.*
+import java.util.*
 
-fun HTML.indexHtml(googleApiKey: String) {
+val appStartTimestamp = Calendar.getInstance().toInstant().toString()
+
+fun HTML.indexHtml(googleApiKey: String, isLoopbackAddress: Boolean) {
+    val queryString =
+        if (isLoopbackAddress) "ver=${BuildKonfig.version}&ts=${appStartTimestamp}"
+        else "ver=${BuildKonfig.version}"
+
     head {
         title("Ticket to Ride!")
         styleBlock {
@@ -29,7 +36,7 @@ fun HTML.indexHtml(googleApiKey: String) {
             +"Loading..."
         }
         script(src = "//maps.googleapis.com/maps/api/js?key=${googleApiKey}") {}
-        script(src = "/ticket-to-ride.js") {}
+        script(src = "/ticket-to-ride.js?$queryString") {}
     }
 }
 

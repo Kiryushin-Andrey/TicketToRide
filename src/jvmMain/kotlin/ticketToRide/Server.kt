@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import mu.KotlinLogging
+import java.net.InetAddress
 
 class PlayerConnection(val gameId: GameId, val name: PlayerName, private val ws: WebSocketSession) {
     suspend fun send(resp: Response) = ws.send(json.stringify(Response.serializer(), resp))
@@ -36,6 +37,9 @@ fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
     val googleApiKey = environment.config.property("google-api-key").getString()
+    val host = environment.config.property("ktor.deployment.host").getString()
+    val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
+
     install(WebSockets)
     install(ContentNegotiation) { json(json) }
     install(CachingHeaders) {
@@ -62,10 +66,10 @@ fun Application.module() {
         static("cards") { resources("cards") }
 
         get("/") {
-            call.respondHtml { indexHtml(googleApiKey) }
+            call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
         }
         get("/game/{gameId}") {
-            call.respondHtml { indexHtml(googleApiKey) }
+            call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
         }
 
         route("/internal") {

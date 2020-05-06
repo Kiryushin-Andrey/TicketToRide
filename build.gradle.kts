@@ -1,16 +1,15 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-}
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.codingfeline.buildkonfig.gradle.*
+import com.codingfeline.buildkonfig.compiler.*
+import java.io.ByteArrayOutputStream
 
 plugins {
     application
     id("org.jetbrains.kotlin.multiplatform") version "1.3.71"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.3.71"
     id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.codingfeline.buildkonfig") version "0.5.1"
 }
 
 repositories {
@@ -111,10 +110,26 @@ kotlin {
 }
 
 tasks {
+    configure<BuildKonfigExtension> {
+        fun getGitHash(): String {
+            val stdout = ByteArrayOutputStream()
+            exec {
+                commandLine("git", "rev-parse", "--short", "HEAD")
+                standardOutput = stdout
+            }
+            return stdout.toString().trim()
+        }
+
+        packageName = "ticketToRide"
+        defaultConfigs {
+            buildConfigField(FieldSpec.Type.STRING, "version", getGitHash())
+        }
+    }
+
     val devJs = named<KotlinWebpack>("jsBrowserDevelopmentWebpack")
     val prodJs = named<KotlinWebpack>("jsBrowserProductionWebpack")
 
-    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    named<ShadowJar>("shadowJar") {
         manifest {
             attributes("Main-Class" to application.mainClassName)
         }
