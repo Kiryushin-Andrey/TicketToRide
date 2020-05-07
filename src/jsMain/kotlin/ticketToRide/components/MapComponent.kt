@@ -1,6 +1,6 @@
 package ticketToRide.components
 
-import react.*
+import react.RBuilder
 import ticketToRide.*
 import ticketToRide.playerState.*
 

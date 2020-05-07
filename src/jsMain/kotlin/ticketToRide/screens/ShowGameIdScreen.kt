@@ -3,6 +3,7 @@ package ticketToRide.screens
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
+import org.w3c.dom.HTMLInputElement
 import react.*
 import react.dom.a
 import react.dom.p
@@ -27,6 +28,9 @@ class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
                 open = true
                 maxWidth = "sm"
                 fullWidth = true
+                onKeyDown = { e ->
+                    if (e.keyCode == 13) props.onClosed()
+                }
             }
             mDialogContent {
                 p {

@@ -4,6 +4,7 @@ import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
 import kotlinx.css.*
+import org.w3c.dom.HTMLInputElement
 import org.w3c.notifications.DEFAULT
 import org.w3c.notifications.Notification
 import org.w3c.notifications.NotificationPermission
@@ -25,10 +26,11 @@ interface WelcomeScreenState : RState {
 }
 
 class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
+    private val gameId =
+        if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
+        else null
+
     override fun RBuilder.render() {
-        val gameId =
-            if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
-            else null
         mDialog {
             css {
                 +ComponentStyles.welcomeDialog
@@ -43,11 +45,18 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                     attrs {
                         error = state.errorText != null
                         helperText = state.errorText ?: ""
+                        autoFocus = true
                         onChange = {
                             val value = it.targetInputValue.trim()
                             setState {
                                 playerName = value
                                 errorText = if (value.isBlank()) "Enter your name" else null
+                            }
+                        }
+                        onKeyDown = { e ->
+                            if (e.keyCode == 13) {
+                                val text = (e.target as HTMLInputElement).value
+                                setState({ it.apply { playerName = text } }, ::proceed)
                             }
                         }
                     }
@@ -63,15 +72,19 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                 val btnTitle = if (gameId == null) "Start the Game!" else "Join the Game!"
                 mButton(btnTitle, MColor.primary, MButtonVariant.contained,
                     disabled = state.errorText != null,
-                    onClick = {
-                        Notification.requestPermission()
-                        val playerName = PlayerName(state.playerName)
-                        if (gameId == null)
-                            props.onStartGame(playerName)
-                        else
-                            props.onJoinGame(GameId(gameId), playerName)
-                    })
+                    onClick = { proceed() })
             }
+        }
+    }
+
+    private fun proceed() {
+        if (state.playerName.isNotBlank()) {
+            Notification.requestPermission()
+            val playerName = PlayerName(state.playerName)
+            if (gameId == null)
+                props.onStartGame(playerName)
+            else
+                props.onJoinGame(GameId(gameId), playerName)
         }
     }
 

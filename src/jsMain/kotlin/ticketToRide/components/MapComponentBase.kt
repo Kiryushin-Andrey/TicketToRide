@@ -5,6 +5,7 @@ import google.map.react.GoogleMapReact
 import google.map.react.Props
 import google.maps.*
 import kotlinext.js.jsObject
+import kotlinx.css.RuleSet
 import org.w3c.dom.*
 import react.*
 import ticketToRide.*
@@ -53,12 +54,13 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         selected = props.citiesToHighlight.contains(CityName(city.name))
     }
 
-    protected open fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) = with(segmentProps) {
-        this.from = from
-        this.to = to
-        color = route.color
-        points = route.points
-    }
+    protected open fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) =
+        with(segmentProps) {
+            this.from = from
+            this.to = to
+            color = route.color
+            points = route.points
+        }
 
     private fun RBuilder.routeSegments() {
         state.map?.let { map ->

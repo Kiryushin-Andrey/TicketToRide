@@ -20,6 +20,7 @@ interface AppState : RState {
     var errorMessage: String
     var showErrorMessage: Boolean
     var secsToReconnect: Int
+    var map: GameMap
 }
 
 private const val ErrorMessageTimeoutSecs = 4
@@ -41,6 +42,7 @@ class App() : RComponent<RProps, AppState>() {
         chatMessages = mutableListOf()
         errorMessage = ""
         secsToReconnect = 0
+        map = GameMap
     }
 
     private fun connectToServer(requests: Channel<Request>) {
@@ -104,9 +106,9 @@ class App() : RComponent<RProps, AppState>() {
                             setState {
                                 screen = Screen.GameInProgress(
                                     it.gameId,
-                                    GameMap,
+                                    state.map,
                                     it.gameState,
-                                    PlayerState.initial(GameMap, it.gameState, requests)
+                                    PlayerState.initial(state.map, it.gameState, requests)
                                 )
                             }
                         }
@@ -125,7 +127,7 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.GameOver ->
                     endScreen {
                         gameMap = it.gameMap
-                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets) }
+                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets, state.map) }
                         chatMessages = state.chatMessages
                         onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
                     }
@@ -181,9 +183,9 @@ class App() : RComponent<RProps, AppState>() {
                         } else {
                             Screen.GameInProgress(
                                 msg.gameId,
-                                GameMap,
+                                state.map,
                                 msg.state,
-                                PlayerState.initial(GameMap, msg.state, requests)
+                                PlayerState.initial(state.map, msg.state, requests)
                             )
                         }
                         chatMessages = chatMessages.apply { add(msg.action.chatMessage()) }
@@ -223,7 +225,7 @@ class App() : RComponent<RProps, AppState>() {
             (state.screen as? Screen.GameInProgress)?.let {
                 screen = Screen.GameOver(
                     msg.gameId,
-                    GameMap,
+                    state.map,
                     msg.players,
                     it.gameState.me
                 )

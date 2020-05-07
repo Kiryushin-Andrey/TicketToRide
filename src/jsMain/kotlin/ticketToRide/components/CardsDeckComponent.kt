@@ -15,16 +15,16 @@ import kotlin.browser.document
 class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
 
     override fun componentDidMount() {
-        document.addEventListener("keypress", ::onKeyPress)
+        document.addEventListener("keypress", onKeyPress)
     }
 
     override fun componentWillUnmount() {
-        document.removeEventListener("keypress", ::onKeyPress)
+        document.removeEventListener("keypress", onKeyPress)
     }
 
-    private fun onKeyPress(e: Event) = with(e as KeyboardEvent) {
-        when {
-            canPickCards && charCode.toChar() in ('0'..'5') -> {
+    private val onKeyPress = { e: Event ->
+        with(e as KeyboardEvent) {
+            if (canPickCards && charCode.toChar() in ('0'..'5')) {
                 val cardIx = (key.toInt() - 1).takeIf { it >= 0 }
                 if (getDisabledTooltip(cardIx) == null)
                     act { if (cardIx != null) pickedOpenCard(cardIx) else pickedClosedCard() }
@@ -74,8 +74,7 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
 
     private object ComponentStyles : StyleSheet("CardsDeck", isStatic = true) {
         val cardsDeck by css {
-            gridColumnStart = GridColumnStart("1")
-            gridColumnEnd = GridColumnEnd("4")
+            height = 100.pct
             display = Display.flex
             flexDirection = FlexDirection.row
             flexWrap = FlexWrap.wrap

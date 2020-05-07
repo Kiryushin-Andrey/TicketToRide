@@ -26,81 +26,111 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
     }
 
     override fun RBuilder.render() {
+        val longestPathOfAll = props.players.map { it.longestPath }.max()!!
+        val winner = props.players.maxBy { it.getTotalPoints(longestPathOfAll) }!!
+
         styledDiv {
             css {
                 height = 100.pct
                 width = 100.pct
                 display = Display.grid
-                gridTemplateColumns =
-                    GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows("0.2fr"))
+                gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows("0.2fr"))
+                gridTemplateRows = GridTemplateRows(GridAutoRows(40.px), GridAutoRows.auto)
+                gridTemplateAreas = GridTemplateAreas("\"left header right\" \"left map right\"")
             }
 
             styledDiv {
                 css {
+                    put("grid-area", "left")
                     +ComponentStyles.verticalPanel
                     put("resize", "horizontal")
                 }
 
-                val longestPath = props.players.map { it.longestPath }.max()!!
-                for (player in props.players) {
-                    playerStats(player, longestPath)
+                for ((ix, player) in props.players.sortedByDescending { it.getTotalPoints(longestPathOfAll) }.withIndex()) {
+                    playerStats(player, longestPathOfAll, ix == 0)
                 }
             }
 
-            finalMap {
-                gameMap = props.gameMap
-                players = props.players.map { it.playerView }
-                citiesToHighlight = state.citiesToHighlight
-                onCityMouseOver = { setState { citiesToHighlight += it } }
-                onCityMouseOut = { setState { citiesToHighlight -= it } }
+            headerMessage(winner)
+
+            styledDiv {
+                css {
+                    put("grid-area", "map")
+                    width = 100.pct
+                    height = 100.pct
+                }
+                finalMap {
+                    gameMap = props.gameMap
+                    players = props.players.map { it.playerView }
+                    citiesToHighlight = state.citiesToHighlight
+                    onCityMouseOver = { setState { citiesToHighlight += it } }
+                    onCityMouseOut = { setState { citiesToHighlight -= it } }
+                }
             }
 
             styledDiv {
                 css {
+                    put("grid-area", "right")
                     +ComponentStyles.verticalPanel
                 }
 
-                chat(props.chatMessages, props.onSendMessage)
+                chatMessages(props.chatMessages)
+                chatSendMessageTextBox(props.onSendMessage)
             }
         }
     }
 
-    private fun RBuilder.playerStats(player: PlayerFinalStats, longestPath: Int) {
-        val fulfilledTicketsPoints = player.fulfilledTickets.sumBy { it.points }
-        val unfulfilledTicketPoints = player.unfulfilledTickets.sumBy { it.points }
-        val segmentsPoints = player.occupiedSegments.groupingBy { it.length }.eachCount().entries
-            .sumBy { (length, count) -> props.gameMap.getPointsForSegments(length) * count }
-        val longestPathPoints = (if (player.longestPath == longestPath) props.gameMap.pointsForLongestPath else 0)
-        val totalPoints = fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + longestPathPoints
+
+    private fun RBuilder.headerMessage(winner: PlayerFinalStats) {
+        styledDiv {
+            css {
+                put("grid-area", "header")
+                width = 100.pct
+                backgroundColor = Color.lightGoldenrodYellow
+            }
+            mTypography("Игра закончена. Победил ${winner.name.value}!", MTypographyVariant.h5) {
+                css {
+                    fontStyle = FontStyle.italic
+                    textAlign = TextAlign.center
+                }
+            }
+        }
+    }
+
+    private fun RBuilder.playerStats(player: PlayerFinalStats, longestPathOfAll: Int, expanded: Boolean) {
 
         mPaper {
-            attrs { elevation = 2 }
             css { margin = 4.px.toString() }
+            attrs { elevation = 2 }
 
             mExpansionPanel {
                 css { backgroundColor = Color(player.color.rgb).withAlpha(0.4) }
+                attrs {
+                    defaultExpanded = expanded
+                }
 
                 mExpansionPanelSummary {
                     attrs {
                         withClasses(
                             "root" to ComponentStyles.getClassName { it::playerSummaryRoot },
-                            "content" to ComponentStyles.getClassName { it::playerSummaryContent })
-                            "expanded" to ComponentStyles.getClassName { it::summaryExpanded }
+                            "content" to ComponentStyles.getClassName { it::playerSummaryContent },
+                            "expanded" to ComponentStyles.getClassName { it::summaryExpanded })
                     }
-                    playerBlockHeader(player, totalPoints)
+                    playerBlockHeader(player, player.getTotalPoints(longestPathOfAll))
                 }
 
                 mExpansionPanelDetails {
                     attrs {
                         className = ComponentStyles.getClassName { it::playerDetailsRoot }
                     }
-                    if (player.longestPath == longestPath) {
-                        longestPathPanel(longestPath)
-                    }
+
+                    if (player.longestPath == longestPathOfAll)
+                        longestPathPanel(longestPathOfAll)
 
                     playerTicketStats(player)
 
-                    playerSegmentStats(player, segmentsPoints)
+                    if (player.occupiedSegments.isNotEmpty())
+                        playerSegmentStats(player, player.segmentsPoints)
                 }
             }
         }

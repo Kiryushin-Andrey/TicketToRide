@@ -2,11 +2,24 @@ package ticketToRide
 
 import graph.*
 
-class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>) {
+class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>, private val map: GameMap) {
     val name get() = playerView.name
     val color get() = playerView.color
     val carsLeft get() = playerView.carsLeft
     val occupiedSegments get() = playerView.occupiedSegments
+
+    val fulfilledTicketsPoints get() = fulfilledTickets.sumBy { it.points }
+    val unfulfilledTicketPoints get() = unfulfilledTickets.sumBy { it.points }
+    val segmentsPoints
+        get() = occupiedSegments.groupingBy { it.length }.eachCount().entries
+            .sumBy { (length, count) -> map.getPointsForSegments(length) * count }
+
+    fun getLongestPathPoints(longestPathOfAll: Int) =
+        if (longestPath == longestPathOfAll) map.pointsForLongestPath else 0
+
+    fun getTotalPoints(longestPathOfAll: Int) =
+        fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + getLongestPathPoints(longestPathOfAll)
+
 
     val longestPath: Int
     val fulfilledTickets: List<Ticket>

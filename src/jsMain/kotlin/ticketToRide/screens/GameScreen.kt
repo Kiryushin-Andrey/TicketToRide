@@ -16,52 +16,73 @@ interface GameScreenProps : ComponentBaseProps {
 
 interface GameScreenState : RState {
     var citiesToHighlight: Set<CityName>
+    var searchText: String
 }
 
 class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
     override fun GameScreenState.init() {
         citiesToHighlight = emptySet()
+        searchText = ""
     }
 
     override fun RBuilder.render() {
+        val rows = mutableListOf(GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
+        val areas = mutableListOf("left map right", "send map search", "cards cards cards")
+        if (myTurn || lastRound) {
+            rows.add(0, GridAutoRows(40.px))
+            areas.add(0, "left header right")
+        }
         styledDiv {
             css {
                 height = 100.pct
                 width = 100.pct
                 display = Display.grid
                 gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
-                gridTemplateRows = GridTemplateRows(GridAutoRows.auto, GridAutoRows(120.px))
+                gridTemplateRows = GridTemplateRows(*rows.toTypedArray())
+                gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
+            }
+
+            when {
+                myTurn -> headerMessage("Ваш ход", Color.lightGreen)
+                lastRound -> headerMessage("Последний круг", Color.darkSalmon)
             }
 
             styledDiv {
                 css {
+                    put("grid-area", "left")
                     +ComponentStyles.verticalPanel
                     put("resize", "horizontal")
                 }
 
-                if (lastRound) {
-                    mTypography("Последний круг", MTypographyVariant.h6, color = MTypographyColor.secondary) {
-                        css {
-                            marginLeft = 5.px
-                        }
-                    }
-                    horizontalDivider()
-                }
-
                 playersList(players, turn)
                 horizontalDivider()
-                chat(props.chatMessages, props.onSendMessage)
-            }
-
-            gameMap(props) {
-                gameMap = props.gameMap
-                citiesToHighlight = state.citiesToHighlight
-                onCityMouseOver = { setState { citiesToHighlight += it } }
-                onCityMouseOut = { setState { citiesToHighlight -= it } }
+                chatMessages(props.chatMessages)
             }
 
             styledDiv {
                 css {
+                    put("grid-area", "send")
+                }
+                chatSendMessageTextBox(props.onSendMessage)
+            }
+
+            styledDiv {
+                css {
+                    put("grid-area", "map")
+                    width = 100.pct
+                    height = 100.pct
+                }
+                gameMap(props) {
+                    gameMap = props.gameMap
+                    citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
+                    onCityMouseOver = { setState { citiesToHighlight += it } }
+                    onCityMouseOut = { setState { citiesToHighlight -= it } }
+                }
+            }
+
+            styledDiv {
+                css {
+                    put("grid-area", "right")
                     +ComponentStyles.verticalPanel
                 }
 
@@ -80,8 +101,52 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 }
             }
 
-            cardsDeck(props)
+            styledDiv {
+                css {
+                    put("grid-area", "search")
+                    width = 96.pct
+                    marginLeft = 4.px
+                }
+                horizontalDivider()
+                searchTextBox {
+                    text = state.searchText
+                    onTextChanged = { setState { searchText = it } }
+                    onEnter = {
+                        getCitiesBySearchText().takeIf { it.size == 1 }?.let {
+                            act { onCityClick(it[0]) }
+                        }
+                    }
+                }
+            }
+
+            styledDiv {
+                css {
+                    put("grid-area", "cards")
+                }
+                cardsDeck(props)
+            }
         }
+    }
+
+    private fun RBuilder.headerMessage(text: String, color: Color) {
+        styledDiv {
+            css {
+                put("grid-area", "header")
+                width = 100.pct
+                backgroundColor = color
+            }
+            mTypography(text, MTypographyVariant.h5) {
+                css {
+                    fontStyle = FontStyle.italic
+                    textAlign = TextAlign.center
+                }
+            }
+        }
+    }
+
+    private fun getCitiesBySearchText() = state.searchText.let { input ->
+        if (input.isNotBlank()) props.gameMap.cities.filter { it.name.startsWith(input) }.map { CityName(it.name) }
+        else emptyList()
     }
 
     private object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
@@ -91,7 +156,9 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             flexWrap = FlexWrap.nowrap
             minWidth = 300.px
             minHeight = LinearDimension.minContent
-            overflow = Overflow.auto
+            overflowY = Overflow.auto
+            marginLeft = 4.px
+            marginRight = 4.px
         }
     }
 }
