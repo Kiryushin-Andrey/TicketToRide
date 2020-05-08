@@ -7,7 +7,7 @@ import mu.KotlinLogging
 import kotlin.random.Random
 
 @FlowPreview
-class Game(private val onAllPlayersLeft: (Game) -> Unit) {
+class Game(private val initialCarsCount: Int, private val onAllPlayersLeft: (Game) -> Unit) {
 
     val id = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
 
@@ -24,7 +24,7 @@ class Game(private val onAllPlayersLeft: (Game) -> Unit) {
         players.add(firstPlayer)
         requestsQueue.offer(RequestQueueItem.Req(JoinGameRequest(id, firstPlayer.name), firstPlayer))
         requestsQueue.consumeAsFlow()
-            .scan(GameState.initial(id) to emptyList<SendResponse>()) { (state, _), req ->
+            .scan(GameState.initial(id, initialCarsCount) to emptyList<SendResponse>()) { (state, _), req ->
                 when (req) {
                     is RequestQueueItem.DumpState -> {
                         req.deferred.complete(state)

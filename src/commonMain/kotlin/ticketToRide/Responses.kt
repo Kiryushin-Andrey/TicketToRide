@@ -2,12 +2,6 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 
-enum class JoinGameFailure {
-    GameNotExists,
-    PlayerNameEmpty,
-    PlayerNameTaken
-}
-
 @Serializable
 sealed class Response {
 

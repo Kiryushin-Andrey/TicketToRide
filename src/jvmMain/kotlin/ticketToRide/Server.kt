@@ -107,7 +107,7 @@ fun Application.module() {
                     when (req) {
 
                         is StartGameRequest ->
-                            Game { games.remove(it.id) }.let { game ->
+                            Game(req.carsCount) { games.remove(it.id) }.let { game ->
                                 games[game.id] = game
                                 connection = PlayerConnection(game.id, req.playerName, this).also { conn ->
                                     rootScope.launch { game.start(conn) }

@@ -107,14 +107,19 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                 css { backgroundColor = Color(player.color.rgb).withAlpha(0.4) }
                 attrs {
                     defaultExpanded = expanded
+                    withClasses(
+                        "root" to ComponentStyles.getClassName { it::playerPanelRoot },
+                        "expanded" to ComponentStyles.getClassName { it::summaryExpanded })
                 }
 
                 mExpansionPanelSummary {
                     attrs {
+                        expandIcon = buildElement { mIcon("expand_more") }!!
                         withClasses(
-                            "root" to ComponentStyles.getClassName { it::playerSummaryRoot },
+                            "root" to ComponentStyles.getClassName { it::playerPanelRoot },
                             "content" to ComponentStyles.getClassName { it::playerSummaryContent },
-                            "expanded" to ComponentStyles.getClassName { it::summaryExpanded })
+                            "expanded" to ComponentStyles.getClassName { it::summaryExpanded },
+                            "expandIcon" to ComponentStyles.getClassName { it::summaryExpandIcon })
                     }
                     playerBlockHeader(player, player.getTotalPoints(longestPathOfAll))
                 }
@@ -270,13 +275,21 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
             paddingLeft = 12.px
         }
 
-        val playerSummaryRoot by css {
+        val playerPanelRoot by css {
             minHeight = 0.px
             padding = 0.px.toString()
+            "&.Mui-expanded" {
+                margin = 0.px.toString()
+                minHeight = 0.px
+            }
         }
 
         val playerSummaryContent by css {
             margin = 0.px.toString()
+            "&.Mui-expanded" {
+                margin = 0.px.toString()
+                minHeight = 0.px
+            }
         }
 
         val playerDetailsRoot by css {
@@ -286,10 +299,11 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
             paddingBottom = 10.px
         }
 
-        val summaryExpanded by css {
-            margin = 0.px.toString()
-            minHeight = 0.px
+        val summaryExpandIcon by css {
+            marginRight = 0.px
         }
+
+        val summaryExpanded by css {}
     }
 }
 

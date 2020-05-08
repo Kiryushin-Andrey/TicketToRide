@@ -26,12 +26,12 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
     }
 
     override fun RBuilder.render() {
-        val rows = mutableListOf(GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
-        val areas = mutableListOf("left map right", "send map search", "cards cards cards")
-        if (myTurn || lastRound) {
-            rows.add(0, GridAutoRows(40.px))
-            areas.add(0, "left header right")
-        }
+        val rows = listOf(GridAutoRows(40.px), GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
+        val areas = listOf(
+            "left header right",
+            "left map right",
+            "send map search",
+            "cards cards cards")
         styledDiv {
             css {
                 height = 100.pct
@@ -45,6 +45,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             when {
                 myTurn -> headerMessage("Ваш ход", Color.lightGreen)
                 lastRound -> headerMessage("Последний круг", Color.darkSalmon)
+                else -> headerMessage("Ходит ${players[turn].name.value}", Color.white)
             }
 
             styledDiv {

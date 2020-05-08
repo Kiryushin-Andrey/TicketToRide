@@ -6,7 +6,7 @@ import kotlinx.serialization.*
 sealed class Request
 
 @Serializable
-class StartGameRequest(val playerName: PlayerName) : Request()
+class StartGameRequest(val playerName: PlayerName, val carsCount: Int) : Request()
 
 @Serializable
 class ChatMessageRequest(val message: String) : Request()

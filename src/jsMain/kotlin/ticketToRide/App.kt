@@ -38,7 +38,7 @@ class App() : RComponent<RProps, AppState>() {
     }
 
     override fun AppState.init() {
-        screen = Screen.Welcome()
+        screen = Screen.Welcome
         chatMessages = mutableListOf()
         errorMessage = ""
         secsToReconnect = 0
@@ -236,8 +236,8 @@ class App() : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun startGame(playerName: PlayerName) {
-        requests.offer(StartGameRequest(playerName))
+    private fun startGame(playerName: PlayerName, carsNumber: Int) {
+        requests.offer(StartGameRequest(playerName, carsNumber))
     }
 
     private fun joinGame(gameId: GameId, playerName: PlayerName) {

@@ -4,7 +4,7 @@ import ticketToRide.playerState.PlayerState
 
 sealed class Screen {
 
-    data class Welcome(val joinGameFailure: JoinGameFailure? = null) : Screen()
+    object Welcome : Screen()
 
     data class ShowGameId(val gameId: GameId, val gameState: GameStateView) : Screen()
 

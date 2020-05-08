@@ -3,7 +3,15 @@ package ticketToRide.screens
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanel
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelDetails
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelSummary
+import com.ccfraser.muirwik.components.input.mInput
+import com.ccfraser.muirwik.components.input.mInputLabel
+import com.ccfraser.muirwik.components.input.type
 import kotlinx.css.*
+import kotlinx.css.properties.BoxShadows
+import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
 import org.w3c.notifications.DEFAULT
 import org.w3c.notifications.Notification
@@ -12,23 +20,28 @@ import react.*
 import react.dom.b
 import styled.*
 import ticketToRide.*
+import ticketToRide.components.withClasses
 import kotlin.browser.window
 
 interface WelcomeScreenProps : RProps {
-    var onStartGame: (PlayerName) -> Unit
+    var onStartGame: (PlayerName, Int) -> Unit
     var onJoinGame: (GameId, PlayerName) -> Unit
-    var joinGameFailure: JoinGameFailure?
 }
 
 interface WelcomeScreenState : RState {
     var playerName: String
     var errorText: String?
+    var carsNumber: Int
 }
 
 class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
     private val gameId =
         if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
         else null
+
+    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
+        carsNumber = 45
+    }
 
     override fun RBuilder.render() {
         mDialog {
@@ -61,6 +74,56 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                         }
                     }
                 }
+                if (gameId == null) {
+                    mExpansionPanel {
+                        attrs {
+                            withClasses(
+                                "root" to ComponentStyles.getClassName { it::settingsPanel },
+                                "expanded" to ComponentStyles.getClassName { it::settingsPanelExpanded })
+                        }
+
+                        mExpansionPanelSummary {
+                            attrs {
+                                css {
+                                    padding = 0.px.toString()
+                                }
+                                expandIcon = buildElement { mIcon("expand_more") }!!
+                                withClasses(
+                                    "root" to ComponentStyles.getClassName { it::settingsPanelSummaryRoot },
+                                    "content" to ComponentStyles.getClassName { it::settingsPanelSummaryContent },
+                                    "expanded" to ComponentStyles.getClassName { it::settingsPanelExpanded })
+                            }
+                            mInputLabel("More settings")
+                        }
+
+                        mExpansionPanelDetails {
+                            attrs {
+                                withClasses(
+                                    "root" to ComponentStyles.getClassName { it::settingsPanelContent }
+                                )
+                            }
+                            mInputLabel("Initial number of cars on hand") {
+                                mInput {
+                                    css {
+                                        marginLeft = 10.px
+                                        width = 40.px
+                                    }
+                                    attrs {
+                                        type = InputType.number
+                                        value = state.carsNumber.toString()
+                                        asDynamic().min = 5
+                                        asDynamic().max = 60
+                                        onChange = { e ->
+                                            e.targetInputValue.trim().toIntOrNull()?.let {
+                                                setState { carsNumber = it }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (Notification.permission == NotificationPermission.DEFAULT) {
                     mTypography(variant = MTypographyVariant.body1) {
                         b { +"Note: " }
@@ -82,7 +145,7 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
             Notification.requestPermission()
             val playerName = PlayerName(state.playerName)
             if (gameId == null)
-                props.onStartGame(playerName)
+                props.onStartGame(playerName, state.carsNumber)
             else
                 props.onJoinGame(GameId(gameId), playerName)
         }
@@ -93,6 +156,33 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
             width = 100.pct
             margin = "0"
         }
+        val settingsPanel by css {
+            borderStyle = BorderStyle.none
+            boxShadow = BoxShadows.none
+            before { display = Display.none }
+            "&.Mui-expanded" {
+                minHeight = 0.px
+                margin = 0.px.toString()
+            }
+        }
+        val settingsPanelSummaryRoot by ComponentStyles.css {
+            "&.Mui-expanded" {
+                minHeight = 0.px
+                margin = 0.px.toString()
+            }
+        }
+        val settingsPanelSummaryContent by ComponentStyles.css {
+            margin = 0.px.toString()
+            padding = 0.px.toString()
+            "&.Mui-expanded" {
+                minHeight = 0.px
+                margin = 0.px.toString()
+            }
+        }
+        val settingsPanelContent by ComponentStyles.css {
+            padding = 0.px.toString()
+        }
+        val settingsPanelExpanded by ComponentStyles.css {}
     }
 }
 

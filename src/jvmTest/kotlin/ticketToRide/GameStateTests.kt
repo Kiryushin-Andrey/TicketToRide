@@ -67,5 +67,6 @@ fun createGameState(playersCount: Int) =
         },
         (1..5).map { Card.random() },
         0,
-        null
+        null,
+        45
     )

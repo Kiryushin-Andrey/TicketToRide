@@ -52,7 +52,7 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
     val cards = (1..4).map { Card.random() }
     val tickets = getRandomTickets(1, true) + getRandomTickets(3, false)
     val newPlayer = Player(
-        name, color, CarsCountPerPlayer, cards, emptyList(),
+        name, color, initialCarsCount, cards, emptyList(),
         PendingTicketsChoice(tickets, 2, true)
     )
     return copy(players = players + newPlayer)

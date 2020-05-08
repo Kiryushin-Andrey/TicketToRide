@@ -45,7 +45,7 @@ class ChatSendMessageTextBox : RComponent<ChatSendMessageProps, ChatSendMessageS
                     margin = MFormControlMargin.dense
                 }
             }
-            mIconButton("send", MColor.secondary) {
+            mIconButton("send") {
                 attrs {
                     onClick = { sendMessage() }
                 }

@@ -2,7 +2,6 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 
-const val CarsCountPerPlayer = 45
 const val OpenCardsCount = 5
 
 @Serializable
@@ -35,10 +34,12 @@ data class GameState(
     val players: List<Player>,
     val openCards: List<Card>,
     val turn: Int,
-    val endsOnPlayer: Int?
+    val endsOnPlayer: Int?,
+    val initialCarsCount: Int
 ) {
     companion object {
-        fun initial(id: GameId) = GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random() }, 0, null)
+        fun initial(id: GameId, initialCarsCount: Int) =
+            GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random() }, 0, null, initialCarsCount)
     }
 
     fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
