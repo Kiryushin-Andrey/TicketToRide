@@ -27,7 +27,7 @@ abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBasePro
     val myCards get() = gameState.myCards
     val myTickets get() = gameState.myTicketsOnHand
     val openCards get() = gameState.openCards
-    val canPickCards get() = myTurn && !(playerState is PlayerState.ChoosingTickets)
+    val canPickCards get() = myTurn && playerState !is PlayerState.ChoosingTickets
 
     protected fun act(block: PlayerState.() -> PlayerState) =
         props.onAction(playerState.block())

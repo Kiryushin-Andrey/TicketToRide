@@ -60,7 +60,9 @@ fun createGameState(playersCount: Int) =
                 PlayerName(it.toString()),
                 PlayerColor.values().random(),
                 45,
+                3,
                 (1..4).map { Card.random() },
+                emptyList(),
                 emptyList(),
                 null
             )

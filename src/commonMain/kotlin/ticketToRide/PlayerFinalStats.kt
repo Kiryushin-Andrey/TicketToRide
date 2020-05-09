@@ -2,7 +2,14 @@ package ticketToRide
 
 import graph.*
 
-class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>, private val map: GameMap) {
+const val PointsPerStation = 4
+
+class PlayerFinalStats(
+    val playerView: PlayerView,
+    tickets: List<Ticket>,
+    allPlayers: List<PlayerView>,
+    private val map: GameMap
+) {
     val name get() = playerView.name
     val color get() = playerView.color
     val carsLeft get() = playerView.carsLeft
@@ -10,6 +17,7 @@ class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>, privat
 
     val fulfilledTicketsPoints get() = fulfilledTickets.sumBy { it.points }
     val unfulfilledTicketPoints get() = unfulfilledTickets.sumBy { it.points }
+    val stationPoints get() = playerView.stationsLeft * PointsPerStation
     val segmentsPoints
         get() = occupiedSegments.groupingBy { it.length }.eachCount().entries
             .sumBy { (length, count) -> map.getPointsForSegments(length) * count }
@@ -18,7 +26,9 @@ class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>, privat
         if (longestPath == longestPathOfAll) map.pointsForLongestPath else 0
 
     fun getTotalPoints(longestPathOfAll: Int) =
-        fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + getLongestPathPoints(longestPathOfAll)
+        fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + stationPoints + getLongestPathPoints(
+            longestPathOfAll
+        )
 
 
     val longestPath: Int
@@ -38,13 +48,28 @@ class PlayerFinalStats(val playerView: PlayerView, tickets: List<Ticket>, privat
             }
         }
         val subgraphs = graph.splitIntoConnectedSubgraphs()
-
-        fulfilledTickets =
-            tickets.filter { t -> subgraphs.any { it.containsKey(t.from.value) && it.containsKey(t.to.value) } }
-        unfulfilledTickets = tickets - fulfilledTickets
-
         longestPath = subgraphs
             .map { it.getMaxEulerianSubgraph().getTotalWeight() }
             .max() ?: 0
+
+        fun getFulfilledTickets(subgraphs: Sequence<Graph<String>>) = tickets.filter { ticket ->
+            subgraphs.any { it.containsKey(ticket.from.value) && it.containsKey(ticket.to.value) }
+        }
+
+        fulfilledTickets = playerView.placedStations
+            .asSequence()
+            .map { city ->
+                // get adjacent occupied segments for each station
+                allPlayers.filter { it != playerView }
+                    .flatMap { it.occupiedSegments.filter { s -> s.from == city || s.to == city } }
+            }
+            .filter { it.isNotEmpty() }
+            .allCombinations()
+            .map { it.fold(graph) { g, s -> g.withEdge(s.from.value, s.to.value, s.length) } }
+            .map { getFulfilledTickets(it.splitIntoConnectedSubgraphs()) }
+            .maxBy { it.sumBy { it.points } }
+            ?: getFulfilledTickets(subgraphs)
+
+        unfulfilledTickets = tickets - fulfilledTickets
     }
 }

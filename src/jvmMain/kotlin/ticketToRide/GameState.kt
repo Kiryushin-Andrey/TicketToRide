@@ -2,6 +2,7 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 
+const val InitialStationsCount = 3
 const val OpenCardsCount = 5
 
 @Serializable
@@ -9,8 +10,10 @@ data class Player(
     val name: PlayerName,
     val color: PlayerColor,
     val carsLeft: Int,
+    val stationsLeft: Int,
     val cards: List<Card>,
     val occupiedSegments: List<Segment>,
+    val placedStations: List<CityName>,
     val ticketsForChoice: PendingTicketsChoice?,
     val ticketsOnHand: List<Ticket> = emptyList(),
     val away: Boolean = false
@@ -20,10 +23,12 @@ data class Player(
             name,
             color,
             carsLeft,
+            stationsLeft,
             cards.size,
             ticketsOnHand.size,
             away,
             occupiedSegments,
+            placedStations,
             ticketsForChoice.toState()
         )
 }

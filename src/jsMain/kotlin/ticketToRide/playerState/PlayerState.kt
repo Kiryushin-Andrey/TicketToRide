@@ -2,10 +2,10 @@ package ticketToRide.playerState
 
 import kotlinx.coroutines.channels.Channel
 import ticketToRide.*
-import kotlin.math.min
 
 typealias PickedFirstCard = PlayerState.MyTurn.PickedFirstCard
-typealias BuildingSegmentFrom = PlayerState.MyTurn.BuildingSegmentFrom
+typealias PickedCity = PlayerState.MyTurn.PickedCity
+typealias BuildingStation = PlayerState.MyTurn.BuildingStation
 typealias BuildingSegment = PlayerState.MyTurn.BuildingSegment
 
 sealed class PlayerState {
@@ -66,12 +66,33 @@ sealed class PlayerState {
 
         class PickedFirstCard internal constructor(prev: MyTurn, val chosenCardIx: Int) : MyTurn(prev)
 
-        class BuildingSegmentFrom internal constructor(prev: MyTurn, val from: CityName) : MyTurn(prev)
+        class PickedCity internal constructor(prev: MyTurn, val target: CityName) : MyTurn(prev) {
+            fun buildStation() = BuildingStation(this)
+        }
+
+        class BuildingStation private constructor(prev: MyTurn, val target: CityName, val chosenCardsToDropIx: Int?) : MyTurn(prev) {
+            internal constructor(prev: PickedCity) : this(prev, prev.target, null)
+            internal constructor(prev: BuildingStation, chosenCardsToDropIx: Int) : this(prev, prev.target, chosenCardsToDropIx)
+
+            val optionsForCardsToDrop by lazy {
+                if (gameState.me.stationsLeft > 0)
+                    myCards.getOptionsForCardsToDrop(gameState.me.placedStations.size + 1, null)
+                else
+                    emptyList()
+            }
+
+            fun chooseCardsToDrop(ix: Int) = BuildingStation(this, ix)
+
+            fun confirm() =
+                (if (optionsForCardsToDrop.size == 1) 0 else chosenCardsToDropIx)?.let {
+                    sendAndResetState(BuildStationRequest(target, optionsForCardsToDrop[it]))
+                } ?: this
+        }
 
         class BuildingSegment private constructor(prev: MyTurn, val segment: Segment, val chosenCardsToDropIx: Int?) :
             MyTurn(prev) {
 
-            internal constructor(prev: BuildingSegmentFrom, segment: Segment) : this(prev, segment, null)
+            internal constructor(prev: PickedCity, segment: Segment) : this(prev, segment, null)
 
             internal constructor(prev: ticketToRide.playerState.BuildingSegment, chosenCardsToDropIx: Int) : this(
                 prev,
@@ -79,26 +100,7 @@ sealed class PlayerState {
                 chosenCardsToDropIx
             )
 
-            val optionsForCardsToDrop by lazy { getOptionsForCardToDrop() }
-
-            private fun getOptionsForCardToDrop(): List<List<Card>> {
-                val countByCar = myCards.filterIsInstance<Card.Car>().groupingBy { it }.eachCount()
-                fun getOptionsForCars(locoCount: Int) =
-                    if (locoCount == segment.length)
-                        listOf(List(locoCount) { Card.Loco })
-                    else countByCar
-                        .filter {
-                            it.value >= segment.length - locoCount && (segment.color == null || it.key.color == segment.color)
-                        }
-                        .map { (car, _) ->
-                            val carsCount = segment.length - locoCount
-                            if (locoCount > 0) List(locoCount) { Card.Loco } + List(carsCount) { car }
-                            else List(carsCount) { car }
-                        }
-
-                val locoCount = min(segment.length, myCards.filterIsInstance<Card.Loco>().count())
-                return (0..locoCount).flatMap { getOptionsForCars(it) }
-            }
+            val optionsForCardsToDrop by lazy { myCards.getOptionsForCardsToDrop(segment.length, segment.color) }
 
             fun chooseCardsToDrop(ix: Int) = BuildingSegment(this, ix)
 
@@ -123,8 +125,7 @@ sealed class PlayerState {
         this is PickedFirstCard && openCards[cardIx] is Card.Car ->
             if (cardIx != chosenCardIx) {
                 sendAndResetState(PickCardsRequest.TwoCards.bothOpen(chosenCardIx, cardIx, openCards))
-            }
-            else
+            } else
                 MyTurn.Blank(this)
         this is MyTurn ->
             if (openCards[cardIx] is Card.Loco)
@@ -150,11 +151,11 @@ sealed class PlayerState {
     }
 
     fun onCityClick(cityName: CityName) = when (this) {
-        is BuildingSegmentFrom ->
-            gameMap.getSegmentBetween(from, cityName)?.let { BuildingSegment(this, it) }
-                ?: BuildingSegmentFrom(this, cityName)
+        is PickedCity ->
+            gameMap.getSegmentBetween(target, cityName)?.let { BuildingSegment(this, it) }
+                ?: PickedCity(this, cityName)
         is MyTurn ->
-            BuildingSegmentFrom(this, cityName)
+            PickedCity(this, cityName)
         else ->
             this
     }
@@ -162,7 +163,8 @@ sealed class PlayerState {
 
 val PlayerState.citiesToHighlight
     get() = when (this) {
-        is BuildingSegmentFrom -> listOf(from)
+        is PickedCity -> listOf(target)
+        is BuildingStation -> listOf(target)
         is BuildingSegment -> listOf(segment.from, segment.to)
         else -> emptyList()
     }

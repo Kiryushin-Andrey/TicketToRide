@@ -5,7 +5,6 @@ import google.map.react.GoogleMapReact
 import google.map.react.Props
 import google.maps.*
 import kotlinext.js.jsObject
-import kotlinx.css.RuleSet
 import org.w3c.dom.*
 import react.*
 import ticketToRide.*
@@ -14,6 +13,7 @@ import kotlin.js.Promise
 interface MapComponentBaseProps : RProps {
     var gameMap: GameMap
     var citiesToHighlight: Set<CityName>
+    var citiesWithStations: kotlin.collections.Map<CityName, PlayerView>
     var onCityMouseOver: (CityName) -> Unit
     var onCityMouseOut: (CityName) -> Unit
 }
@@ -51,6 +51,7 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         lat = city.latLng.lat
         lng = city.latLng.lng
         displayAllCityNames = state.mapZoom > 4
+        station = props.citiesWithStations[CityName(city.name)]
         selected = props.citiesToHighlight.contains(CityName(city.name))
     }
 

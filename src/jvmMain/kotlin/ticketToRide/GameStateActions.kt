@@ -24,6 +24,8 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
             inTurnOnly(fromPlayerName) { pickCards(fromPlayerName, req) }
         is BuildSegmentRequest ->
             inTurnOnly(fromPlayerName) { buildSegment(fromPlayerName, req.from, req.to, req.cards) }
+        is BuildStationRequest ->
+            inTurnOnly(fromPlayerName) { buildStation(fromPlayerName, req.target, req.cards) }
     }
     val message = with(newState) {
         SendResponse.ForAll { toPlayerName ->
@@ -52,7 +54,7 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
     val cards = (1..4).map { Card.random() }
     val tickets = getRandomTickets(1, true) + getRandomTickets(3, false)
     val newPlayer = Player(
-        name, color, initialCarsCount, cards, emptyList(),
+        name, color, initialCarsCount, InitialStationsCount, cards, emptyList(), emptyList(),
         PendingTicketsChoice(tickets, 2, true)
     )
     return copy(players = players + newPlayer)
@@ -116,6 +118,14 @@ fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards
     return updatePlayer(name) { occupySegment(segment, cards) }.advanceTurn()
 }
 
+fun GameState.buildStation(name: PlayerName, target: CityName, cards: List<Card>): GameState {
+    players.find { it.placedStations.contains(target) }?.let {
+        throw InvalidActionError("There is already a station in ${target.value} owned by ${it.name.value}")
+    }
+
+    return updatePlayer(name) { buildStation(target, cards) }.advanceTurn()
+}
+
 fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
     ticketsForChoice == null ->
         throw InvalidActionError("You do not have any pending tickets choice")
@@ -134,23 +144,51 @@ fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
     segment.length > carsLeft ->
         throw InvalidActionError("Not enough wagons ($carsLeft) to build ${segment.from.value} - ${segment.to.value} segment")
 
+    !cards.contains(cardsToDrop) ->
+        throw InvalidActionError("Cards to drop do not match cards on hand")
+
     !segment.canBuildWith(cardsToDrop) -> {
         val cardsDesc = cards.groupingBy { it }.eachCount().entries.joinToString { "${it.key} - ${it.value}" }
         throw InvalidActionError("You cannot build ${segment.from.value} - ${segment.to.value} segment with the cards $cardsDesc")
     }
 
-    else -> {
-        val list = cardsToDrop.toMutableList()
-        copy(
-            cards = cards.filter {
-                if (list.contains(it)) {
-                    list -= it; false
-                } else true
-            },
-            carsLeft = carsLeft - cardsToDrop.size,
-            occupiedSegments = occupiedSegments + segment
-        )
+    else -> copy(
+        cards = cards.drop(cardsToDrop),
+        carsLeft = carsLeft - cardsToDrop.size,
+        occupiedSegments = occupiedSegments + segment
+    )
+}
+
+fun Player.buildStation(target: CityName, cardsToDrop: List<Card>) = when {
+    cardsToDrop.filterIsInstance<Card.Car>().distinct().size > 1 ->
+        throw InvalidActionError("Only cards of the same color (or locos) are allowed to be dropped for building a station")
+
+    stationsLeft == 0 ->
+        throw InvalidActionError("No stations left on hand")
+
+    !cards.contains(cardsToDrop) ->
+        throw InvalidActionError("Cards to drop do not match cards on hand")
+
+    cardsToDrop.size != placedStations.size + 1 ->
+        throw InvalidActionError("Should drop 1 card for 1st station, 2 cards for 2nd station and 3 cards for 3rd station")
+
+    else -> copy(
+        cards = cards.drop(cardsToDrop),
+        stationsLeft = stationsLeft - 1,
+        placedStations = placedStations + target
+    )
+}
+
+fun List<Card>.drop(cardsToDrop: List<Card>) = cardsToDrop.toMutableList().let { list ->
+    filter {
+        if (list.contains(it)) {
+            list -= it; false
+        } else true
     }
+}
+
+fun List<Card>.contains(other: List<Card>) = other.groupingBy { it }.eachCount().let { another ->
+    groupingBy { it }.eachCount().all { (card, count) -> count >= (another[card] ?: 0) }
 }
 
 fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {

@@ -1,6 +1,7 @@
 package ticketToRide.components
 
 import com.ccfraser.muirwik.components.*
+import com.ccfraser.muirwik.components.button.MButtonVariant
 import com.ccfraser.muirwik.components.button.mButton
 import kotlinx.css.*
 import react.*
@@ -35,6 +36,8 @@ class MyTickets : ComponentBase<MyTicketsProps, RState>() {
                     flexDirection = FlexDirection.row
                     justifyContent = JustifyContent.spaceBetween
                     alignItems = Align.baseline
+                    paddingTop = 6.px
+                    paddingBottom = 6.px
                 }
                 mTypography("Выбор маршрутов", MTypographyVariant.h6) {
                     css {
@@ -46,7 +49,7 @@ class MyTickets : ComponentBase<MyTicketsProps, RState>() {
                         disableHoverListener = choice.isValid
                     }
                     span {
-                        mButton("Готово", MColor.primary) {
+                        mButton("Готово", MColor.primary, MButtonVariant.contained) {
                             attrs {
                                 disabled = !choice.isValid
                                 onClick = {

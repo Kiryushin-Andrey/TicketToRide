@@ -5,6 +5,7 @@ import kotlinx.css.properties.*
 import kotlinx.html.js.onClickFunction
 import react.*
 import styled.*
+import ticketToRide.PlayerView
 
 interface MapCityMarkerProps: RProps {
     var lat: Number
@@ -13,22 +14,19 @@ interface MapCityMarkerProps: RProps {
     var name: String
     var displayAllCityNames: Boolean
     var selected: Boolean
+    var station: PlayerView?
     var hasOccupiedSegment: Boolean
     var onClick: (() -> Unit)?
 }
 
 class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
     override fun RBuilder.render() {
-        val scale = if (props.selected) 1.2 else 1.0
-
         styledDiv {
             css {
                 position = Position.absolute
                 cursor = Cursor.pointer
                 if (props.selected) {
-                    transform {
-                        scale(scale)
-                    }
+                    transform { scale(1.2) }
                     zIndex = 150
                 }
             }
@@ -38,12 +36,23 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
             styledDiv {
                 css {
                     +ComponentStyle.markerIcon
-                    val img = when {
+                    val img = props.station?.let { "station-${it.color.name.toLowerCase()}" } ?: when {
                         props.selected -> "city-marker-red"
                         props.hasOccupiedSegment -> "city-marker-green"
                         else -> "city-marker-blue"
                     }
                     backgroundImage = Image("url(/icons/${img}.svg)")
+                    if (props.station != null) {
+                        put("transform-origin", "center")
+                        transform {
+                            translate((-50).pct, (-50).pct)
+                            scale(1.5)
+                        }
+                    } else {
+                        transform {
+                            translate((-50).pct, (-50).pct)
+                        }
+                    }
                 }
             }
             if (props.selected || props.displayAllCityNames) {
@@ -55,6 +64,7 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
                     styledDiv {
                         css {
                             +ComponentStyle.popupBubbleAnchor
+                            bottom = if (props.station != null) 20.px else 16.px
                             after {
                                 borderTopColor = if (props.selected) Color.lightPink else Color.white
                             }
@@ -77,10 +87,6 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
             position = Position.absolute
             width = 20.px
             height = 20.px
-            put("transform-origin", "left top")
-            transform {
-                translate((-50).pct, (-50).pct)
-            }
             backgroundSize = "${20.px} ${20.px}"
             backgroundRepeat = BackgroundRepeat.noRepeat
         }
@@ -95,7 +101,6 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
             position = Position.absolute
             width = 100.pct
             left = 0.px
-            bottom = 16.px
             after {
                 content = QuotedString("")
                 position = Position.absolute

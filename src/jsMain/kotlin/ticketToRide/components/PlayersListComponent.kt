@@ -36,6 +36,7 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
                 styledDiv {
                     css { +ComponentStyles.playerCardIcons }
                     playerCardIcon("/icons/railway-car.png", player.carsLeft)
+                    playerCardIcon("/icons/station.png", player.stationsLeft)
                     playerCardIcon("/icons/cards-deck.png", player.cardsOnHand)
                     playerCardIcon("/icons/ticket.png", player.ticketsOnHand)
                 }
@@ -45,13 +46,15 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
 
     object ComponentStyles : StyleSheet("PlayersList", isStatic = true) {
         val playerCard by css {
-            minHeight = 40.px
+            minHeight = 60.px
             display = Display.flex
-            alignItems = Align.center
-            flexDirection = FlexDirection.row
+            alignItems = Align.flexStart
+            flexDirection = FlexDirection.column
             justifyContent = JustifyContent.spaceBetween
             borderRadius = 4.px
             margin = 4.px.toString()
+            paddingTop = 4.px
+            paddingBottom = 4.px
             paddingLeft = 12.px
             paddingRight = 12.px
         }
@@ -59,7 +62,7 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
             display = Display.flex
             flexDirection = FlexDirection.row
             alignItems = Align.center
-            width = 150.px
+            width = 100.pct
             justifyContent = JustifyContent.spaceEvenly
         }
     }

@@ -44,6 +44,9 @@ sealed class Response {
 
         @Serializable
         class BuildSegment(val playerName: PlayerName, val from: CityName, val to: CityName, val cards: List<Card>) : PlayerAction()
+
+        @Serializable
+        class BuildStation(val playerName: PlayerName, val target: CityName) : PlayerAction()
     }
 }
 
@@ -55,4 +58,5 @@ fun GameRequest.toAction(playerName: PlayerName) = when (this) {
     is PickCardsRequest.TwoCards -> Response.PlayerAction.PickCards.TwoCards(playerName, cards)
     is PickTicketsRequest -> Response.PlayerAction.PickTickets(playerName)
     is BuildSegmentRequest -> Response.PlayerAction.BuildSegment(playerName, from, to, cards)
+    is BuildStationRequest -> Response.PlayerAction.BuildStation(playerName, target)
 }

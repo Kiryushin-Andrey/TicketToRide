@@ -1,6 +1,7 @@
 package ticketToRide
 
 import kotlinx.serialization.Serializable
+import kotlin.math.min
 import kotlin.random.Random
 
 @Serializable
@@ -28,6 +29,25 @@ sealed class Card {
             return if (value < colors.size) Car(colors[value]) else Loco
         }
     }
+}
+
+fun List<Card>.getOptionsForCardsToDrop(count: Int, color: CardColor?): List<List<Card>> {
+    val countByCar = filterIsInstance<Card.Car>().groupingBy { it }.eachCount()
+    fun getOptionsForCars(locoCount: Int) =
+        if (locoCount == count)
+            listOf(List(locoCount) { Card.Loco })
+        else countByCar
+            .filter {
+                it.value >= count - locoCount && (color == null || it.key.color == color)
+            }
+            .map { (car, _) ->
+                val carsCount = count - locoCount
+                if (locoCount > 0) List(locoCount) { Card.Loco } + List(carsCount) { car }
+                else List(carsCount) { car }
+            }
+
+    val locoCount = min(count, filterIsInstance<Card.Loco>().count())
+    return (0..locoCount).flatMap { getOptionsForCars(it) }
 }
 
 @Serializable
@@ -73,12 +93,16 @@ data class PlayerView(
     val name: PlayerName,
     val color: PlayerColor,
     val carsLeft: Int,
+    val stationsLeft: Int,
     val cardsOnHand: Int,
     val ticketsOnHand: Int,
     val away: Boolean,
     val occupiedSegments: List<Segment>,
+    val placedStations: List<CityName>,
     val pendingTicketsChoice: PendingTicketsChoiceState
 )
+
+fun List<PlayerView>.getStations() = flatMap { p -> p.placedStations.map { it to p } }.associate { it }
 
 @Serializable
 data class GameStateView(

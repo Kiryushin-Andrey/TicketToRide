@@ -4,9 +4,9 @@ import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
 import react.*
 import styled.*
-import ticketToRide.playerState.*
+import ticketToRide.playerState.BuildingStation
 
-class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
+class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
         styledDiv {
             css {
@@ -28,14 +28,8 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
                     }
                 }
                 styledDiv {
-                    with(props.playerState as BuildingSegment) {
-                        mTypography(segment.from.value, MTypographyVariant.h6) {
-                            css {
-                                textAlign = TextAlign.right
-                                paddingRight = 16.px
-                            }
-                        }
-                        mTypography(segment.to.value, MTypographyVariant.h6) {
+                    with(props.playerState as BuildingStation) {
+                        mTypography(target.value, MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px
@@ -45,32 +39,26 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
                 }
             }
 
-            chooseCardsToDrop(props.playerState as BuildingSegment)
+            chooseCardsToDrop(props.playerState as BuildingStation)
         }
     }
 
-    private fun RBuilder.chooseCardsToDrop(playerState: BuildingSegment) {
-        val segment = playerState.segment
-        val occupiedBy = props.gameState.players.find { it.occupiedSegments.contains(segment) }
+    private fun RBuilder.chooseCardsToDrop(playerState: BuildingStation) {
+        val occupiedBy = props.gameState.players.find { it.placedStations.contains(playerState.target) }
         when {
             occupiedBy == me ->
-                mTypography("Сегмент уже построен \uD83D\uDE0A", MTypographyVariant.body1) {
+                mTypography("Станция уже построена \uD83D\uDE0A", MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             occupiedBy != null ->
-                mTypography("Сегмент уже занят другим игроком \uD83D\uDE1E", MTypographyVariant.body1) {
-                    css { marginTop = 10.px }
-                }
-
-            me.carsLeft < segment.length ->
-                mTypography("Не хватает вагонов \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography("Станция уже построена другим игроком \uD83D\uDE1E", MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             else ->
                 optionsForCardsToDrop {
-                    confirmBtnTitle = "Строю сегмент"
+                    confirmBtnTitle = "Ставлю станцию"
                     options = playerState.optionsForCardsToDrop
                     chosenCardsToDropIx = playerState.chosenCardsToDropIx
                     onChooseCards = { ix -> act { playerState.chooseCardsToDrop(ix) } }
@@ -80,8 +68,8 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
     }
 }
 
-fun RBuilder.buildingSegment(props: ComponentBaseProps) {
-    child(BuildingSegmentComponent::class) {
+fun RBuilder.buildingStation(props: ComponentBaseProps) {
+    child(BuildingStationComponent::class) {
         attrs {
             this.gameState = props.gameState
             this.playerState = props.playerState

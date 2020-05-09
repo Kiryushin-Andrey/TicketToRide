@@ -124,13 +124,15 @@ class App() : RComponent<RProps, AppState>() {
                         onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
                     }
 
-                is Screen.GameOver ->
+                is Screen.GameOver -> {
+                    val allPlayers = it.players.map { it.first }
                     endScreen {
                         gameMap = it.gameMap
-                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets, state.map) }
+                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets, allPlayers, state.map) }
                         chatMessages = state.chatMessages
                         onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
                     }
+                }
             }
         }
 

@@ -63,6 +63,7 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                     gameMap = props.gameMap
                     players = props.players.map { it.playerView }
                     citiesToHighlight = state.citiesToHighlight
+                    citiesWithStations = props.players.map { it.playerView }.getStations()
                     onCityMouseOver = { setState { citiesToHighlight += it } }
                     onCityMouseOut = { setState { citiesToHighlight -= it } }
                 }
@@ -135,7 +136,7 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                     playerTicketStats(player)
 
                     if (player.occupiedSegments.isNotEmpty())
-                        playerSegmentStats(player, player.segmentsPoints)
+                        playerSegmentStats(player)
                 }
             }
         }
@@ -197,61 +198,52 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
         }
     }
 
-    private fun RBuilder.playerSegmentStats(player: PlayerFinalStats, segmentsPoints: Int) {
+    private fun RBuilder.playerSegmentStats(player: PlayerFinalStats) {
         styledDiv {
-            css {
-                minHeight = 40.px
-                paddingTop = 4.px
-                paddingLeft = 12.px
-                paddingRight = 16.px
-                display = Display.flex
-                flexDirection = FlexDirection.row
-                justifyContent = JustifyContent.spaceBetween
-            }
-
+            css { +ComponentStyles.playerSegmentStats }
             styledDiv {
                 css {
                     display = Display.flex
                     flexDirection = FlexDirection.column
                     flexWrap = FlexWrap.nowrap
+                    width = 80.pct
                 }
                 for ((length, count) in player.occupiedSegments.groupingBy { it.length }.eachCount().entries.sortedByDescending { it.key }) {
-                    styledDiv {
+                    val pointsPerSegment = props.gameMap.getPointsForSegments(length)
+                    repeatedIconsWithPoints(
+                        length,
+                        "/icons/railway-car.png",
+                        "$count * $pointsPerSegment = ${pointsPerSegment * count}"
+                    )
+                }
+                player.playerView.stationsLeft.takeIf { it > 0 }?.let {
+                    repeatedIconsWithPoints(it, "/icons/station.png", "$it * $PointsPerStation = ${it * PointsPerStation}")
+                }
+            }
+            pointsLabel(player.segmentsPoints + player.stationPoints, Color.lightGreen)
+        }
+    }
+
+    private fun RBuilder.repeatedIconsWithPoints(count: Int, imgUrl: String, pointsText: String) {
+        styledDiv {
+            css { +ComponentStyles.repeatedIconsWithPoints }
+            styledDiv {
+                css { +ComponentStyles.repeatedIcons }
+                repeat(count) {
+                    styledImg {
                         css {
-                            display = Display.flex
-                            flexDirection = FlexDirection.row
-                            justifyContent = JustifyContent.spaceBetween
-                            alignItems = Align.center
-                            marginBottom = 6.px
+                            marginRight = 4.px
                         }
-                        styledDiv {
-                            css {
-                                display = Display.flex
-                                flexDirection = FlexDirection.row
-                                justifyContent = JustifyContent.left
-                                alignItems = Align.center
-                            }
-                            repeat(length) {
-                                styledImg {
-                                    css {
-                                        marginRight = 4.px
-                                    }
-                                    attrs {
-                                        src = "/icons/railway-car.png"
-                                        width = 24.px.toString()
-                                    }
-                                }
-                            }
-                        }
-                        mTypography(variant = MTypographyVariant.body2) {
-                            val pointsPerSegment = props.gameMap.getPointsForSegments(length)
-                            +"$count * $pointsPerSegment = ${pointsPerSegment * count}"
+                        attrs {
+                            src = imgUrl
+                            width = 24.px.toString()
                         }
                     }
                 }
             }
-
-            pointsLabel(segmentsPoints, Color.lightGreen)
+            mTypography(variant = MTypographyVariant.body2) {
+                +pointsText
+            }
         }
     }
 
@@ -263,6 +255,31 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
             minWidth = 350.px
             minHeight = LinearDimension.minContent
             overflow = Overflow.auto
+        }
+
+        val playerSegmentStats by css {
+            minHeight = 40.px
+            paddingTop = 4.px
+            paddingLeft = 12.px
+            paddingRight = 16.px
+            display = Display.flex
+            flexDirection = FlexDirection.row
+            justifyContent = JustifyContent.spaceBetween
+        }
+
+        val repeatedIconsWithPoints by css {
+            display = Display.flex
+            flexDirection = FlexDirection.row
+            justifyContent = JustifyContent.spaceBetween
+            alignItems = Align.center
+            marginBottom = 6.px
+        }
+
+        val repeatedIcons by css {
+            display = Display.flex
+            flexDirection = FlexDirection.row
+            justifyContent = JustifyContent.left
+            alignItems = Align.center
         }
 
         val playerStatsBar by css {

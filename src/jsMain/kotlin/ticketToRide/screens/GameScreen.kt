@@ -76,6 +76,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 gameMap(props) {
                     gameMap = props.gameMap
                     citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
+                    citiesWithStations = players.getStations()
                     onCityMouseOver = { setState { citiesToHighlight += it } }
                     onCityMouseOut = { setState { citiesToHighlight -= it } }
                 }
@@ -90,9 +91,19 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 myCards(props)
                 horizontalDivider()
 
-                if (playerState is BuildingSegmentFrom || playerState is BuildingSegment) {
-                    buildingSegment(props)
-                    horizontalDivider()
+                when (playerState) {
+                    is PickedCity -> {
+                        pickedCity(props)
+                        horizontalDivider()
+                    }
+                    is BuildingStation -> {
+                        buildingStation(props)
+                        horizontalDivider()
+                    }
+                    is BuildingSegment -> {
+                        buildingSegment(props)
+                        horizontalDivider()
+                    }
                 }
 
                 myTickets(props) {

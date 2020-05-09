@@ -25,6 +25,7 @@ fun PlayerAction.chatMessage() = when (this) {
             "строю участок ${from.value} - ${to.value} и сбрасываю карты: $cardsByCount"
         )
     }
+    is BuildStation -> ChatMessage(playerName, "ставлю станцию в ${target.value}")
 }
 
 val PickedCard.name get() = when(this) {

@@ -75,3 +75,6 @@ object PickTicketsRequest : GameRequest()
 
 @Serializable
 class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>) : GameRequest()
+
+@Serializable
+class BuildStationRequest(val target: CityName, val cards: List<Card>) : GameRequest()
