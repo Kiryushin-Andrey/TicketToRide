@@ -47,6 +47,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.2")
             }
         }
         val jvmMain by getting {

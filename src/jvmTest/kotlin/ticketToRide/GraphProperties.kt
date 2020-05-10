@@ -6,10 +6,11 @@ import io.kotest.core.spec.style.*
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.*
 import io.kotest.matchers.*
-import io.kotest.matchers.maps.shouldBeEmpty
-import io.kotest.matchers.maps.shouldNotBeEmpty
+import io.kotest.matchers.maps.*
+import io.kotest.matchers.sequences.*
 import io.kotest.property.*
 import io.kotest.property.arbitrary.*
+import kotlinx.collections.immutable.*
 
 class GraphProperties : FreeSpec({
 
@@ -22,7 +23,8 @@ class GraphProperties : FreeSpec({
         }
 
         "decreases source and target node degree by one" {
-            val data = Arb.graphWithPairOfVertices.filter { (g, path) -> g.nodeDegree(path.first) > 1 && g.nodeDegree(path.second) > 1 }
+            val data =
+                Arb.graphWithPairOfVertices.filter { (g, path) -> g.nodeDegree(path.first) > 1 && g.nodeDegree(path.second) > 1 }
             checkAll(data) { (graph, path) ->
                 val originalDegrees = graph.nodeDegree(path.first) to graph.nodeDegree(path.second)
                 graph.removePath(path.first, path.second, Distances(graph)).let {
@@ -33,14 +35,15 @@ class GraphProperties : FreeSpec({
         }
 
         "decreases the total graph weight" {
-            forAll(PropTestConfig(5073329641730822048), Arb.graphWithPairOfVertices) { (g, path) ->
+            forAll(Arb.graphWithPairOfVertices) { (g, path) ->
                 g.getTotalWeight() > g.removePath(path.first, path.second, Distances(g)).getTotalWeight()
             }
         }
 
         "decreases the total number of edges" {
             forAll(Arb.graphWithPairOfVertices) { (g, path) ->
-                g.map { it.value.size }.sum() > g.removePath(path.first, path.second, Distances(g)).map { it.value.size }.sum()
+                g.map { it.value.size }.sum() > g.removePath(path.first, path.second, Distances(g))
+                    .map { it.value.size }.sum()
             }
         }
 
@@ -99,7 +102,7 @@ class GraphProperties : FreeSpec({
     "maximum eulerian subgraph" - {
 
         "is eulerian" {
-            checkAll(PropTestConfig(-8638342389302181338), Arb.connectedGraph) {
+            checkAll(Arb.connectedGraph) {
                 shouldNotThrowAny {
                     it.getMaxEulerianSubgraph().isEulerian()
                 }
@@ -112,6 +115,55 @@ class GraphProperties : FreeSpec({
             }
         }
     }
+
+    "adding segment to graph" - {
+
+        "leaves it with an edge between two nodes with correct weight" {
+            checkAll(
+                Arb.connectedGraph,
+                Arb.pair(Arb.int(0..100), Arb.int(0..100)).filter { (from, to) -> from != to },
+                Arb.int(1..1000)
+            ) { graph, (from, to), weight ->
+                graph.withEdge(from, to, weight).let {
+                    it.edgeWeight(from, to) shouldBe weight
+                    it.edgeWeight(to, from) shouldBe weight
+                }
+            }
+        }
+
+        "makes no changes when applied twice" {
+            checkAll(
+                Arb.connectedGraph,
+                Arb.int(0..100),
+                Arb.int(0..100),
+                Arb.int(1..1000)
+            ) { graph, from, to, weight ->
+                val first = graph.withEdge(from, to, weight)
+                val second = first.withEdge(from, to, weight)
+                first shouldContainExactly second
+            }
+        }
+    }
+
+    "generating all combinations" - {
+
+        "each of the combinations contains items from every source list" {
+            checkAll(Arb.list(Arb.list(Arb.int(), 1..10), 1..5)) { lists ->
+                lists.asSequence().allCombinations().forEach { c ->
+                    lists.forEach { c shouldContainAnyOf it }
+                }
+            }
+        }
+
+        "every source list has its item contained in each of the combinations" {
+            checkAll(Arb.list(Arb.list(Arb.int(), 1..10), 1..5)) { lists ->
+                val combinations = lists.asSequence().allCombinations().toList()
+                lists.forEach { list ->
+                    combinations.forEach { it shouldContainAnyOf list }
+                }
+            }
+        }
+    }
 })
 
 val Arb.Companion.connectedGraph: Arb<Graph<Int>>
@@ -119,18 +171,20 @@ val Arb.Companion.connectedGraph: Arb<Graph<Int>>
         generateSequence {
             val size = Arb.int(6..30).next(rs)
             (0 until size)
-                .associateWith { mutableListOf<Pair<Int, Int>>() }
+                .associateWith { persistentMapOf<Int, Int>().builder() }
                 .also { graph ->
                     for (from in (1 until size)) {
                         val degree = Arb.int(1..maxOf(1, from / 2)).next(rs)
                         val edges = Arb.int(0 until from).take(degree).distinct()
                         for (to in edges) {
                             val weight = Arb.int(1..100).next(rs)
-                            graph[from]!!.add(to to weight)
-                            graph[to]!!.add(from to weight)
+                            graph.getValue(from)[to] = weight
+                            graph.getValue(to)[from] = weight
                         }
                     }
                 }
+                .mapValues { (_, v) -> v.build() }
+                .toPersistentMap()
         }
     }
 
@@ -140,11 +194,11 @@ val Arb.Companion.disconnectedGraph: Arb<Graph<Int>>
             val graphs = Arb.connectedGraph.take(Arb.int(2..6).next(rs), rs).toList()
             graphs.drop(1).fold(graphs[0].toMutableMap()) { result, next ->
                 val size = result.size
-                for ((from, edge) in next) {
-                    result[from + size] = edge.map { (t, w) -> (t + size) to w }
+                for ((from, edges) in next) {
+                    result[from + size] = edges.entries.associate { (t, w) -> (t + size) to w }.toPersistentMap()
                 }
                 result
-            }
+            }.toPersistentMap()
         }
     }
 
@@ -160,11 +214,10 @@ val Arb.Companion.graphWithPairOfVertices
 val Arb.Companion.graphWithSubgraph: Arb<Pair<Graph<Int>, Graph<Int>>>
     get() = arb { rs ->
         connectedGraph.values(rs).map { graph ->
-            val subgraphSize = Arb.int(4 until graph.value.size).next(rs)
-            val subgraph = graph.value.entries.asSequence()
-                .filter { (from, _) -> from < subgraphSize }
-                .map { (from, edges) -> from to edges.filter { (to, _) -> to < subgraphSize } }
-                .associate { it }
-            graph.value to subgraph
+            graph.value to graph.value.mutate { g ->
+                val subgraphSize = Arb.int(4 until graph.value.size).next(rs)
+                g.keys.removeIf { it >= subgraphSize }
+                g.replaceAll { _, v -> v.mutate { it.keys.removeIf { it >= subgraphSize } } }
+            }
         }
     }

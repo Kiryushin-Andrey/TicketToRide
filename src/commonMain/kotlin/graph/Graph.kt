@@ -1,17 +1,17 @@
 package graph
 
-typealias Edge<T> = Pair<T, Int>
-typealias Graph<T> = Map<T, List<Edge<T>>>
+import kotlinx.collections.immutable.*
 
-class GraphSegment<T>(val from: T, val to: T, val weight: Int) {
-    fun covers(a: T, b: T) = (from == a && to == b) || (from == b && to == a)
-}
+typealias Graph<T> = PersistentMap<T, PersistentMap<T, Int>>
+typealias MutableGraph<T> = MutableMap<T, PersistentMap<T, Int>>
+
+class GraphSegment<T>(val from: T, val to: T, val weight: Int)
 
 class Distances<T>(graph: Graph<T>) {
-    private val entries = graph.entries.toList()
-
+    private val entries = graph.entries.toImmutableList()
+    private val vertices = entries.map { it.key }.toImmutableList()
     private val size = graph.size
-    private val vertices = entries.map { it.key }
+
     private val dist = Array(vertices.size) { IntArray(vertices.size) { Int.MAX_VALUE } }
     private val prev = Array(vertices.size) { IntArray(vertices.size) { -1 } }
 
@@ -64,49 +64,16 @@ class Distances<T>(graph: Graph<T>) {
     }
 }
 
-fun <T> Graph<T>.withEdge(from: T, to: T, weight: Int): Graph<T> {
-    val fromNode = this[from]
-    val toNode = this[to]
-    val edge = fromNode?.find { (n, w) -> n == to }
-    return when {
-        // edge already present with the same weight
-        edge?.second == weight ->
-            this
-
-        // edge already present but weight is different
-        edge != null ->
-            this.mapValues { (k, v) ->
-                when (k) {
-                    from -> v.map { (n, w) -> n to (if (n == to) weight else w) }
-                    to -> v.map { (n, w) -> n to (if (n == from) weight else w) }
-                    else -> v
-                }
-            }
-
-        // both nodes in graph but no edge
-        fromNode != null && toNode != null ->
-            this.mapValues { (k, v) ->
-                when (k) {
-                    from -> v + (to to weight)
-                    to -> v + (from to weight)
-                    else -> v
-                }
-            }
-
-        // one of the nodes is in graph but the other is not
-        fromNode != null && toNode == null ->
-            this.mapValues { (k, v) -> if (k == from) v + (to to weight) else v } + (to to listOf(from to weight))
-
-        fromNode == null && toNode != null ->
-            withEdge(to, from, weight)
-
-        // both nodes missing
-        else ->
-            this + (from to listOf(to to weight)) + (to to listOf(from to weight))
-    }
+fun <T> MutableGraph<T>.addEdge(from: T, to: T, weight: Int) {
+    this[from] = this[from]?.mutate { it[to] = weight } ?: persistentMapOf(to to weight)
+    this[to] = this[to]?.mutate { it[from] = weight } ?: persistentMapOf(from to weight)
 }
 
+fun <T> Graph<T>.withEdge(from: T, to: T, weight: Int): Graph<T> = mutate { it.addEdge(from, to, weight) }
+
 fun <T> Graph<T>.edges(v: T) = this[v] ?: throw Error("Node ${v} not found in graph")
+
+fun <T> Graph<T>.edgeWeight(from: T, to: T) = this[from]?.let { it[to] }
 
 fun <T> Graph<T>.nodeDegree(v: T) = edges(v).size
 
@@ -114,12 +81,12 @@ fun <T> Graph<T>.getFirstSubgraph(): Graph<T> {
     val queue = ArrayDeque<T>()
     queue.addFirst(keys.firstOrNull() ?: return this)
     val graph = this
-    return mutableMapOf<T, List<Edge<T>>>().apply {
+    return persistentMapOf<T, PersistentMap<T, Int>>().mutate { map ->
         while (queue.size > 0) {
             val vertex = queue.removeLast()
             val edges = graph.edges(vertex)
-            this[vertex] = edges
-            edges.map { it.first }.filter { !this.containsKey(it) }.forEach { queue.addFirst(it) }
+            map[vertex] = edges
+            edges.map { it.key }.filter { !map.containsKey(it) }.forEach { queue.addFirst(it) }
         }
     }
 }
@@ -141,10 +108,14 @@ fun <T> Graph<T>.splitIntoConnectedSubgraphs(): Sequence<Graph<T>> =
 
 fun <T> Graph<T>.isEulerian() = values.count { it.size % 2 == 1 }.let { it == 0 || it == 2 }
 
+fun <T> MutableMap<T, PersistentMap<T, Int>>.removeEdge(from: T, to: T) {
+    (this[from]!! - to).takeIf { it.isNotEmpty() }?.let { this[from] = it } ?: this.remove(from)
+    (this[to]!! - from).takeIf { it.isNotEmpty() }?.let { this[to] = it } ?: this.remove(to)
+}
+
 fun <T> Graph<T>.removePath(from: T, to: T, distances: Distances<T>) =
-    distances.getPath(from, to).let { segments ->
-        mapValues { (a, edges) -> edges.filter { (b, _) -> !segments.any { it.covers(a, b) } } }
-            .filterNot { it.value.isEmpty() }
+    mutate { graph ->
+        distances.getPath(from, to).forEach { s -> graph.removeEdge(s.from, s.to) }
     }
 
 fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
@@ -166,11 +137,11 @@ fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
             .getMaxEulerianSubgraph()
     }
 
-fun <T> Graph<T>.getTotalWeight() = flatMap { it.value }.sumBy { (_, points) -> points } / 2
+fun <T> Graph<T>.getTotalWeight() = flatMap { it.value.values }.sum() / 2
 
 // returns all possible combinations of unique elements
 // generated by picking one item from each of the lists
 fun <T> Sequence<List<T>>.allCombinations(): Sequence<Set<T>> =
-    firstOrNull()?.let { list ->
-        list.asSequence().flatMap { item -> drop(1).allCombinations().map { it + item } }
-    } ?: sequenceOf(emptySet())
+    filter { it.isNotEmpty() }.fold(sequenceOf(emptySet())) { sets, list ->
+        sets.flatMap { prev -> list.asSequence().map { prev + it } }
+    }
