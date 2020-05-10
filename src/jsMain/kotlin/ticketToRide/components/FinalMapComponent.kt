@@ -18,7 +18,8 @@ class MapFinalComponent(props: FinalMapComponentProps) :
     override fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) = with(segmentProps) {
         super.segmentProps(this, from, to, route)
         occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
-        highlight = occupiedBy != null && occupiedBy?.name == props.playerToHighlight
-        thinned = props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight
+        if (props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight) {
+            occupiedBy = null
+        }
     }
 }

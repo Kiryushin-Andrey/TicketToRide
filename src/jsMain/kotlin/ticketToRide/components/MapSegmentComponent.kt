@@ -16,8 +16,6 @@ interface MapSegmentProps : RProps {
     var color: CardColor?
     var points: Int
     var occupiedBy: PlayerView?
-    var thinned: Boolean
-    var highlight: Boolean
 }
 
 class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
@@ -37,28 +35,21 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
             map = props.map
             geodesic = true
             path = arrayOf(props.from.latLng, props.to.latLng)
-            strokeOpacity = if (occupiedBy == null || props.highlight) 1 else 0
             strokeColor = occupiedBy?.color?.rgb ?: props.color?.rgb ?: "#AAAAAA"
-            strokeWeight = when {
-                props.thinned -> 3
-                props.highlight -> 8
-                occupiedBy == null -> 3
-                else -> 2
-            }
+            strokeWeight = if (occupiedBy != null) 8 else 3
             icons =
                 if (occupiedBy == null)
                     arrayOf(segmentSplitIcon(props.color?.rgb, props.points, false))
                 else
-                    occupiedSegmentIcons(occupiedBy.color, props.points, props.mapZoom, props.highlight)
+                    occupiedSegmentIcons(occupiedBy.color, props.points, props.mapZoom)
         })
     }
 
-    private fun occupiedSegmentIcons(color: PlayerColor, points: Int, mapZoom: Int, highlight: Boolean): Array<IconSequence> {
+    private fun occupiedSegmentIcons(color: PlayerColor, points: Int, mapZoom: Int): Array<IconSequence> {
         val iconsList = mutableListOf(
             segmentSplitIcon(color.rgb, points, true),
             occupiedIcon(points, color.rgb)
         )
-        if (!highlight) iconsList.add(0, dashedLikeIcon(color.rgb))
         if (mapZoom > 4) iconsList += carIcon(color.rgb)
         return iconsList.toTypedArray()
     }
@@ -67,7 +58,7 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
         icon = jsObject {
             path = if (occupied) "M 1,1 -1,-1 M 1,-1 -1,1" else "M 1,0 -1,0"
             strokeOpacity = 1
-            strokeColor = if (colorRgb != "#000000") "#000000" else "#FFFFFF"
+            strokeColor = if (occupied || colorRgb == "#000000") "#FFFFFF" else "#000000"
             scale = 3
         }
         offset = "0px"
@@ -84,17 +75,6 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
         }
         offset = "${ceil(100f / segmentsCount)}%"
         repeat = "${ceil(100f / segmentsCount)}%"
-    }
-
-    private fun dashedLikeIcon(color: String) = jsObject<IconSequence> {
-        icon = jsObject {
-            path = "M 0,-1 0,1"
-            strokeOpacity = 1
-            strokeColor = color
-            scale = 4
-        }
-        offset = "0"
-        repeat = "20px"
     }
 
     private fun carIcon(color: String) = jsObject<IconSequence> {

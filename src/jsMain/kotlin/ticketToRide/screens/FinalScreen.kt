@@ -104,7 +104,9 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
 
         mPaper {
             css { margin = 4.px.toString() }
-            attrs { elevation = 2 }
+            attrs {
+                elevation = if (state.playerToHighlight == player.name) 6 else 2
+            }
 
             mExpansionPanel {
                 css { backgroundColor = Color(player.color.rgb).withAlpha(0.4) }
