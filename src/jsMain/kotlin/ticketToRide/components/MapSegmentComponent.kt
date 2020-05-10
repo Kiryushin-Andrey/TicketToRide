@@ -2,6 +2,7 @@ package ticketToRide.components
 
 import google.maps.*
 import kotlinext.js.jsObject
+import kotlinx.serialization.PrimitiveKind
 import org.w3c.dom.Element
 import react.*
 import ticketToRide.*
@@ -15,6 +16,8 @@ interface MapSegmentProps : RProps {
     var color: CardColor?
     var points: Int
     var occupiedBy: PlayerView?
+    var thinned: Boolean
+    var highlight: Boolean
 }
 
 class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
@@ -34,21 +37,28 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
             map = props.map
             geodesic = true
             path = arrayOf(props.from.latLng, props.to.latLng)
-            strokeOpacity = if (occupiedBy == null) 1 else 0
+            strokeOpacity = if (occupiedBy == null || props.highlight) 1 else 0
             strokeColor = occupiedBy?.color?.rgb ?: props.color?.rgb ?: "#AAAAAA"
-            strokeWeight = if (occupiedBy == null) 5 else 2
+            strokeWeight = when {
+                props.thinned -> 3
+                props.highlight -> 8
+                occupiedBy == null -> 3
+                else -> 2
+            }
             icons =
-                if (occupiedBy == null) arrayOf(segmentSplitIcon(props.color?.rgb, props.points, false))
-                else occupiedSegmentIcons(occupiedBy.color, props.points, props.mapZoom)
+                if (occupiedBy == null)
+                    arrayOf(segmentSplitIcon(props.color?.rgb, props.points, false))
+                else
+                    occupiedSegmentIcons(occupiedBy.color, props.points, props.mapZoom, props.highlight)
         })
     }
 
-    private fun occupiedSegmentIcons(color: PlayerColor, points: Int, mapZoom: Int): Array<IconSequence> {
+    private fun occupiedSegmentIcons(color: PlayerColor, points: Int, mapZoom: Int, highlight: Boolean): Array<IconSequence> {
         val iconsList = mutableListOf(
-            dashedLikeIcon(color.rgb),
             segmentSplitIcon(color.rgb, points, true),
             occupiedIcon(points, color.rgb)
         )
+        if (!highlight) iconsList.add(0, dashedLikeIcon(color.rgb))
         if (mapZoom > 4) iconsList += carIcon(color.rgb)
         return iconsList.toTypedArray()
     }

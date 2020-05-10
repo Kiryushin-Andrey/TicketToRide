@@ -100,7 +100,9 @@ sealed class PlayerState {
                 chosenCardsToDropIx
             )
 
-            val optionsForCardsToDrop by lazy { myCards.getOptionsForCardsToDrop(segment.length, segment.color) }
+            val optionsForCardsToDrop by lazy {
+                myCards.getOptionsForCardsToDrop(segment.length, segment.color)
+            }
 
             fun chooseCardsToDrop(ix: Int) = BuildingSegment(this, ix)
 

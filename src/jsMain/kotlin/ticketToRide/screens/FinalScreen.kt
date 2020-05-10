@@ -9,19 +9,20 @@ import styled.*
 import ticketToRide.*
 import ticketToRide.components.*
 
-interface EndScreenProps : RProps {
+interface FinalScreenProps : RProps {
     var gameMap: GameMap
     var players: List<PlayerFinalStats>
     var chatMessages: List<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
 }
 
-interface EndScreenState : RState {
+interface FinalScreenState : RState {
+    var playerToHighlight: PlayerName?
     var citiesToHighlight: Set<CityName>
 }
 
-class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenState>(props) {
-    override fun EndScreenState.init(props: EndScreenProps) {
+class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalScreenState>(props) {
+    override fun FinalScreenState.init(props: FinalScreenProps) {
         citiesToHighlight = emptySet()
     }
 
@@ -62,6 +63,7 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                 finalMap {
                     gameMap = props.gameMap
                     players = props.players.map { it.playerView }
+                    playerToHighlight = state.playerToHighlight
                     citiesToHighlight = state.citiesToHighlight
                     citiesWithStations = props.players.map { it.playerView }.getStations()
                     onCityMouseOver = { setState { citiesToHighlight += it } }
@@ -111,6 +113,8 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
                     withClasses(
                         "root" to ComponentStyles.getClassName { it::playerPanelRoot },
                         "expanded" to ComponentStyles.getClassName { it::summaryExpanded })
+                    onMouseEnter = { setState { playerToHighlight = player.name } }
+                    onMouseLeave = { setState { playerToHighlight = null } }
                 }
 
                 mExpansionPanelSummary {
@@ -324,8 +328,8 @@ class EndScreen(props: EndScreenProps) : RComponent<EndScreenProps, EndScreenSta
     }
 }
 
-fun RBuilder.endScreen(builder: EndScreenProps.() -> Unit) {
-    child(EndScreen::class) {
+fun RBuilder.endScreen(builder: FinalScreenProps.() -> Unit) {
+    child(FinalScreen::class) {
         attrs(builder)
     }
 }
