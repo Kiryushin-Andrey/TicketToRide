@@ -28,8 +28,8 @@ private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = 
 
 class App() : RComponent<RProps, AppState>() {
     private val scope = CoroutineScope(Dispatchers.Default + Job())
-    private val requests = Channel<Request>().also {
-        connectToServer(it)
+    private val requests = Channel<Request>(Channel.CONFLATED).also {
+        scope.connectToServer(it)
         window.onunload = { _ -> it.offer(LeaveGameRequest) }
     }
 
@@ -45,16 +45,28 @@ class App() : RComponent<RProps, AppState>() {
         map = GameMap
     }
 
-    private fun connectToServer(requests: Channel<Request>) {
+    private fun CoroutineScope.connectToServer(requests: Channel<Request>, reconnecting: Boolean = false) {
         val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
         with(WebSocket("$protocol//" + window.location.host + "/ws")) {
-            val job = scope.launch {
-                for (req in requests) {
-                    send(json.stringify(Request.serializer(), req))
-                }
-            }
+            var job: Job? = null
+            var pingHandle: Int? = null
 
-            val pingHandle = window.setInterval({ send(Request.Ping) }, 10000)
+            onopen = {
+                job = launch {
+                    if (reconnecting) {
+                        (state.screen as? Screen.InGame)?.apply {
+                            requests.send(JoinGameRequest(gameId, me.name))
+                        }
+                    }
+                    for (req in requests) {
+                        send(json.stringify(Request.serializer(), req))
+                    }
+                }
+
+                pingHandle = window.setInterval({ send(Request.Ping) }, 10000)
+
+                Unit
+            }
 
             onmessage = { msg ->
                 (msg.data as? String)?.let { reqStr ->
@@ -67,17 +79,17 @@ class App() : RComponent<RProps, AppState>() {
                 fun errorMessage(reason: String, secsToReconnect: Int) =
                     "Disconnected from server: $reason. Trying to reconnect in $secsToReconnect seconds..."
 
-                window.clearInterval(pingHandle)
-                job.cancel()
-                var handle = 0
-                handle = window.setInterval({
+                pingHandle?.let { window.clearInterval(it) }
+                job?.cancel()
+                var reconnectTimeoutHandle = 0
+                reconnectTimeoutHandle = window.setInterval({
                     setState {
                         secsToReconnect -= 1
                         errorMessage = errorMessage(e.asDynamic().reason, secsToReconnect)
                         if (secsToReconnect == 0) {
                             showErrorMessage = false
-                            window.clearInterval(handle)
-                            connectToServer(requests)
+                            window.clearInterval(reconnectTimeoutHandle)
+                            connectToServer(requests, true)
                         }
                     }
                 }, 1000)
@@ -190,13 +202,17 @@ class App() : RComponent<RProps, AppState>() {
                                 PlayerState.initial(state.map, msg.state, requests)
                             )
                         }
-                        chatMessages = chatMessages.apply { add(msg.action.chatMessage()) }
+                        msg.action?.let {
+                            chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                        }
                     }
                 }
 
                 is Screen.ShowGameId -> setState {
                     screen = copy(gameState = msg.state)
-                    chatMessages = chatMessages.apply { add(msg.action.chatMessage()) }
+                    msg.action?.let {
+                        chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                    }
                 }
 
                 is Screen.GameInProgress -> {
@@ -214,7 +230,9 @@ class App() : RComponent<RProps, AppState>() {
                         else PlayerState.initial(gameMap, msg.state, requests)
                     setState {
                         screen = copy(gameState = msg.state, playerState = newPlayerState)
-                        chatMessages = chatMessages.apply { add(msg.action.chatMessage()) }
+                        msg.action?.let {
+                            chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                        }
                     }
                 }
 
@@ -227,9 +245,9 @@ class App() : RComponent<RProps, AppState>() {
             (state.screen as? Screen.GameInProgress)?.let {
                 screen = Screen.GameOver(
                     msg.gameId,
+                    it.gameState.me,
                     state.map,
-                    msg.players,
-                    it.gameState.me
+                    msg.players
                 )
                 msg.action?.chatMessage()?.let {
                     chatMessages = chatMessages.apply { add(it) }

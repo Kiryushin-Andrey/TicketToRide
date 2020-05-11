@@ -8,8 +8,6 @@ import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
-import io.ktor.http.push
-import io.ktor.response.cacheControl
 import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.route
@@ -26,6 +24,7 @@ import java.net.InetAddress
 
 class PlayerConnection(val gameId: GameId, val name: PlayerName, private val ws: WebSocketSession) {
     suspend fun send(resp: Response) = ws.send(json.stringify(Response.serializer(), resp))
+    suspend fun ping() = ws.send(Response.Pong)
 }
 
 private val games = mutableMapOf<GameId, Game>()
@@ -38,6 +37,13 @@ fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module() {
     val googleApiKey = environment.config.property("google-api-key").getString()
     val host = environment.config.property("ktor.deployment.host").getString()
+    val redis = environment.config.propertyOrNull("redis.host")?.let {
+        RedisCredentials(
+            it.getString(),
+            environment.config.property("redis.port").getString().toInt(),
+            environment.config.propertyOrNull("redis.password")?.getString()
+        )
+    }
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
 
     install(WebSockets)
@@ -106,19 +112,25 @@ fun Application.module() {
                 .collect { req ->
                     when (req) {
 
-                        is StartGameRequest ->
-                            Game(req.carsCount) { games.remove(it.id) }.let { game ->
-                                games[game.id] = game
-                                connection = PlayerConnection(game.id, req.playerName, this).also { conn ->
-                                    rootScope.launch { game.start(conn) }
-                                }
+                        is StartGameRequest -> {
+                            val game = Game(req.carsCount, redis) { games.remove(it.id) }
+                            games[game.id] = game
+                            connection = PlayerConnection(game.id, req.playerName, this).also { conn ->
+                                rootScope.launch { game.start(conn) }
                             }
+                        }
 
                         is JoinGameRequest -> {
-                            connection = PlayerConnection(req.gameId, req.playerName, this).also { conn ->
-                                games[req.gameId]?.joinPlayer(req, conn)
-                                    ?: conn.send(Response.ErrorMessage("No such game"))
-                            }
+                            val conn = PlayerConnection(req.gameId, req.playerName, this)
+                            games[req.gameId]?.let {
+                                if (it.joinPlayer(req, conn)) connection = conn
+                                else conn.send(Response.ErrorMessage("Name is taken"))
+                            } ?: redis?.loadFromRedis(conn.gameId)?.let { gameState ->
+                                val game = Game(gameState.initialCarsCount, redis) { games.remove(conn.gameId) }
+                                games[conn.gameId] = game
+                                rootScope.launch { game.restore(conn, gameState) }
+                                connection = conn
+                            } ?: conn.send(Response.ErrorMessage("No such game"))
                         }
 
                         is LeaveGameRequest -> {

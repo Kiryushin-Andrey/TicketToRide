@@ -50,10 +50,7 @@ class CardComponent : RComponent<CardProps, CardState>() {
                 }
             }
 
-            mTooltip("") {
-                attrs {
-                    title = tooltip
-                }
+            mTooltip(tooltip) {
                 img {
                     attrs {
                         src = props.imageUrl

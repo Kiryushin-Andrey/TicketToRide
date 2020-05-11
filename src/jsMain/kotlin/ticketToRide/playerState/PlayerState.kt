@@ -47,7 +47,7 @@ sealed class PlayerState {
                 None
             } else this
 
-        val ticketsToKeep
+        private val ticketsToKeep
             get() = items.filter { it.keep }.map { it.ticket }
     }
 

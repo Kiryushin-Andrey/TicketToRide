@@ -6,19 +6,28 @@ sealed class Screen {
 
     object Welcome : Screen()
 
-    data class ShowGameId(val gameId: GameId, val gameState: GameStateView) : Screen()
+    data class ShowGameId(override val gameId: GameId, val gameState: GameStateView) : Screen(), InGame {
+        override val me: PlayerView get() = gameState.me
+    }
 
     data class GameInProgress(
-        val gameId: GameId,
+        override val gameId: GameId,
         val gameMap: GameMap,
         val gameState: GameStateView,
         val playerState: PlayerState
-    ) : Screen()
+    ) : Screen(), InGame {
+        override val me: PlayerView get() = gameState.me
+    }
 
     data class GameOver(
-        val gameId: GameId,
+        override val gameId: GameId,
+        override val me: PlayerView,
         val gameMap: GameMap,
-        val players: List<Pair<PlayerView, List<Ticket>>>,
+        val players: List<Pair<PlayerView, List<Ticket>>>
+    ) : Screen(), InGame
+
+    interface InGame {
+        val gameId: GameId
         val me: PlayerView
-    ) : Screen()
+    }
 }

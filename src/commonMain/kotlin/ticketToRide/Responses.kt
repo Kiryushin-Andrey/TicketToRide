@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 sealed class Response {
 
     @Serializable
-    class GameState(val gameId: GameId, val state: GameStateView, val action: PlayerAction) : Response()
+    class GameState(val gameId: GameId, val state: GameStateView, val action: PlayerAction?) : Response()
 
     @Serializable
     class GameEnd(val gameId: GameId, val players: List<Pair<PlayerView, List<Ticket>>>, val action: PlayerAction? = null) : Response()

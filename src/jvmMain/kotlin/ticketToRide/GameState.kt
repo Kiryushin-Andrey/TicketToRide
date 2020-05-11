@@ -78,4 +78,7 @@ data class GameState(
 
     fun updatePlayer(ix: Int, block: Player.() -> Player) =
         copy(players = players.mapIndexed { i, player -> if (i == ix) player.block() else player })
+
+    fun restored(byPlayerName: PlayerName) =
+        copy(players = players.map { it.copy(away = it.name != byPlayerName) })
 }

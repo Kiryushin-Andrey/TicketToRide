@@ -16,29 +16,31 @@ interface PlayersListProps : RProps {
 class PlayersList : RComponent<PlayersListProps, RState>() {
     override fun RBuilder.render() {
         for ((ix, player) in props.players.withIndex()) {
-            mPaper {
-                attrs {
-                    elevation = 2
-                }
-                css {
-                    +ComponentStyles.playerCard
-                    color = if (player.away) Color.black.withAlpha(0.4) else Color.black
-                    backgroundColor = Color(player.color.rgb).withAlpha(0.4)
-                    if (ix == props.turn) {
-                        borderColor = Color.red
-                        borderStyle = BorderStyle.solid
-                        borderWidth = 4.px
+            mTooltip(if (player.away) "Disconnected" else "", TooltipPlacement.rightStart) {
+                mPaper {
+                    attrs {
+                        elevation = 2
                     }
-                }
-                mTypography(variant = MTypographyVariant.h6) {
-                    +player.name.value
-                }
-                styledDiv {
-                    css { +ComponentStyles.playerCardIcons }
-                    playerCardIcon("/icons/railway-car.png", player.carsLeft)
-                    playerCardIcon("/icons/station.png", player.stationsLeft)
-                    playerCardIcon("/icons/cards-deck.png", player.cardsOnHand)
-                    playerCardIcon("/icons/ticket.png", player.ticketsOnHand)
+                    css {
+                        +ComponentStyles.playerCard
+                        color = if (player.away) Color.black.withAlpha(0.4) else Color.black
+                        backgroundColor = Color(player.color.rgb).withAlpha(0.4)
+                        if (ix == props.turn) {
+                            borderColor = Color.red
+                            borderStyle = BorderStyle.solid
+                            borderWidth = 4.px
+                        }
+                    }
+                    mTypography(variant = MTypographyVariant.h6) {
+                        +player.name.value
+                    }
+                    styledDiv {
+                        css { +ComponentStyles.playerCardIcons }
+                        playerCardIcon("/icons/railway-car.png", player.carsLeft)
+                        playerCardIcon("/icons/station.png", player.stationsLeft)
+                        playerCardIcon("/icons/cards-deck.png", player.cardsOnHand)
+                        playerCardIcon("/icons/ticket.png", player.ticketsOnHand)
+                    }
                 }
             }
         }

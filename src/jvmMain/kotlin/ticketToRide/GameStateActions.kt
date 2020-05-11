@@ -27,19 +27,19 @@ fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair
         is BuildStationRequest ->
             inTurnOnly(fromPlayerName) { buildStation(fromPlayerName, req.target, req.cards) }
     }
-    val message = with(newState) {
-        SendResponse.ForAll { toPlayerName ->
-            if (turn != endsOnPlayer)
-                Response.GameState(id, toPlayerView(toPlayerName), req.toAction(fromPlayerName))
-            else
-                Response.GameEnd(
-                    id,
-                    players.map { it.toPlayerView() to it.ticketsOnHand },
-                    req.toAction(fromPlayerName)
-                )
-        }
-    }
+    val message = newState.responseMessage(req.toAction(fromPlayerName))
     return newState to listOf(message)
+}
+
+fun GameState.responseMessage(action: Response.PlayerAction?) = SendResponse.ForAll { toPlayerName ->
+    if (turn != endsOnPlayer)
+        Response.GameState(id, toPlayerView(toPlayerName), action)
+    else
+        Response.GameEnd(
+            id,
+            players.map { it.toPlayerView() to it.ticketsOnHand },
+            action
+        )
 }
 
 fun GameState.joinPlayer(name: PlayerName): GameState {
