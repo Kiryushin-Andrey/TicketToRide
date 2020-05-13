@@ -1,6 +1,6 @@
 package ticketToRide
 
-data class LatLong(val lat: Number, val lng: Number)
+data class LatLong(val lat: Double, val lng: Double)
 data class City(val name: String, val latLng: LatLong, val routes: List<Route> = emptyList())
 data class Route(val destination: String, val color: CardColor?, val points: Int)
 

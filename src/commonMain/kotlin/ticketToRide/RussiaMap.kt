@@ -59,7 +59,8 @@ object RussiaMap {
             )),
         City("Ивдель", LatLong(60.6973287, 60.4172583),
             listOf(
-                Route("Салехард", CardColor.MAGENTO, 4)
+                Route("Салехард", null, 6),
+                Route("Ханты-Мансийск", CardColor.BLUE, 4)
             )),
         City("Салехард", LatLong(66.5375387, 66.6157469)),
         City("Нижний Новгород", LatLong(56.328571, 44.003506),
@@ -70,7 +71,7 @@ object RussiaMap {
             )),
         City("Рязань", LatLong(54.6295687, 39.7425039),
             listOf(
-                Route("Пенза", CardColor.RED, 3)
+                Route("Пенза", CardColor.RED, 2)
             )),
         City("Киров", LatLong(58.6035257, 49.6639029),
             listOf(
@@ -86,7 +87,7 @@ object RussiaMap {
             )),
         City("Саратов", LatLong(51.530018, 46.034683),
             listOf(
-                Route("Самара", CardColor.YELLOW, 3)
+                Route("Самара", CardColor.YELLOW, 2)
             )),
         City("Самара", LatLong(53.198627, 50.113987),
             listOf(
@@ -134,7 +135,7 @@ object RussiaMap {
             )),
         City("Волгоград", LatLong(48.7081906, 44.5153353),
             listOf(
-                Route("Астрахань", CardColor.BLACK, 3),
+                Route("Астрахань", CardColor.BLACK, 2),
                 Route("Саратов", CardColor.MAGENTO, 2)
             )),
         City("Ставрополь", LatLong(45.0433245, 41.9690934),
@@ -144,6 +145,7 @@ object RussiaMap {
         City("Элиста", LatLong(46.306999, 44.270187),
             listOf(
                 Route("Астрахань", CardColor.ORANGE, 2),
+                Route("Волгоград", CardColor.YELLOW, 2),
                 Route("Махачкала", CardColor.MAGENTO, 3)
             )),
         City("Астрахань", LatLong(46.3498308, 48.0326203)),
@@ -155,14 +157,18 @@ object RussiaMap {
             )),
         City("Владикавказ", LatLong(43.024593, 44.68211),
             listOf(
-                Route("Махачкала", CardColor.YELLOW, 2)
+                Route("Махачкала", CardColor.YELLOW, 1)
             )),
         City("Магнитогорск", LatLong(53.4242184, 58.983136),
             listOf(
                 Route("Челябинск", CardColor.YELLOW, 2)
             )),
-        City("Челябинск", LatLong(55.1598408, 61.4025547)),
-        City("Пенза", LatLong(53.200001, 45),
+        City("Челябинск", LatLong(55.1598408, 61.4025547),
+            listOf(
+                Route("Тюмень", CardColor.BLUE, 2),
+                Route("Омск", CardColor.GREEN, 4)
+            )),
+        City("Пенза", LatLong(53.200001, 45.0),
             listOf(
                 Route("Самара", CardColor.ORANGE, 2),
                 Route("Саратов", CardColor.BLACK, 1)
@@ -177,6 +183,49 @@ object RussiaMap {
                 Route("Мурманск", CardColor.GREEN, 2),
                 Route("Архангельск", CardColor.YELLOW, 4)
             )),
-        City("Махачкала", LatLong(42.9830241, 47.5048717))
+        City("Махачкала", LatLong(42.9830241, 47.5048717),
+            listOf(
+                Route("Астрахань", CardColor.GREEN, 3)
+            )),
+        City("Тюмень", LatLong(57.153534, 65.542274),
+            listOf(
+                Route("Омск", CardColor.BLACK, 3),
+                Route("Тобольск", CardColor.MAGENTO, 1)
+            )),
+        City("Тобольск", LatLong(58.1998048, 68.2512924),
+            listOf(
+                Route("Омск", CardColor.ORANGE, 3),
+                Route("Ханты-Мансийск", CardColor.RED, 3)
+            )),
+        City("Ханты-Мансийск", LatLong(61.00346, 69.019157),
+            listOf(
+                Route("Нижневартовск", CardColor.WHITE, 2)
+            )),
+        City("Нижневартовск", LatLong(60.9339411, 76.5814274),
+            listOf(
+                Route("Томск", CardColor.GREEN, 3),
+                Route("Новый Уренгой", CardColor.ORANGE, 4)
+            )),
+        City("Омск", LatLong(54.991375, 73.371529),
+            listOf(
+                Route("Новосибирск", CardColor.BLACK, 4)
+            )),
+        City("Новосибирск", LatLong(55.0282171, 82.9234509),
+            listOf(
+                Route("Томск", CardColor.YELLOW, 1)
+            )),
+        City("Лонгъюган", LatLong(64.7782522, 70.9559136),
+            listOf(
+                Route("Салехард", CardColor.RED, 2),
+                Route("Ханты-Мансийск", CardColor.YELLOW, 3),
+                Route("Новый Уренгой", CardColor.BLACK, 3)
+            )),
+        City("Томск", LatLong(56.488712, 84.952324)),
+        City("Новый Уренгой", LatLong(66.085196, 76.6799167)),
+        City("Сабетта", LatLong(71.2844523, 72.0468727),
+            listOf(
+                Route("Салехард", CardColor.ORANGE, 4),
+                Route("Мурманск", null, 8)
+            ))
     )
 }

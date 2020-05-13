@@ -31,10 +31,13 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
 
     override fun RBuilder.render() {
         val occupiedBy = props.occupiedBy
+        val (from, to) =
+            if (props.from.latLng.lng < props.to.latLng.lng) (props.from to props.to)
+            else (props.to to props.from)
         line = Polyline(jsObject {
             map = props.map
             geodesic = true
-            path = arrayOf(props.from.latLng, props.to.latLng)
+            path = arrayOf(from.latLng, to.latLng)
             strokeColor = occupiedBy?.color?.rgb ?: props.color?.rgb ?: "#AAAAAA"
             strokeWeight = if (occupiedBy != null) 8 else 3
             icons =
