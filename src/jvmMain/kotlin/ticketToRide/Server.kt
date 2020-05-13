@@ -70,6 +70,7 @@ fun Application.module() {
         }
         static("icons") { resources("icons") }
         static("cards") { resources("cards") }
+        static("images") { resources("images") }
 
         get("/") {
             call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }

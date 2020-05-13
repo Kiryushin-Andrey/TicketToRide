@@ -2,12 +2,27 @@ package ticketToRide.components
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
+import org.w3c.dom.Image
 import react.*
 import styled.*
 import ticketToRide.playerState.*
+import kotlin.browser.window
 
-class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
+interface BuildingSegmentState : RState {
+    var showArrivalGif: Boolean
+}
+
+class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentState>() {
+    override fun BuildingSegmentState.init() {
+        Image().src = "/images/lumiere.gif"
+    }
+
     override fun RBuilder.render() {
+        if (state.showArrivalGif) {
+            styledImg(src = "/images/lumiere.gif") {}
+            return
+        }
+
         styledDiv {
             css {
                 paddingLeft = 10.px
@@ -74,7 +89,10 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, RState>() {
                     options = playerState.optionsForCardsToDrop
                     chosenCardsToDropIx = playerState.chosenCardsToDropIx
                     onChooseCards = { ix -> act { playerState.chooseCardsToDrop(ix) } }
-                    onConfirm = { act { playerState.confirm() } }
+                    onConfirm = {
+                        setState { showArrivalGif = true }
+                        window.setTimeout({ act { playerState.confirm() } }, 5000)
+                    }
                 }
         }
     }
