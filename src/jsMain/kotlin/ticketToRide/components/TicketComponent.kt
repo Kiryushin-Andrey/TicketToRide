@@ -7,18 +7,19 @@ import react.dom.label
 import styled.*
 import ticketToRide.Ticket
 
-interface TicketProps : RProps {
-    var ticket: Ticket
-    var highlighted: Boolean
-    var fulfilled: Boolean?
-    var checkbox: TicketCheckbox?
-    var onMouseOver: () -> Unit
-    var onMouseOut: () -> Unit
-}
-
 class TicketCheckbox(val checked: Boolean, val onChange: () -> Unit)
 
-class TicketComponent : RComponent<TicketProps, RState>() {
+class TicketComponent : RComponent<TicketComponent.Props, RState>() {
+
+    interface Props : RProps {
+        var ticket: Ticket
+        var highlighted: Boolean
+        var fulfilled: Boolean?
+        var checkbox: TicketCheckbox?
+        var onMouseOver: () -> Unit
+        var onMouseOut: () -> Unit
+    }
+
     override fun RBuilder.render() {
         mPaper {
             attrs {
@@ -73,7 +74,7 @@ class TicketComponent : RComponent<TicketProps, RState>() {
     }
 }
 
-fun RBuilder.ticket(ticket: Ticket, builder: TicketProps.() -> Unit): ReactElement {
+fun RBuilder.ticket(ticket: Ticket, builder: TicketComponent.Props.() -> Unit): ReactElement {
     return child(TicketComponent::class) {
         attrs {
             this.ticket = ticket

@@ -1,12 +1,12 @@
 package ticketToRide.components
 
-import react.RComponent
-import react.RProps
-import react.RState
+import react.*
 import ticketToRide.GameStateView
+import ticketToRide.Locale
 import ticketToRide.playerState.PlayerState
 
 interface ComponentBaseProps : RProps {
+    var locale: Locale
     var playerState: PlayerState
     var gameState: GameStateView
     var onAction: (PlayerState) -> Unit
@@ -32,3 +32,17 @@ abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBasePro
     protected fun act(block: PlayerState.() -> PlayerState) =
         props.onAction(playerState.block())
 }
+
+inline fun <reified T : ComponentBase<P, *>, P : ComponentBaseProps> RBuilder.componentBase(
+    props: ComponentBaseProps,
+    crossinline builder: P.() -> Unit = {}
+) =
+    child(T::class) {
+        attrs {
+            this.locale = props.locale
+            this.gameState = props.gameState
+            this.playerState = props.playerState
+            this.onAction = props.onAction
+            builder()
+        }
+    }

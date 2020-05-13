@@ -43,9 +43,9 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             }
 
             when {
-                myTurn -> headerMessage("Ваш ход", Color.lightGreen)
-                lastRound -> headerMessage("Последний круг", Color.darkSalmon)
-                else -> headerMessage("Ходит ${players[turn].name.value}", Color.white)
+                myTurn -> headerMessage(str.yourTurn, Color.lightGreen)
+                lastRound -> headerMessage(str.lastRound, Color.darkSalmon)
+                else -> headerMessage(str.playerXmoves(players[turn].name.value), Color.white)
             }
 
             styledDiv {
@@ -55,7 +55,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     put("resize", "horizontal")
                 }
 
-                playersList(players, turn)
+                playersList(players, turn, props.locale)
                 horizontalDivider()
                 chatMessages(props.chatMessages)
             }
@@ -64,7 +64,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                 css {
                     put("grid-area", "send")
                 }
-                chatSendMessageTextBox(props.onSendMessage)
+                chatSendMessageTextBox(props.locale, props.onSendMessage)
             }
 
             styledDiv {
@@ -120,7 +120,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     marginLeft = 4.px
                 }
                 horizontalDivider()
-                searchTextBox {
+                searchTextBox(props.locale) {
                     text = state.searchText
                     onTextChanged = { setState { searchText = it } }
                     onEnter = {
@@ -173,6 +173,25 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             marginRight = 4.px
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val yourTurn by loc(
+            Locale.En to "Your turn",
+            Locale.Ru to "Ваш ход"
+        )
+
+        val lastRound by loc(
+            Locale.En to "Last round",
+            Locale.Ru to "Последний круг"
+        )
+
+        val playerXmoves by locWithParam<String>(
+            Locale.En to { name -> "$name moves" },
+            Locale.Ru to { name -> "Ходит $name" }
+        )
+    }
+    private val str = Strings()
 }
 
 fun RBuilder.horizontalDivider() {

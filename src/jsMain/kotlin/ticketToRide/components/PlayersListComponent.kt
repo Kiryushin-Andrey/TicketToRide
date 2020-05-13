@@ -2,21 +2,23 @@ package ticketToRide.components
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
-import kotlinx.html.onMouseOut
 import react.*
-import react.dom.*
 import styled.*
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.PlayerView
 
-interface PlayersListProps : RProps {
-    var players: List<PlayerView>
-    var turn: Int
-}
+class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
 
-class PlayersList : RComponent<PlayersListProps, RState>() {
+    interface Props : RProps {
+        var players: List<PlayerView>
+        var turn: Int
+        var locale: Locale
+    }
+
     override fun RBuilder.render() {
         for ((ix, player) in props.players.withIndex()) {
-            mTooltip(if (player.away) "Disconnected" else "", TooltipPlacement.rightStart) {
+            mTooltip(if (player.away) str.disconnected else "", TooltipPlacement.rightStart) {
                 mPaper {
                     attrs {
                         elevation = 2
@@ -68,6 +70,14 @@ class PlayersList : RComponent<PlayersListProps, RState>() {
             justifyContent = JustifyContent.spaceEvenly
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+        val disconnected by loc(
+            Locale.En to "Disconnected",
+            Locale.Ru to "Отключился"
+        )
+    }
+    private val str = Strings()
 }
 
 fun RBuilder.playerCardIcon(iconUrl: String, number: Int, style: RuleSet = {}) {
@@ -85,9 +95,10 @@ fun RBuilder.playerCardIcon(iconUrl: String, number: Int, style: RuleSet = {}) {
     }
 }
 
-fun RBuilder.playersList(players: List<PlayerView>, turn: Int) = child(PlayersList::class) {
+fun RBuilder.playersList(players: List<PlayerView>, turn: Int, locale: Locale) = child(PlayersListComponent::class) {
     attrs {
         this.players = players
         this.turn = turn
+        this.locale = locale
     }
 }

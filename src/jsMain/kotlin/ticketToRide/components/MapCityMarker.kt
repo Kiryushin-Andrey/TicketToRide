@@ -7,19 +7,20 @@ import react.*
 import styled.*
 import ticketToRide.PlayerView
 
-interface MapCityMarkerProps: RProps {
-    var lat: Number
-    var lng: Number
+class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
 
-    var name: String
-    var displayAllCityNames: Boolean
-    var selected: Boolean
-    var station: PlayerView?
-    var hasOccupiedSegment: Boolean
-    var onClick: (() -> Unit)?
-}
+    interface Props: RProps {
+        var lat: Number
+        var lng: Number
 
-class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
+        var name: String
+        var displayAllCityNames: Boolean
+        var selected: Boolean
+        var station: PlayerView?
+        var hasOccupiedSegment: Boolean
+        var onClick: (() -> Unit)?
+    }
+
     override fun RBuilder.render() {
         styledDiv {
             css {
@@ -143,7 +144,7 @@ class MapCityMarker : RComponent<MapCityMarkerProps, RState>() {
     }
 }
 
-fun RBuilder.marker(block: MapCityMarkerProps.() -> Unit): ReactElement {
+fun RBuilder.marker(block: MapCityMarker.Props.() -> Unit): ReactElement {
     return child(MapCityMarker::class) {
         attrs(block)
     }

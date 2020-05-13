@@ -10,6 +10,7 @@ import ticketToRide.*
 import ticketToRide.components.*
 
 interface FinalScreenProps : RProps {
+    var locale: Locale
     var gameMap: GameMap
     var players: List<PlayerFinalStats>
     var chatMessages: List<Response.ChatMessage>
@@ -78,7 +79,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                 }
 
                 chatMessages(props.chatMessages)
-                chatSendMessageTextBox(props.onSendMessage)
+                chatSendMessageTextBox(props.locale, props.onSendMessage)
             }
         }
     }
@@ -91,7 +92,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                 width = 100.pct
                 backgroundColor = Color.lightGoldenrodYellow
             }
-            mTypography("Игра закончена. Победил ${winner.name.value}!", MTypographyVariant.h5) {
+            mTypography(str.gameOver(winner.name.value), MTypographyVariant.h5) {
                 css {
                     fontStyle = FontStyle.italic
                     textAlign = TextAlign.center
@@ -180,7 +181,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     justifyContent = JustifyContent.spaceBetween
                 }
                 mTypography(variant = MTypographyVariant.body2) {
-                    +"Самый длинный маршрут! $longestPath вагонов"
+                    +str.longestRoute(longestPath)
                 }
                 pointsLabel(props.gameMap.pointsForLongestPath, Color.lightGreen)
             }
@@ -328,6 +329,21 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
 
         val summaryExpanded by css {}
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val gameOver by locWithParam<String>(
+            Locale.En to { name -> "Game is over, $name won!" },
+            Locale.Ru to { name -> "Игра закончена. Победил $name!" }
+        )
+
+        val longestRoute by locWithParam<Int>(
+            Locale.En to { n -> "Longest route - $n wagons!" },
+            Locale.Ru to { n -> "Самый длинный маршрут - $n вагонов!" }
+        )
+    }
+
+    private val str = Strings()
 }
 
 fun RBuilder.endScreen(builder: FinalScreenProps.() -> Unit) {

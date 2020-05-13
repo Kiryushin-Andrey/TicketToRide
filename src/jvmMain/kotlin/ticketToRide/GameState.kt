@@ -55,8 +55,11 @@ data class GameState(
                     .any { it == ticket || (long && it.points >= GameMap.longTicketMinPoints && it.sharesCityWith(ticket)) }
             }
             .distinct()
-        return if (available.size >= count) (1..count).map { available.random() }
-        else throw InvalidActionError("Game full, no more players allowed (no tickets left)")
+        if (available.size < count)
+            throw InvalidActionError("Game full, no more players allowed (no tickets left)")
+
+        return (1..count).map { available.random() }.distinct()
+            .let { if (it.size == count) it else getRandomTickets(count, long) }
     }
 
     fun toPlayerView(myName: PlayerName): GameStateView {

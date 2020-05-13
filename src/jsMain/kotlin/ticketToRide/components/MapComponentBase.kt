@@ -45,7 +45,7 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         routeSegments()
     }
 
-    protected open fun cityMarkerProps(markerProps: MapCityMarkerProps, city: City) = with(markerProps) {
+    protected open fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
         key = city.name
         name = city.name
         lat = city.latLng.lat
@@ -55,7 +55,7 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         selected = props.citiesToHighlight.contains(CityName(city.name))
     }
 
-    protected open fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) =
+    protected open fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, route: Route) =
         with(segmentProps) {
             this.from = from
             this.to = to
@@ -92,8 +92,8 @@ fun LatLong.toGoogleMapCoords() = jsObject<Coords> {
     lng = this@toGoogleMapCoords.lng
 }
 
-fun RBuilder.finalMap(builder: FinalMapComponentProps.() -> Unit) {
-    child(MapFinalComponent::class) {
+fun RBuilder.finalMap(builder: FinalMapComponent.Props.() -> Unit) {
+    child(FinalMapComponent::class) {
         attrs(builder)
     }
 }

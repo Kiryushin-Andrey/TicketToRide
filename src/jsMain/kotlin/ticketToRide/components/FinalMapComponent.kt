@@ -2,20 +2,20 @@ package ticketToRide.components
 
 import ticketToRide.*
 
-interface FinalMapComponentProps : MapComponentBaseProps {
-    var players: List<PlayerView>
-    var playerToHighlight: PlayerName?
-}
+class FinalMapComponent(props: Props) :
+    MapComponentBase<FinalMapComponent.Props, MapComponentBaseState>(props) {
 
-class MapFinalComponent(props: FinalMapComponentProps) :
-    MapComponentBase<FinalMapComponentProps, MapComponentBaseState>(props) {
+    interface Props : MapComponentBaseProps {
+        var players: List<PlayerView>
+        var playerToHighlight: PlayerName?
+    }
 
-    override fun cityMarkerProps(markerProps: MapCityMarkerProps, city: City) = with(markerProps) {
+    override fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
         super.cityMarkerProps(markerProps, city)
         selected = selected || (station != null && station?.name == props.playerToHighlight)
     }
 
-    override fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) = with(segmentProps) {
+    override fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, route: Route) = with(segmentProps) {
         super.segmentProps(this, from, to, route)
         occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
         if (props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight) {

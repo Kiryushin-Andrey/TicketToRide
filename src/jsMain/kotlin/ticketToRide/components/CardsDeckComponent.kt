@@ -9,10 +9,12 @@ import styled.StyleSheet
 import styled.css
 import styled.styledDiv
 import ticketToRide.Card
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.playerState.*
 import kotlin.browser.document
 
-class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
+class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
 
     override fun componentDidMount() {
         document.addEventListener("keypress", onKeyPress)
@@ -36,11 +38,11 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
 
     private fun getDisabledTooltip(cardIx: Int?) = when {
         !myTurn ->
-            "Ждем своего хода"
+            str.waitingForYouTurn
         playerState is PlayerState.ChoosingTickets ->
-            "Сначала надо выбрать маршруты"
+            str.chooseTicketsFirst
         cardIx != null && chosenCardIx != null && openCards[cardIx] is Card.Loco ->
-            "Уже выбрана другая карта, локомотив брать нельзя"
+            str.cannotTakeLocoWithAnotherCard
         else -> null
     }
 
@@ -55,17 +57,17 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
                 }
                 val chosenCardIx = (playerState as? PickedFirstCard)?.chosenCardIx
                 for ((ix, card) in openCards.withIndex()) {
-                    openCard(card, canPickCards, ix, chosenCardIx, getDisabledTooltip(ix)) {
+                    openCard(card, props.locale, canPickCards, ix, chosenCardIx, getDisabledTooltip(ix)) {
                         act { pickedOpenCard(ix) }
                     }
                 }
-                closedCard(getDisabledTooltip(null), chosenCardIx != null) {
+                closedCard(props.locale, getDisabledTooltip(null), chosenCardIx != null) {
                     act { pickedClosedCard() }
                 }
             }
             styledDiv {
-                val tooltipForTickets = getDisabledTooltip(null) ?: if (lastRound) "Идет последний круг" else null
-                ticketsCard(tooltipForTickets) {
+                val tooltipForTickets = getDisabledTooltip(null) ?: if (lastRound) str.lastRound else null
+                ticketsCard(props.locale, tooltipForTickets) {
                     act { pickedTickets() }
                 }
             }
@@ -87,12 +89,31 @@ class CardsDeck : ComponentBase<ComponentBaseProps, RState>() {
             justifyContent = JustifyContent.flexStart
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val waitingForYouTurn by loc(
+            Locale.En to "Wait for you turn to move",
+            Locale.Ru to "Ждем своего хода"
+        )
+
+        val chooseTicketsFirst by loc(
+            Locale.En to "Choose tickets first",
+            Locale.Ru to "Сначала надо выбрать маршруты"
+        )
+
+        val cannotTakeLocoWithAnotherCard by loc(
+            Locale.En to "You cannot take loco together with another card",
+            Locale.Ru to "Уже выбрана другая карта, локомотив брать нельзя"
+        )
+
+        val lastRound by loc(
+            Locale.En to "Last round",
+            Locale.Ru to "Идет последний круг"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.cardsDeck(props: ComponentBaseProps) = child(CardsDeck::class) {
-    attrs {
-        this.gameState = props.gameState
-        this.playerState = props.playerState
-        this.onAction = props.onAction
-    }
-}
+fun RBuilder.cardsDeck(props: ComponentBaseProps) = componentBase<CardsDeckComponent, ComponentBaseProps>(props)

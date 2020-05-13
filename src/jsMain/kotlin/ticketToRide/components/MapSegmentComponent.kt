@@ -2,26 +2,26 @@ package ticketToRide.components
 
 import google.maps.*
 import kotlinext.js.jsObject
-import kotlinx.serialization.PrimitiveKind
 import org.w3c.dom.Element
 import react.*
 import ticketToRide.*
 import kotlin.math.ceil
 
-interface MapSegmentProps : RProps {
-    var map: Map<Element>
-    var mapZoom: Int
-    var from: City
-    var to: City
-    var color: CardColor?
-    var points: Int
-    var occupiedBy: PlayerView?
-}
+class MapSegmentComponent : RComponent<MapSegmentComponent.Props, RState>() {
 
-class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
+    interface Props : RProps {
+        var map: Map<Element>
+        var mapZoom: Int
+        var from: City
+        var to: City
+        var color: CardColor?
+        var points: Int
+        var occupiedBy: PlayerView?
+    }
+
     private lateinit var line: Polyline
 
-    override fun componentWillUpdate(nextProps: MapSegmentProps, nextState: RState) {
+    override fun componentWillUpdate(nextProps: Props, nextState: RState) {
         line.setMap(null)
     }
 
@@ -94,7 +94,7 @@ class MapSegmentComponent : RComponent<MapSegmentProps, RState>() {
     }
 }
 
-fun RBuilder.mapSegment(builder: MapSegmentProps.() -> Unit) {
+fun RBuilder.mapSegment(builder: MapSegmentComponent.Props.() -> Unit) {
     child(MapSegmentComponent::class) {
         attrs(builder)
     }

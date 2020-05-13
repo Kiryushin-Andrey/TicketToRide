@@ -15,7 +15,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 
     private fun act(block: PlayerState.() -> PlayerState) = props.onAction(playerState.block())
 
-    override fun cityMarkerProps(markerProps: MapCityMarkerProps, city: City) = with(markerProps) {
+    override fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
         super.cityMarkerProps(this, city)
 
         val cityName = CityName(city.name)
@@ -24,7 +24,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
         onClick = { act { onCityClick(cityName) } }
     }
 
-    override fun segmentProps(segmentProps: MapSegmentProps, from: City, to: City, route: Route) = with(segmentProps) {
+    override fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, route: Route) = with(segmentProps) {
         super.segmentProps(this, from, to, route)
         occupiedBy = players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
     }
@@ -33,6 +33,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 fun RBuilder.gameMap(props: ComponentBaseProps, builder: MapComponentProps.() -> Unit) {
     child(MapComponent::class) {
         attrs {
+            this.locale = props.locale
             this.gameState = props.gameState
             this.playerState = props.playerState
             this.onAction = props.onAction

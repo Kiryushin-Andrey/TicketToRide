@@ -7,10 +7,12 @@ import react.RBuilder
 import react.RState
 import styled.css
 import styled.styledDiv
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 
 class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
-        mTypography("Мои карты", variant = MTypographyVariant.h6) {
+        mTypography(str.header, variant = MTypographyVariant.h6) {
             css { paddingLeft = 10.px }
         }
         styledDiv {
@@ -28,7 +30,7 @@ class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
                         alignItems = Align.center
                         margin = 12.px.toString()
                     }
-                    myCard(card)
+                    myCard(card, props.locale)
                     styledDiv {
                         css {
                             put("font-size", "large")
@@ -39,12 +41,16 @@ class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
             }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val header by loc(
+            Locale.En to "My cards",
+            Locale.Ru to "Мои карты"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.myCards(props: ComponentBaseProps) = child(MyCardsComponent::class) {
-    attrs {
-        this.gameState = props.gameState
-        this.playerState = props.playerState
-        this.onAction = props.onAction
-    }
-}
+fun RBuilder.myCards(props: ComponentBaseProps) = componentBase<MyCardsComponent, ComponentBaseProps>(props)

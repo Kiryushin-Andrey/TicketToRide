@@ -3,43 +3,40 @@ package ticketToRide.screens
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanel
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelDetails
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelSummary
-import com.ccfraser.muirwik.components.input.mInput
-import com.ccfraser.muirwik.components.input.mInputLabel
-import com.ccfraser.muirwik.components.input.type
+import com.ccfraser.muirwik.components.expansionpanel.*
+import com.ccfraser.muirwik.components.input.*
+import com.ccfraser.muirwik.components.menu.mMenuItem
 import kotlinx.css.*
 import kotlinx.css.properties.BoxShadows
 import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
-import org.w3c.notifications.DEFAULT
-import org.w3c.notifications.Notification
-import org.w3c.notifications.NotificationPermission
+import org.w3c.notifications.*
 import react.*
-import react.dom.b
 import styled.*
 import ticketToRide.*
 import ticketToRide.components.withClasses
 import kotlin.browser.window
 
-interface WelcomeScreenProps : RProps {
-    var onStartGame: (PlayerName, Int) -> Unit
-    var onJoinGame: (GameId, PlayerName) -> Unit
-}
+class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
-interface WelcomeScreenState : RState {
-    var playerName: String
-    var errorText: String?
-    var carsNumber: Int
-}
+    interface State : RState {
+        var playerName: String
+        var errorText: String?
+        var carsNumber: Int
+    }
 
-class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
+    interface Props : RProps {
+        var locale: Locale
+        var onLocaleChanged: (Locale) -> Unit
+        var onStartGame: (PlayerName, Int) -> Unit
+        var onJoinGame: (GameId, PlayerName) -> Unit
+    }
+
     private val gameId =
         if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
         else null
 
-    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
+    override fun State.init(props: Props) {
         carsNumber = 45
     }
 
@@ -54,7 +51,7 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                 fullWidth = true
             }
             mDialogContent {
-                mTextField("Your name is", fullWidth = true) {
+                mTextField(str.yourName, fullWidth = true) {
                     attrs {
                         error = state.errorText != null
                         helperText = state.errorText ?: ""
@@ -63,7 +60,7 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                             val value = it.targetInputValue.trim()
                             setState {
                                 playerName = value
-                                errorText = if (value.isBlank()) "Enter your name" else null
+                                errorText = if (value.isBlank()) str.enterYourName else null
                             }
                         }
                         onKeyDown = { e ->
@@ -93,7 +90,7 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                                     "content" to ComponentStyles.getClassName { it::settingsPanelSummaryContent },
                                     "expanded" to ComponentStyles.getClassName { it::settingsPanelExpanded })
                             }
-                            mInputLabel("More settings")
+                            mInputLabel(str.moreSettings)
                         }
 
                         mExpansionPanelDetails {
@@ -102,7 +99,7 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                                     "root" to ComponentStyles.getClassName { it::settingsPanelContent }
                                 )
                             }
-                            mInputLabel("Initial number of cars on hand") {
+                            mInputLabel(str.numberOfCarsOnHand) {
                                 mInput {
                                     css {
                                         marginLeft = 10.px
@@ -126,13 +123,30 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
                 }
                 if (Notification.permission == NotificationPermission.DEFAULT) {
                     mTypography(variant = MTypographyVariant.body1) {
-                        b { +"Note: " }
-                        +" allow notifications to be notified when it's your turn to move even if the browser tab is inactive"
+                        +str.notificationNote
                     }
                 }
             }
             mDialogActions {
-                val btnTitle = if (gameId == null) "Start the Game!" else "Join the Game!"
+                mSelect(props.locale.toString()) {
+                    css { marginRight = 15.px }
+                    attrs {
+                        onChange = { e, _ ->
+                            val value = e.target?.asDynamic().value
+                            props.onLocaleChanged(Locale.valueOf(value))
+                        }
+                    }
+                    Locale.values().forEach {
+                        mMenuItem {
+                            attrs {
+                                value = it.name
+                                selected = props.locale == it
+                            }
+                            +it.name
+                        }
+                    }
+                }
+                val btnTitle = if (gameId == null) str.startGame else str.joinGame
                 mButton(btnTitle, MColor.primary, MButtonVariant.contained,
                     disabled = state.errorText != null,
                     onClick = { proceed() })
@@ -184,9 +198,48 @@ class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, 
         }
         val settingsPanelExpanded by ComponentStyles.css {}
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val yourName by loc(
+            Locale.En to "Your name is",
+            Locale.Ru to "Ваше имя"
+        )
+
+        val enterYourName by loc(
+            Locale.En to "Enter your name",
+            Locale.Ru to "Введите ваше имя"
+        )
+
+        val moreSettings by loc(
+            Locale.En to "More settings",
+            Locale.Ru to "Настройки"
+        )
+
+        val numberOfCarsOnHand by loc(
+            Locale.En to "Initial number of cars on hand",
+            Locale.Ru to "Количество вагонов в начале игры"
+        )
+
+        val notificationNote by loc(
+            Locale.En to "Allow notifications to be notified when it's your turn to move even if the browser tab is inactive",
+            Locale.Ru to "Уведомления подскажут, когда до вас дошла очередь ходить"
+        )
+
+        val startGame by loc(
+            Locale.En to "Start game!",
+            Locale.Ru to "Начать игру!"
+        )
+
+        val joinGame by loc(
+            Locale.En to "Join game!",
+            Locale.Ru to "Присоединиться к игре!"
+        )
+    }
+    private val str = Strings()
 }
 
-fun RBuilder.welcomeScreen(builder: WelcomeScreenProps.() -> Unit) {
+fun RBuilder.welcomeScreen(builder: WelcomeScreen.Props.() -> Unit) {
     child(WelcomeScreen::class) {
         attrs {
             builder()

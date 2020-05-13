@@ -9,20 +9,24 @@ import styled.css
 import styled.styledDiv
 import styled.styledLabel
 import ticketToRide.Card
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 
-interface OptionsForCardsToDropProps : RProps {
-    var options: List<List<Card>>
-    var chosenCardsToDropIx: Int?
-    var confirmBtnTitle: String
-    var onChooseCards: (Int) -> Unit
-    var onConfirm: () -> Unit
-}
+class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent.Props, RState>() {
 
-class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropProps, RState>() {
+    interface Props : RProps {
+        var locale: Locale
+        var options: List<List<Card>>
+        var chosenCardsToDropIx: Int?
+        var confirmBtnTitle: String
+        var onChooseCards: (Int) -> Unit
+        var onConfirm: () -> Unit
+    }
+
     override fun RBuilder.render() {
         when {
             props.options.isEmpty() ->
-                mTypography("Не хватает карт \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography(str.notEnoughCardsOnHand, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
@@ -38,7 +42,7 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropProps, RS
                             display = Display.inlineFlex
                             justifyContent = JustifyContent.left
                         }
-                        props.options[0].forEach(::myCard)
+                        props.options[0].forEach { myCard(it, props.locale) }
                     }
                     confirmButton()
                 }
@@ -73,7 +77,7 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropProps, RS
                                         onClick = { props.onChooseCards(ix) }
                                     }
                                 }
-                                cards.forEach(::myCard)
+                                cards.forEach { myCard(it, props.locale) }
                             }
                         }
                     }
@@ -94,10 +98,22 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropProps, RS
             }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+        val notEnoughCardsOnHand by loc(
+            Locale.En to "Not enough cards on hand \uD83D\uDE1E",
+            Locale.Ru to "Не хватает карт \uD83D\uDE1E"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.optionsForCardsToDrop(builder: OptionsForCardsToDropProps.() -> Unit) {
+fun RBuilder.optionsForCardsToDrop(locale: Locale, builder: OptionsForCardsToDropComponent.Props.() -> Unit) {
     child(OptionsForCardsToDropComponent::class) {
-        attrs(builder)
+        attrs {
+            this.locale = locale
+            builder()
+        }
     }
 }

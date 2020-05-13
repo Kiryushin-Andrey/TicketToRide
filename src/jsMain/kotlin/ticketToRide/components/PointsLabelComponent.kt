@@ -6,12 +6,13 @@ import react.*
 import styled.StyleSheet
 import styled.css
 
-interface PointsLabelProps : RProps {
-    var color: Color
-    var text: String
-}
+class PointsLabelComponent : RComponent<PointsLabelComponent.Props, RState>() {
 
-class PointsLabelComponent : RComponent<PointsLabelProps, RState>() {
+    interface Props : RProps {
+        var color: Color
+        var text: String
+    }
+
     override fun RBuilder.render() {
         mPaper {
             attrs { elevation = 4 }

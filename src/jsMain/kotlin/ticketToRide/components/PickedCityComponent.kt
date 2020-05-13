@@ -10,6 +10,8 @@ import react.*
 import styled.css
 import styled.styledDiv
 import styled.styledImg
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.playerState.PlayerState
 
 class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
@@ -47,7 +49,7 @@ class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
                                 paddingRight = 16.px
                             }
                         }
-                        mButton("Станция", MColor.primary, MButtonVariant.contained) {
+                        mButton(str.station, MColor.primary, MButtonVariant.contained) {
                             attrs {
                                 onClick = { act { buildStation() } }
                             }
@@ -57,14 +59,15 @@ class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
             }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+        val station by loc(
+            Locale.En to "Station",
+            Locale.Ru to "Станция"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.pickedCity(props: ComponentBaseProps) {
-    child(PickedCityComponent::class) {
-        attrs {
-            this.gameState = props.gameState
-            this.playerState = props.playerState
-            this.onAction = props.onAction
-        }
-    }
-}
+fun RBuilder.pickedCity(props: ComponentBaseProps) = componentBase<PickedCityComponent, ComponentBaseProps>(props)

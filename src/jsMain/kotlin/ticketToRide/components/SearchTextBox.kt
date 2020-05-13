@@ -5,26 +5,28 @@ import com.ccfraser.muirwik.components.form.MFormControlMargin
 import com.ccfraser.muirwik.components.form.MFormControlVariant
 import com.ccfraser.muirwik.components.form.margin
 import com.ccfraser.muirwik.components.form.variant
-import com.ccfraser.muirwik.components.input.MInputProps
 import com.ccfraser.muirwik.components.mTextField
 import com.ccfraser.muirwik.components.mTooltip
 import com.ccfraser.muirwik.components.targetInputValue
-import kotlinext.js.jsObject
-import kotlinx.css.*
-import react.*
-import react.dom.input
-import styled.*
+import react.RBuilder
+import react.RComponent
+import react.RProps
+import react.RState
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 
-interface SearchTextBoxProps : RProps {
-    var text: String
-    var onTextChanged: (String) -> Unit
-    var onEnter: () -> Unit
-}
+class SearchTextBox : RComponent<SearchTextBox.Props, RState>() {
 
-class SearchTextBox : RComponent<SearchTextBoxProps, RState>() {
+    interface Props : RProps {
+        var text: String
+        var locale: Locale
+        var onTextChanged: (String) -> Unit
+        var onEnter: () -> Unit
+    }
+
     override fun RBuilder.render() {
-        mTooltip("Enter - выбрать город, Esc - сбросить ввод", TooltipPlacement.topStart) {
-            mTextField("Поиск") {
+        mTooltip(str.tooltip, TooltipPlacement.topStart) {
+            mTextField(str.header) {
                 attrs {
                     value = props.text
                     onChange = { e ->
@@ -45,13 +47,25 @@ class SearchTextBox : RComponent<SearchTextBoxProps, RState>() {
         }
     }
 
-    private object ComponentStyles : StyleSheet("SearchTextBox", isStatic = true) {
-        val input by css {
-            padding = 12.px.toString()
-        }
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val tooltip by loc(
+            Locale.En to "Enter - pick city, Esc - clear input",
+            Locale.Ru to "Enter - выбрать город, Esc - сбросить ввод"
+        )
+
+        val header by loc(
+            Locale.En to "Search city",
+            Locale.Ru to "Поиск города"
+        )
     }
+
+    private val str = Strings()
 }
 
-fun RBuilder.searchTextBox(builder: SearchTextBoxProps.() -> Unit) = child(SearchTextBox::class) {
-    attrs(builder)
+fun RBuilder.searchTextBox(locale: Locale, builder: SearchTextBox.Props.() -> Unit) = child(SearchTextBox::class) {
+    attrs {
+        this.locale = locale
+        builder()
+    }
 }

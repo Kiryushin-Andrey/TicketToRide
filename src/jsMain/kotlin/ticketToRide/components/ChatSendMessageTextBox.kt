@@ -7,17 +7,21 @@ import kotlinx.css.*
 import org.w3c.dom.HTMLInputElement
 import react.*
 import styled.*
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 
-interface ChatSendMessageProps : RProps {
-    var onSendMessage: (String) -> Unit
-}
+class ChatSendMessageTextBox : RComponent<ChatSendMessageTextBox.Props, ChatSendMessageTextBox.State>() {
 
-interface ChatSendMessageState : RState {
-    var messageText: String
-}
+    interface Props : RProps {
+        var locale: Locale
+        var onSendMessage: (String) -> Unit
+    }
 
-class ChatSendMessageTextBox : RComponent<ChatSendMessageProps, ChatSendMessageState>() {
-    override fun ChatSendMessageState.init(props: ChatSendMessageProps) {
+    interface State : RState {
+        var messageText: String
+    }
+
+    override fun State.init(props: Props) {
         messageText = ""
     }
 
@@ -31,7 +35,7 @@ class ChatSendMessageTextBox : RComponent<ChatSendMessageProps, ChatSendMessageS
                 alignItems = Align.center
                 margin = 4.px.toString()
             }
-            mTextField("Отправить сообщение") {
+            mTextField(str.sendMessage) {
                 attrs {
                     value = state.messageText
                     onChange = { e ->
@@ -59,11 +63,22 @@ class ChatSendMessageTextBox : RComponent<ChatSendMessageProps, ChatSendMessageS
             setState { messageText = "" }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val sendMessage by loc(
+            Locale.En to "Send message",
+            Locale.Ru to "Отправить сообщение"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.chatSendMessageTextBox(onSendMessage: (String) -> Unit) {
+fun RBuilder.chatSendMessageTextBox(locale: Locale, onSendMessage: (String) -> Unit) {
     child(ChatSendMessageTextBox::class) {
         attrs {
+            this.locale = locale
             this.onSendMessage = onSendMessage
         }
     }

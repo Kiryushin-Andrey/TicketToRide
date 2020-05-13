@@ -22,7 +22,11 @@ import kotlinx.serialization.json.*
 import mu.KotlinLogging
 import java.net.InetAddress
 
-class PlayerConnection(val gameId: GameId, val name: PlayerName, private val ws: WebSocketSession) {
+class PlayerConnection(
+    val gameId: GameId,
+    val name: PlayerName,
+    private val ws: WebSocketSession
+) {
     suspend fun send(resp: Response) = ws.send(json.stringify(Response.serializer(), resp))
     suspend fun ping() = ws.send(Response.Pong)
 }

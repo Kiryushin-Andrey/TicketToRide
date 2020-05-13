@@ -16,6 +16,7 @@ import kotlin.browser.*
 
 interface AppState : RState {
     var screen: Screen
+    var locale: Locale
     var chatMessages: MutableList<Response.ChatMessage>
     var errorMessage: String
     var showErrorMessage: Boolean
@@ -38,6 +39,7 @@ class App() : RComponent<RProps, AppState>() {
     }
 
     override fun AppState.init() {
+        locale = Locale.En
         screen = Screen.Welcome
         chatMessages = mutableListOf()
         errorMessage = ""
@@ -76,16 +78,14 @@ class App() : RComponent<RProps, AppState>() {
             }
 
             onclose = { e ->
-                fun errorMessage(reason: String, secsToReconnect: Int) =
-                    "Disconnected from server: $reason. Trying to reconnect in $secsToReconnect seconds..."
-
+                val reason = e.asDynamic().reason as? String
                 pingHandle?.let { window.clearInterval(it) }
                 job?.cancel()
                 var reconnectTimeoutHandle = 0
                 reconnectTimeoutHandle = window.setInterval({
                     setState {
                         secsToReconnect -= 1
-                        errorMessage = errorMessage(e.asDynamic().reason, secsToReconnect)
+                        errorMessage = str.disconnected(reason to secsToReconnect)
                         if (secsToReconnect == 0) {
                             showErrorMessage = false
                             window.clearInterval(reconnectTimeoutHandle)
@@ -95,7 +95,7 @@ class App() : RComponent<RProps, AppState>() {
                 }, 1000)
                 setState {
                     secsToReconnect = ErrorMessageTimeoutSecs
-                    errorMessage = errorMessage(e.asDynamic().reason, secsToReconnect)
+                    errorMessage = str.disconnected(reason to secsToReconnect)
                     showErrorMessage = true
                 }
             }
@@ -107,6 +107,8 @@ class App() : RComponent<RProps, AppState>() {
             when (it) {
                 is Screen.Welcome ->
                     welcomeScreen {
+                        locale = state.locale
+                        onLocaleChanged = ::onLocaleChanged
                         onStartGame = ::startGame
                         onJoinGame = ::joinGame
                     }
@@ -114,6 +116,7 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.ShowGameId ->
                     showGameIdScreen {
                         gameId = it.gameId
+                        locale = state.locale
                         onClosed = {
                             setState {
                                 screen = Screen.GameInProgress(
@@ -128,6 +131,7 @@ class App() : RComponent<RProps, AppState>() {
 
                 is Screen.GameInProgress ->
                     gameScreen {
+                        locale = state.locale
                         gameMap = it.gameMap
                         gameState = it.gameState
                         playerState = it.playerState
@@ -139,8 +143,16 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.GameOver -> {
                     val allPlayers = it.players.map { it.first }
                     endScreen {
+                        locale = state.locale
                         gameMap = it.gameMap
-                        players = it.players.map { (player, tickets) -> PlayerFinalStats(player, tickets, allPlayers, state.map) }
+                        players = it.players.map { (player, tickets) ->
+                            PlayerFinalStats(
+                                player,
+                                tickets,
+                                allPlayers,
+                                state.map
+                            )
+                        }
                         chatMessages = state.chatMessages
                         onSendMessage = { message -> requests.offer(ChatMessageRequest(message)) }
                     }
@@ -203,7 +215,7 @@ class App() : RComponent<RProps, AppState>() {
                             )
                         }
                         msg.action?.let {
-                            chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
                         }
                     }
                 }
@@ -211,14 +223,14 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.ShowGameId -> setState {
                     screen = copy(gameState = msg.state)
                     msg.action?.let {
-                        chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
                     }
                 }
 
                 is Screen.GameInProgress -> {
                     if (!gameState.myTurn && msg.state.myTurn) {
                         Notification("Ticket to Ride", jsObject {
-                            body = "It's your turn to make a move!"
+                            body = str.yourTurn
                             icon = "/favicon.ico"
                             silent = true
                             renotify = false
@@ -231,12 +243,13 @@ class App() : RComponent<RProps, AppState>() {
                     setState {
                         screen = copy(gameState = msg.state, playerState = newPlayerState)
                         msg.action?.let {
-                            chatMessages = chatMessages.apply { add(it.chatMessage()) }
+                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
                         }
                     }
                 }
 
-                is Screen.GameOver -> {}
+                is Screen.GameOver -> {
+                }
             }
 
         }
@@ -249,7 +262,7 @@ class App() : RComponent<RProps, AppState>() {
                     state.map,
                     msg.players
                 )
-                msg.action?.chatMessage()?.let {
+                msg.action?.chatMessage(state.locale)?.let {
                     chatMessages = chatMessages.apply { add(it) }
                 }
             }
@@ -263,4 +276,27 @@ class App() : RComponent<RProps, AppState>() {
     private fun joinGame(gameId: GameId, playerName: PlayerName) {
         requests.offer(JoinGameRequest(gameId, playerName))
     }
+
+    private fun onLocaleChanged(value: Locale) = setState { locale = value }
+
+    private inner class Strings : LocalizedStrings({ state.locale }) {
+
+        val disconnected by locWithParam<Pair<String?, Int>>(
+            Locale.En to { (reason, secsToReconnect) ->
+                val additionalInfo = reason?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""
+                "Disconnected from server$additionalInfo. Trying to reconnect in $secsToReconnect seconds..."
+            },
+            Locale.Ru to { (reason, secsToReconnect) ->
+                val additionalInfo = reason?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""
+                "Потеряно соединение$additionalInfo. Попытка переподключения через $secsToReconnect секунд..."
+            }
+        )
+
+        val yourTurn by loc(
+            Locale.En to "It's your turn to make a move!",
+            Locale.Ru to "Ваш ход!"
+        )
+    }
+
+    private val str = Strings()
 }

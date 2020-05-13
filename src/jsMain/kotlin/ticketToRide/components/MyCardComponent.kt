@@ -9,16 +9,19 @@ import react.RProps
 import react.RState
 import styled.css
 import ticketToRide.Card
-import ticketToRide.name
+import ticketToRide.Locale
+import ticketToRide.getName
 
-interface MyCardProps : RProps {
-    var card: Card
-}
+class MyCardComponent : RComponent<MyCardComponent.Props, RState>() {
 
-class MyCardComponent : RComponent<MyCardProps, RState>() {
+    interface Props : RProps {
+        var card: Card
+        var locale: Locale
+    }
+
     override fun RBuilder.render() {
         val card = props.card
-        mTooltip(card.name) {
+        mTooltip(card.getName(props.locale)) {
             mPaper {
                 attrs {
                     elevation = 4
@@ -41,10 +44,11 @@ class MyCardComponent : RComponent<MyCardProps, RState>() {
     }
 }
 
-fun RBuilder.myCard(card: Card) {
+fun RBuilder.myCard(card: Card, locale: Locale) {
     child(MyCardComponent::class) {
         attrs {
             this.card = card
+            this.locale = locale
         }
     }
 }

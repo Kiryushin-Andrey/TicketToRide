@@ -4,6 +4,8 @@ import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
 import react.*
 import styled.*
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.playerState.BuildingStation
 
 class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
@@ -47,18 +49,18 @@ class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
         val occupiedBy = props.gameState.players.find { it.placedStations.contains(playerState.target) }
         when {
             occupiedBy == me ->
-                mTypography("Станция уже построена \uD83D\uDE0A", MTypographyVariant.body1) {
+                mTypography(str.stationAlreadyPlacedByYou, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             occupiedBy != null ->
-                mTypography("Станция уже построена другим игроком \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography(str.stationAlreadyPlacedByAnotherPlayer, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             else ->
-                optionsForCardsToDrop {
-                    confirmBtnTitle = "Ставлю станцию"
+                optionsForCardsToDrop(props.locale) {
+                    confirmBtnTitle = str.putStation
                     options = playerState.optionsForCardsToDrop
                     chosenCardsToDropIx = playerState.chosenCardsToDropIx
                     onChooseCards = { ix -> act { playerState.chooseCardsToDrop(ix) } }
@@ -66,14 +68,27 @@ class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
                 }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val stationAlreadyPlacedByYou by loc(
+            Locale.En to "You already have a station here \uD83D\uDE0A",
+            Locale.Ru to "У вас уже есть здесь станция \uD83D\uDE0A"
+        )
+
+        val stationAlreadyPlacedByAnotherPlayer by loc(
+            Locale.En to "Another player has already placed a station here \uD83D\uDE1E",
+            Locale.Ru to "Станция уже построена другим игроком \uD83D\uDE1E"
+        )
+
+        val putStation by loc(
+            Locale.En to "Build station",
+            Locale.Ru to "Ставлю станцию"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.buildingStation(props: ComponentBaseProps) {
-    child(BuildingStationComponent::class) {
-        attrs {
-            this.gameState = props.gameState
-            this.playerState = props.playerState
-            this.onAction = props.onAction
-        }
-    }
-}
+fun RBuilder.buildingStation(props: ComponentBaseProps) =
+    componentBase<BuildingStationComponent, ComponentBaseProps>(props)

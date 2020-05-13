@@ -5,15 +5,18 @@ import kotlinx.css.*
 import org.w3c.dom.Image
 import react.*
 import styled.*
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.playerState.*
 import kotlin.browser.window
 
-interface BuildingSegmentState : RState {
-    var showArrivalGif: Boolean
-}
+class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentComponent.State>() {
 
-class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentState>() {
-    override fun BuildingSegmentState.init() {
+    interface State : RState {
+        var showArrivalGif: Boolean
+    }
+
+    override fun State.init() {
         Image().src = "/images/lumiere.gif"
     }
 
@@ -69,41 +72,59 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegme
         val occupiedBy = props.gameState.players.find { it.occupiedSegments.contains(segment) }
         when {
             occupiedBy == me ->
-                mTypography("Сегмент уже построен \uD83D\uDE0A", MTypographyVariant.body1) {
+                mTypography(str.segmentAlreadyTakenByYou, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             occupiedBy != null ->
-                mTypography("Сегмент уже занят другим игроком \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography(str.segmentAlreadyTakenByAnotherPlayer, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             me.carsLeft < segment.length ->
-                mTypography("Не хватает вагонов \uD83D\uDE1E", MTypographyVariant.body1) {
+                mTypography(str.notEnoughCars, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
 
             else ->
-                optionsForCardsToDrop {
-                    confirmBtnTitle = "Строю сегмент"
+                optionsForCardsToDrop(props.locale) {
+                    confirmBtnTitle = str.buildSegment
                     options = playerState.optionsForCardsToDrop
                     chosenCardsToDropIx = playerState.chosenCardsToDropIx
                     onChooseCards = { ix -> act { playerState.chooseCardsToDrop(ix) } }
                     onConfirm = {
                         setState { showArrivalGif = true }
-                        window.setTimeout({ act { playerState.confirm() } }, 5000)
+                        window.setTimeout({ act { playerState.confirm() } }, 4000)
                     }
                 }
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val buildSegment by loc(
+            Locale.En to "Build segment",
+            Locale.Ru to "Строю сегмент"
+        )
+
+        val segmentAlreadyTakenByYou by loc(
+            Locale.En to "Segment already taken by you \uD83D\uDE0A",
+            Locale.Ru to "Сегмент уже построен \uD83D\uDE0A"
+        )
+
+        val segmentAlreadyTakenByAnotherPlayer by loc(
+            Locale.En to "Segment already taken by another player \uD83D\uDE1E",
+            Locale.Ru to "Сегмент уже занят другим игроком \uD83D\uDE1E"
+        )
+
+        val notEnoughCars by loc(
+            Locale.En to "Not enough wagons \uD83D\uDE1E",
+            Locale.Ru to "Не хватает вагонов на строительство \uD83D\uDE1E"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.buildingSegment(props: ComponentBaseProps) {
-    child(BuildingSegmentComponent::class) {
-        attrs {
-            this.gameState = props.gameState
-            this.playerState = props.playerState
-            this.onAction = props.onAction
-        }
-    }
-}
+fun RBuilder.buildingSegment(props: ComponentBaseProps) =
+    componentBase<BuildingSegmentComponent, ComponentBaseProps>(props)

@@ -7,23 +7,27 @@ import react.*
 import react.dom.*
 import styled.*
 import ticketToRide.Card
-import ticketToRide.name
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
+import ticketToRide.getName
 
-interface CardProps : RProps {
-    var imageUrl: String
-    var assignedKey: String?
-    var color: Color?
-    var enabled: Boolean
-    var checked: Boolean
-    var tooltip: String?
-    var onClick: () -> Unit
-}
+class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
 
-interface CardState : RState {
-    var hovered: Boolean
-}
+    interface Props : RProps {
+        var locale: Locale
+        var imageUrl: String
+        var assignedKey: String?
+        var color: Color?
+        var enabled: Boolean
+        var checked: Boolean
+        var tooltip: String?
+        var onClick: () -> Unit
+    }
 
-class CardComponent : RComponent<CardProps, CardState>() {
+    interface State : RState {
+        var hovered: Boolean
+    }
+
     override fun RBuilder.render() {
         mPaper {
             attrs {
@@ -67,7 +71,7 @@ class CardComponent : RComponent<CardProps, CardState>() {
 
     private val tooltip
         get() = props.tooltip?.let { msg ->
-            if (props.enabled) props.assignedKey?.let { "$msg (клавиша $it)" } ?: msg else msg
+            if (props.enabled) props.assignedKey?.let { "$msg (${str.keyTip(it)})" } ?: msg else msg
         } ?: ""
 
     private fun RBuilder.checkedMark() {
@@ -99,14 +103,41 @@ class CardComponent : RComponent<CardProps, CardState>() {
             }
         }
     }
+
+    private val str = Strings { props.locale }
 }
 
-private fun RBuilder.card(builder: CardProps.() -> Unit) = child(CardComponent::class) {
+
+private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
+
+    val keyTip by locWithParam<String>(
+        Locale.En to { key -> "key $key" },
+        Locale.Ru to { key -> "клавиша $key" }
+    )
+
+    val takeOneClosedCard by loc(
+        Locale.En to "Take face down card",
+        Locale.Ru to "Взять закрытую карту"
+    )
+
+    val takeTwoClosedCards by loc(
+        Locale.En to "Take two face down cards",
+        Locale.Ru to "Взять две закрытые карты"
+    )
+
+    val takeTickets by loc(
+        Locale.En to "Take tickets",
+        Locale.Ru to "Взять маршруты"
+    )
+}
+
+private fun RBuilder.card(builder: CardComponent.Props.() -> Unit) = child(CardComponent::class) {
     attrs { builder() }
 }
 
 fun RBuilder.openCard(
     card: Card,
+    locale: Locale,
     canPickCards: Boolean,
     cardIx: Int,
     chosenCardIx: Int?,
@@ -114,8 +145,9 @@ fun RBuilder.openCard(
     clickHandler: () -> Unit
 ): ReactElement {
     return card {
+        this.locale = locale
         this.assignedKey = (cardIx + 1).toString()
-        tooltip = disabledTooltip ?: card.name
+        tooltip = disabledTooltip ?: card.getName(locale)
         enabled = canPickCards && (card is Card.Car || chosenCardIx == null)
         checked = cardIx == chosenCardIx
         imageUrl = "/cards/" + when (card) {
@@ -138,21 +170,24 @@ fun RBuilder.openCard(
     }
 }
 
-fun RBuilder.closedCard(disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
+fun RBuilder.closedCard(locale: Locale, disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
     card {
+        this.locale = locale
         assignedKey = "0"
         imageUrl = "/cards/faceDown.png"
         color = blackAlpha(0.1)
-        tooltip = disabledTooltip ?: (if (hasChosenCard) "Взять закрытую карты" else "Взять 2 закрытые карты")
+        tooltip = disabledTooltip
+            ?: Strings { locale }.run { if (hasChosenCard) takeOneClosedCard else takeTwoClosedCards }
         this.enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
 
-fun RBuilder.ticketsCard(disabledTooltip: String?, clickHandler: () -> Unit) {
+fun RBuilder.ticketsCard(locale: Locale, disabledTooltip: String?, clickHandler: () -> Unit) {
     card {
+        this.locale = locale
         imageUrl = "/cards/routeFaceDown.png"
         color = blackAlpha(0.1)
-        tooltip = disabledTooltip ?: "Взять маршруты"
+        tooltip = disabledTooltip ?: Strings { locale }.takeTickets
         enabled = (disabledTooltip == null)
         onClick = clickHandler
     }

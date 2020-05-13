@@ -8,19 +8,22 @@ import react.*
 import react.dom.span
 import styled.*
 import ticketToRide.CityName
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 import ticketToRide.playerState.PlayerState
 import ticketToRide.Ticket
 
-interface MyTicketsProps : ComponentBaseProps {
-    var citiesToHighlight: Set<CityName>
-    var onTicketMouseOver: (Ticket) -> Unit
-    var onTicketMouseOut: (Ticket) -> Unit
-}
+class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
 
-class MyTickets : ComponentBase<MyTicketsProps, RState>() {
+    interface Props : ComponentBaseProps {
+        var citiesToHighlight: Set<CityName>
+        var onTicketMouseOver: (Ticket) -> Unit
+        var onTicketMouseOut: (Ticket) -> Unit
+    }
+
     override fun RBuilder.render() {
         if (playerState !is PlayerState.ChoosingTickets) {
-            mTypography("Мои маршруты", MTypographyVariant.h6) {
+            mTypography(str.header, MTypographyVariant.h6) {
                 css {
                     paddingLeft = 10.px
                 }
@@ -39,17 +42,17 @@ class MyTickets : ComponentBase<MyTicketsProps, RState>() {
                     paddingTop = 6.px
                     paddingBottom = 6.px
                 }
-                mTypography("Выбор маршрутов", MTypographyVariant.h6) {
+                mTypography(str.ticketsChoice, MTypographyVariant.h6) {
                     css {
                         paddingLeft = 10.px
                     }
                 }
-                mTooltip("Надо оставить минимум ${choice.minCountToKeep} маршрутов") {
+                mTooltip(str.youNeedToKeepAtLeastNTickets(choice.minCountToKeep)) {
                     attrs {
                         disableHoverListener = choice.isValid
                     }
                     span {
-                        mButton("Готово", MColor.primary, MButtonVariant.contained) {
+                        mButton(str.ticketsChoiceDone, MColor.primary, MButtonVariant.contained) {
                             attrs {
                                 disabled = !choice.isValid
                                 onClick = {
@@ -78,13 +81,32 @@ class MyTickets : ComponentBase<MyTicketsProps, RState>() {
             this.checkbox = checkbox
         }
     }
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val header by loc(
+            Locale.En to "My tickets",
+            Locale.Ru to "Мои маршруты"
+        )
+
+        val ticketsChoice by loc(
+            Locale.En to "Tickets choice",
+            Locale.Ru to "Выбор маршрутов"
+        )
+
+        val youNeedToKeepAtLeastNTickets by locWithParam<Int>(
+            Locale.En to { n -> "You need to keep at least $n tickets " },
+            Locale.Ru to { n -> "Надо оставить минимум $n маршрутов" }
+        )
+
+        val ticketsChoiceDone by loc(
+            Locale.En to "Done",
+            Locale.Ru to "Готово"
+        )
+    }
+
+    private val str = Strings()
 }
 
-fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsProps.() -> Unit) = child(MyTickets::class) {
-    attrs {
-        gameState = props.gameState
-        playerState = props.playerState
-        onAction = props.onAction
-        block()
-    }
-}
+fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsComponent.Props.() -> Unit) =
+    componentBase<MyTicketsComponent, MyTicketsComponent.Props>(props, block)

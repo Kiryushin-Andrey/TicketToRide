@@ -4,6 +4,8 @@ import java.io.*
 import java.net.Socket
 import java.util.*
 
+// This is taken from https://github.com/drm/java-redis-client/blob/master/src/nl/melp/redis/Redis.java and converted to Kotlin
+
 /**
  * A lightweight implementation of the Redis server protocol at https://redis.io/topics/protocol
  *
@@ -198,8 +200,8 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             return java.lang.Long.valueOf(String(scanCr(1024)))
         }
 
-        private fun scanCr(size: Int): ByteArray {
-            var size = size
+        private fun scanCr(initialBufferSize: Int): ByteArray {
+            var size = initialBufferSize
             var idx = 0
             var ch: Int
             var buffer = ByteArray(size)
@@ -258,7 +260,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
      * @throws IOException All protocol and io errors are IO exceptions.
     </T> */
     fun <T> call(vararg args: Any?): T? {
-        writer.write(Arrays.asList(*args as Array<Any?>))
+        writer.write(Arrays.asList(*args as Array<*>))
         writer.flush()
         return read()
     }
@@ -307,7 +309,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             private var n = 0
 
             override fun call(vararg args: String?): Pipeline {
-                writer.write(Arrays.asList(*args as Array<Any?>))
+                writer.write(Arrays.asList(*args as Array<*>))
                 writer.flush()
                 n++
                 return this
