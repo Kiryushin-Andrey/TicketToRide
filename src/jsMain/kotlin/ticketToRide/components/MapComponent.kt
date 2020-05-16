@@ -18,14 +18,13 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
     override fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
         super.cityMarkerProps(this, city)
 
-        val cityName = CityName(city.name)
-        selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(cityName)
-        hasOccupiedSegment = me.occupiedSegments.any { it.from == cityName || it.to == cityName }
-        onClick = { act { onCityClick(cityName) } }
+        selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
+        hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
+        onClick = { act { onCityClick(city.name) } }
     }
 
-    override fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, route: Route) = with(segmentProps) {
-        super.segmentProps(this, from, to, route)
+    override fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, segment: Segment) = with(segmentProps) {
+        super.segmentProps(this, from, to, segment)
         occupiedBy = players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
     }
 }

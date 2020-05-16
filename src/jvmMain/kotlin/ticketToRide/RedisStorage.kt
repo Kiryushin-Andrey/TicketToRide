@@ -8,25 +8,34 @@ import java.net.Socket
 data class RedisCredentials(val host: String, val port: Int, val password: String?)
 
 private val redisJson = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
+private fun mapKey(id: GameId) = "${id.value}-map"
+private const val expireTimeSec = 3600.toString()
 
-fun RedisCredentials.saveToRedis(state: GameState) {
-    Socket(host, port).use { socket ->
-        val conn = Redis(socket)
-        if (password != null) {
-            conn.call<Unit>("AUTH", password)
+fun RedisCredentials.saveMap(id: GameId, map: GameMap) = exec { conn ->
+    val mapJson = redisJson.stringify(GameMap.serializer(), map)
+    conn.call<Any?>("SET", mapKey(id), mapJson, "EX", expireTimeSec)
+}
+
+fun RedisCredentials.saveGame(state: GameState) = exec { conn ->
+    val gameStateJson = redisJson.stringify(GameState.serializer(), state)
+    conn.call<Any?>("SET", state.id.value, gameStateJson, "EX", expireTimeSec)
+    conn.call<Any?>("EXPIRE", mapKey(state.id), expireTimeSec)
+}
+
+fun RedisCredentials.loadGame(id: GameId) = exec { conn ->
+    conn.call<ByteArray>("GET", id.value)?.let {
+        val state = redisJson.parse(GameState.serializer(), String(it))
+        conn.call<ByteArray>("GET", mapKey(id))?.let {
+            val map = redisJson.parse(GameMap.serializer(), String(it))
+            state to map
         }
-        val gameStateJson = redisJson.stringify(GameState.serializer(), state)
-        conn.call<Any?>("SET", state.id.value, gameStateJson, "EX", "3600")
     }
 }
 
-fun RedisCredentials.loadFromRedis(id: GameId) : GameState? {
-    Socket(host, port).use { socket ->
-        val conn = Redis(socket)
-        if (password != null) {
-            conn.call<Unit>("AUTH", password)
-        }
-        val data = conn.call<ByteArray>("GET", id.value)
-        return if (data != null) redisJson.parse(GameState.serializer(), String(data)) else null
+private fun <T> RedisCredentials.exec(block: (Redis) -> T) = Socket(host, port).use { socket ->
+    val conn = Redis(socket)
+    if (password != null) {
+        conn.call<Unit>("AUTH", password)
     }
+    block(conn)
 }

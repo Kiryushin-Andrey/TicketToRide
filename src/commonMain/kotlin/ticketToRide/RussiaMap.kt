@@ -1,231 +1,182 @@
 package ticketToRide
 
-object RussiaMap {
-    val mapCenter = LatLong(57.6012967,40.4744424)
-    const val mapZoom = 4
-    const val longTicketMinPoints = 20
-    val shortTicketsPointsRange = 5 to 12
+import kotlin.math.ceil
+import kotlin.random.Random
+
+fun createMapOfRussia(): GameMap {
+    fun city(name: String, lat: Double, long: Double) = City(CityName(name), LatLong(lat, long))
     val cities = listOf(
-        City("Санкт-Петербург", LatLong(59.938732, 30.316229),
-            listOf(
-                Route("Москва", CardColor.GREEN, 3),
-                Route("Петрозаводск", CardColor.MAGENTO, 2),
-                Route("Вологда", CardColor.WHITE, 3)
-            )),
-        City("Мурманск", LatLong(68.970665, 33.07497),
-            listOf(
-                Route("Архангельск", CardColor.BLACK, 4),
-                Route("Нарьян-Мар", null, 6)
-            )),
-        City("Псков", LatLong(57.817398, 28.334368),
-            listOf(
-                Route("Москва", CardColor.RED, 3),
-                Route("Санкт-Петербург", CardColor.ORANGE, 1),
-                Route("Смоленск", CardColor.BLACK, 2)
-            )),
-        City("Смоленск", LatLong(54.77897, 32.0471812),
-            listOf(
-                Route("Москва", CardColor.MAGENTO, 3),
-                Route("Курск", CardColor.RED, 3)
-            )),
-        City("Курск", LatLong(51.739433, 36.179604),
-            listOf(
-                Route("Воронеж", CardColor.GREEN, 1),
-                Route("Москва", CardColor.YELLOW, 3)
-            )),
-        City("Москва", LatLong(55.7504461, 37.61749431),
-            listOf(
-                Route("Вологда", CardColor.BLACK, 2),
-                Route("Нижний Новгород", CardColor.WHITE, 2),
-                Route("Воронеж", CardColor.BLUE, 3),
-                Route("Рязань", CardColor.MAGENTO, 1)
-            )),
-        City("Архангельск", LatLong(64.543022, 40.537121)),
-        City("Вологда", LatLong(59.218876, 39.893276),
-            listOf(
-                Route("Архангельск", CardColor.ORANGE, 4),
-                Route("Сыктывкар", CardColor.BLUE, 3),
-                Route("Нижний Новгород", CardColor.MAGENTO, 2)
-            )),
-        City("Сыктывкар", LatLong(61.6685237, 50.8352024),
-            listOf(
-                Route("Нарьян-Мар", CardColor.YELLOW, 4),
-                Route("Воркута", null, 6)
-            )),
-        City("Нарьян-Мар", LatLong(67.6380175, 53.0071044)),
-        City("Воркута", LatLong(67.494957, 64.0401),
-            listOf(
-                Route("Салехард", CardColor.YELLOW, 1)
-            )),
-        City("Ивдель", LatLong(60.6973287, 60.4172583),
-            listOf(
-                Route("Салехард", null, 6),
-                Route("Ханты-Мансийск", CardColor.BLUE, 4)
-            )),
-        City("Салехард", LatLong(66.5375387, 66.6157469)),
-        City("Нижний Новгород", LatLong(56.328571, 44.003506),
-            listOf(
-                Route("Казань", CardColor.ORANGE, 2),
-                Route("Киров", CardColor.GREEN, 3),
-                Route("Пенза", CardColor.BLUE, 2)
-            )),
-        City("Рязань", LatLong(54.6295687, 39.7425039),
-            listOf(
-                Route("Пенза", CardColor.RED, 2)
-            )),
-        City("Киров", LatLong(58.6035257, 49.6639029),
-            listOf(
-                Route("Сыктывкар", CardColor.BLACK, 3),
-                Route("Пермь", CardColor.YELLOW, 3)
-            )),
-        City("Казань", LatLong(55.7823547, 49.1242266),
-            listOf(
-                Route("Киров", CardColor.RED, 2),
-                Route("Уфа", CardColor.BLUE, 3),
-                Route("Ижевск", CardColor.BLACK, 2),
-                Route("Самара", CardColor.WHITE, 2)
-            )),
-        City("Саратов", LatLong(51.530018, 46.034683),
-            listOf(
-                Route("Самара", CardColor.YELLOW, 2)
-            )),
-        City("Самара", LatLong(53.198627, 50.113987),
-            listOf(
-                Route("Оренбург", CardColor.MAGENTO, 3)
-            )),
-        City("Уфа", LatLong(54.726288, 55.947727),
-            listOf(
-                Route("Екатеринбург", CardColor.RED, 3),
-                Route("Челябинск", CardColor.BLACK, 2),
-                Route("Магнитогорск", CardColor.GREEN, 1),
-                Route("Оренбург", CardColor.ORANGE, 2)
-            )),
-        City("Ижевск", LatLong(56.866557, 53.2094166),
-            listOf(
-                Route("Пермь", CardColor.WHITE, 2)
-            )),
-        City("Кудымкар", LatLong(59.014606, 54.664135),
-            listOf(
-                Route("Пермь", CardColor.GREEN, 1),
-                Route("Ивдель", CardColor.WHITE, 3)
-            )),
-        City("Пермь", LatLong(58.014965, 56.246723),
-            listOf(
-                Route("Екатеринбург", CardColor.MAGENTO, 2)
-            )),
-        City("Екатеринбург", LatLong(56.839104, 60.60825),
-            listOf(
-                Route("Ивдель", CardColor.ORANGE, 3),
-                Route("Челябинск", CardColor.RED, 1)
-            )),
-        City("Оренбург", LatLong(51.767452, 55.097118)),
-        City("Воронеж", LatLong(51.6605982, 39.2005858),
-            listOf(
-                Route("Урюпинск", CardColor.YELLOW, 1),
-                Route("Ростов-на-Дону", CardColor.MAGENTO, 3)
-            )),
-        City("Ростов-на-Дону", LatLong(47.2213858, 39.7114196),
-            listOf(
-                Route("Волгоград", CardColor.GREEN, 2),
-                Route("Ставрополь", CardColor.ORANGE, 2)
-            )),
-        City("Урюпинск", LatLong(50.7970972, 42.0051866),
-            listOf(
-                Route("Волгоград", CardColor.RED, 2)
-            )),
-        City("Волгоград", LatLong(48.7081906, 44.5153353),
-            listOf(
-                Route("Астрахань", CardColor.BLACK, 2),
-                Route("Саратов", CardColor.MAGENTO, 2)
-            )),
-        City("Ставрополь", LatLong(45.0433245, 41.9690934),
-            listOf(
-                Route("Элиста", CardColor.RED, 2)
-            )),
-        City("Элиста", LatLong(46.306999, 44.270187),
-            listOf(
-                Route("Астрахань", CardColor.ORANGE, 2),
-                Route("Волгоград", CardColor.YELLOW, 2),
-                Route("Махачкала", CardColor.MAGENTO, 3)
-            )),
-        City("Астрахань", LatLong(46.3498308, 48.0326203)),
-        City("Краснодар", LatLong(45.0352566, 38.9764814),
-            listOf(
-                Route("Ростов-на-Дону", CardColor.BLUE, 1),
-                Route("Ставрополь", CardColor.YELLOW, 1),
-                Route("Владикавказ", CardColor.WHITE, 3)
-            )),
-        City("Владикавказ", LatLong(43.024593, 44.68211),
-            listOf(
-                Route("Махачкала", CardColor.YELLOW, 1)
-            )),
-        City("Магнитогорск", LatLong(53.4242184, 58.983136),
-            listOf(
-                Route("Челябинск", CardColor.YELLOW, 2)
-            )),
-        City("Челябинск", LatLong(55.1598408, 61.4025547),
-            listOf(
-                Route("Тюмень", CardColor.BLUE, 2),
-                Route("Омск", CardColor.GREEN, 4)
-            )),
-        City("Пенза", LatLong(53.200001, 45.0),
-            listOf(
-                Route("Самара", CardColor.ORANGE, 2),
-                Route("Саратов", CardColor.BLACK, 1)
-            )),
-        City("Петрозаводск", LatLong(61.790039, 34.390007),
-            listOf(
-                Route("Вологда", CardColor.GREEN, 3)
-            )),
-        City("Кандалакша", LatLong(67.151442, 32.4130551),
-            listOf(
-                Route("Петрозаводск", CardColor.BLUE, 4),
-                Route("Мурманск", CardColor.GREEN, 2),
-                Route("Архангельск", CardColor.YELLOW, 4)
-            )),
-        City("Махачкала", LatLong(42.9830241, 47.5048717),
-            listOf(
-                Route("Астрахань", CardColor.GREEN, 3)
-            )),
-        City("Тюмень", LatLong(57.153534, 65.542274),
-            listOf(
-                Route("Омск", CardColor.BLACK, 3),
-                Route("Тобольск", CardColor.MAGENTO, 1)
-            )),
-        City("Тобольск", LatLong(58.1998048, 68.2512924),
-            listOf(
-                Route("Омск", CardColor.ORANGE, 3),
-                Route("Ханты-Мансийск", CardColor.RED, 3)
-            )),
-        City("Ханты-Мансийск", LatLong(61.00346, 69.019157),
-            listOf(
-                Route("Нижневартовск", CardColor.WHITE, 2)
-            )),
-        City("Нижневартовск", LatLong(60.9339411, 76.5814274),
-            listOf(
-                Route("Томск", CardColor.GREEN, 3),
-                Route("Новый Уренгой", CardColor.ORANGE, 4)
-            )),
-        City("Омск", LatLong(54.991375, 73.371529),
-            listOf(
-                Route("Новосибирск", CardColor.BLACK, 4)
-            )),
-        City("Новосибирск", LatLong(55.0282171, 82.9234509),
-            listOf(
-                Route("Томск", CardColor.YELLOW, 1)
-            )),
-        City("Лонгъюган", LatLong(64.7782522, 70.9559136),
-            listOf(
-                Route("Салехард", CardColor.RED, 2),
-                Route("Ханты-Мансийск", CardColor.YELLOW, 3),
-                Route("Новый Уренгой", CardColor.BLACK, 3)
-            )),
-        City("Томск", LatLong(56.488712, 84.952324)),
-        City("Новый Уренгой", LatLong(66.085196, 76.6799167)),
-        City("Сабетта", LatLong(71.2844523, 72.0468727),
-            listOf(
-                Route("Салехард", CardColor.ORANGE, 4),
-                Route("Мурманск", null, 8)
-            ))
+        city("Санкт-Петербург", 59.938732, 30.316229),
+        city("Мурманск", 68.970665, 33.07497),
+        city("Псков", 57.817398, 28.334368),
+        city("Смоленск", 54.77897, 32.0471812),
+        city("Курск", 51.739433, 36.179604),
+        city("Москва", 55.7504461, 37.61749431),
+        city("Архангельск", 64.543022, 40.537121),
+        city("Вологда", 59.218876, 39.893276),
+        city("Сыктывкар", 61.6685237, 50.8352024),
+        city("Нарьян-Мар", 67.6380175, 53.0071044),
+        city("Воркута", 67.494957, 64.0401),
+        city("Ивдель", 60.6973287, 60.4172583),
+        city("Салехард", 66.5375387, 66.6157469),
+        city("Нижний Новгород", 56.328571, 44.003506),
+        city("Рязань", 54.6295687, 39.7425039),
+        city("Киров", 58.6035257, 49.6639029),
+        city("Казань", 55.7823547, 49.1242266),
+        city("Саратов", 51.530018, 46.034683),
+        city("Самара", 53.198627, 50.113987),
+        city("Уфа", 54.726288, 55.947727),
+        city("Ижевск", 56.866557, 53.2094166),
+        city("Кудымкар", 59.014606, 54.664135),
+        city("Пермь", 58.014965, 56.246723),
+        city("Екатеринбург", 56.839104, 60.60825),
+        city("Оренбург", 51.767452, 55.097118),
+        city("Воронеж", 51.6605982, 39.2005858),
+        city("Ростов-на-Дону", 47.2213858, 39.7114196),
+        city("Урюпинск", 50.7970972, 42.0051866),
+        city("Волгоград", 48.7081906, 44.5153353),
+        city("Ставрополь", 45.0433245, 41.9690934),
+        city("Элиста", 46.306999, 44.270187),
+        city("Астрахань", 46.3498308, 48.0326203),
+        city("Краснодар", 45.0352566, 38.9764814),
+        city("Владикавказ", 43.024593, 44.68211),
+        city("Магнитогорск", 53.4242184, 58.983136),
+        city("Челябинск", 55.1598408, 61.4025547),
+        city("Пенза", 53.200001, 45.0),
+        city("Петрозаводск", 61.790039, 34.390007),
+        city("Кандалакша", 67.151442, 32.4130551),
+        city("Махачкала", 42.9830241, 47.5048717),
+        city("Тюмень", 57.153534, 65.542274),
+        city("Тобольск", 58.1998048, 68.2512924),
+        city("Ханты-Мансийск", 61.00346, 69.019157),
+        city("Нижневартовск", 60.9339411, 76.5814274),
+        city("Омск", 54.991375, 73.371529),
+        city("Новосибирск", 55.0282171, 82.9234509),
+        city("Лонгъюган", 64.7782522, 70.9559136),
+        city("Томск", 56.488712, 84.952324),
+        city("Новый Уренгой", 66.085196, 76.6799167),
+        city("Сабетта", 71.2844523, 72.0468727)
+    )
+
+    fun segment(from: String, to: String, points: Int) =
+        Segment(CityName(from), CityName(to), null, points)
+
+    val segments = listOf(
+        segment("Санкт-Петербург", "Москва", 3),
+        segment("Санкт-Петербург", "Петрозаводск", 2),
+        segment("Санкт-Петербург", "Вологда", 3),
+        segment("Мурманск", "Архангельск", 4),
+        segment("Мурманск", "Нарьян-Мар", 6),
+        segment("Псков", "Москва", 3),
+        segment("Псков", "Санкт-Петербург", 1),
+        segment("Псков", "Смоленск", 2),
+        segment("Смоленск", "Москва", 3),
+        segment("Смоленск", "Курск", 3),
+        segment("Курск", "Воронеж", 1),
+        segment("Курск", "Москва", 3),
+        segment("Москва", "Вологда", 2),
+        segment("Москва", "Нижний Новгород", 2),
+        segment("Москва", "Воронеж", 3),
+        segment("Москва", "Рязань", 1),
+        segment("Вологда", "Архангельск", 4),
+        segment("Вологда", "Сыктывкар", 3),
+        segment("Вологда", "Нижний Новгород", 2),
+        segment("Сыктывкар", "Нарьян-Мар", 4),
+        segment("Сыктывкар", "Воркута", 6),
+        segment("Воркута", "Салехард", 1),
+        segment("Ивдель", "Салехард", 6),
+        segment("Ивдель", "Ханты-Мансийск", 4),
+        segment("Нижний Новгород", "Казань", 2),
+        segment("Нижний Новгород", "Киров", 3),
+        segment("Нижний Новгород", "Пенза", 2),
+        segment("Рязань", "Пенза", 2),
+        segment("Киров", "Сыктывкар", 3),
+        segment("Киров", "Пермь", 3),
+        segment("Казань", "Киров", 2),
+        segment("Казань", "Уфа", 3),
+        segment("Казань", "Ижевск", 2),
+        segment("Казань", "Самара", 2),
+        segment("Саратов", "Самара", 2),
+        segment("Самара", "Оренбург", 3),
+        segment("Уфа", "Екатеринбург", 3),
+        segment("Уфа", "Челябинск", 2),
+        segment("Уфа", "Магнитогорск", 1),
+        segment("Уфа", "Оренбург", 2),
+        segment("Ижевск", "Пермь", 2),
+        segment("Кудымкар", "Пермь", 1),
+        segment("Кудымкар", "Ивдель", 3),
+        segment("Пермь", "Екатеринбург", 2),
+        segment("Екатеринбург", "Ивдель", 3),
+        segment("Екатеринбург", "Челябинск", 1),
+        segment("Воронеж", "Урюпинск", 1),
+        segment("Воронеж", "Ростов-на-Дону", 3),
+        segment("Ростов-на-Дону", "Волгоград", 2),
+        segment("Ростов-на-Дону", "Ставрополь", 2),
+        segment("Урюпинск", "Волгоград", 2),
+        segment("Волгоград", "Астрахань", 2),
+        segment("Волгоград", "Саратов", 2),
+        segment("Ставрополь", "Элиста", 2),
+        segment("Элиста", "Астрахань", 2),
+        segment("Элиста", "Волгоград", 2),
+        segment("Элиста", "Махачкала", 3),
+        segment("Краснодар", "Ростов-на-Дону", 1),
+        segment("Краснодар", "Ставрополь", 1),
+        segment("Краснодар", "Владикавказ", 3),
+        segment("Владикавказ", "Махачкала", 1),
+        segment("Магнитогорск", "Челябинск", 2),
+        segment("Челябинск", "Тюмень", 2),
+        segment("Челябинск", "Омск", 4),
+        segment("Пенза", "Самара", 2),
+        segment("Пенза", "Саратов", 1),
+        segment("Петрозаводск", "Вологда", 3),
+        segment("Кандалакша", "Петрозаводск", 4),
+        segment("Кандалакша", "Мурманск", 2),
+        segment("Кандалакша", "Архангельск", 4),
+        segment("Махачкала", "Астрахань", 3),
+        segment("Тюмень", "Омск", 3),
+        segment("Тюмень", "Тобольск", 1),
+        segment("Тобольск", "Омск", 3),
+        segment("Тобольск", "Ханты-Мансийск", 3),
+        segment("Ханты-Мансийск", "Нижневартовск", 2),
+        segment("Нижневартовск", "Томск", 3),
+        segment("Нижневартовск", "Новый Уренгой", 4),
+        segment("Омск", "Новосибирск", 4),
+        segment("Новосибирск", "Томск", 1),
+        segment("Лонгъюган", "Салехард", 2),
+        segment("Лонгъюган", "Ханты-Мансийск", 3),
+        segment("Лонгъюган", "Новый Уренгой", 3),
+        segment("Сабетта", "Салехард", 4),
+        segment("Сабетта", "Мурманск", 8)
+    )
+
+    val segmentsByCities =
+        segments.asSequence().flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
+
+    val totalLength = segments.asSequence().filter { it.length <= 4 }.sumBy { it.length }
+    val perColor = ceil(totalLength.toDouble() / CardColor.values().size).toInt()
+    val usedByColor = mutableMapOf<CardColor, Int>()
+
+    val colorMap = mutableMapOf<Segment, CardColor?>()
+    for (segment in segments.sortedByDescending { it.length }.dropWhile { it.length > 4 }) {
+        val takenColors = sequenceOf(segment.from, segment.to)
+            .flatMap { segmentsByCities[it]?.asSequence() ?: throw Error("City ${it.value} not found in map") }
+            .mapNotNull { colorMap[it] }
+            .toSet()
+        val next = CardColor.values().asSequence()
+            .filter { !takenColors.contains(it) }
+            .flatMap { color -> sequence { repeat(perColor - usedByColor.getOrElse(color, { 0 })) { yield(color) } } }
+            .let { seq ->
+                val until = seq.count() - 1
+                if (until > 0) seq.drop(until).first() else CardColor.values().random()
+            }
+        colorMap[segment] = next
+        usedByColor[next] = (usedByColor[next] ?: 0) + 1
+    }
+
+    return GameMap(
+        cities,
+        segments.map { Segment(it.from, it.to, colorMap[it], it.length) },
+        LatLong(57.6012967, 40.4744424),
+        4
     )
 }

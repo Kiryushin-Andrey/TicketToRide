@@ -3,7 +3,6 @@ package ticketToRide.components
 import google.map.react.Coords
 import google.map.react.GoogleMapReact
 import google.map.react.Props
-import google.maps.*
 import kotlinext.js.jsObject
 import org.w3c.dom.*
 import react.*
@@ -19,7 +18,7 @@ interface MapComponentBaseProps : RProps {
 }
 
 interface MapComponentBaseState : RState {
-    var map: Map<Element>?
+    var map: google.maps.Map<Element>?
     var mapZoom: Int
 }
 
@@ -46,36 +45,33 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
     }
 
     protected open fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
-        key = city.name
-        name = city.name
+        key = city.name.value
+        name = city.name.value
         lat = city.latLng.lat
         lng = city.latLng.lng
         displayAllCityNames = state.mapZoom > 4
-        station = props.citiesWithStations[CityName(city.name)]
-        selected = props.citiesToHighlight.contains(CityName(city.name))
+        station = props.citiesWithStations[city.name]
+        selected = props.citiesToHighlight.contains(city.name)
     }
 
-    protected open fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, route: Route) =
+    protected open fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, segment: Segment) =
         with(segmentProps) {
             this.from = from
             this.to = to
-            color = route.color
-            points = route.points
+            color = segment.color
+            points = segment.length
         }
 
     private fun RBuilder.routeSegments() {
         state.map?.let { map ->
             val cityByName = props.gameMap.cities.associateBy { it.name }
-            props.gameMap.cities.forEach { fromCity ->
-                fromCity.routes.forEach { route ->
-                    val toCity =
-                        cityByName[route.destination] ?: error("City ${route.destination} not present in game map")
-
-                    mapSegment {
-                        this.map = map
-                        mapZoom = state.mapZoom
-                        segmentProps(this, fromCity, toCity, route)
-                    }
+            props.gameMap.segments.forEach {
+                val fromCity = cityByName[it.from] ?: error("City ${it.from.value} not present in game map")
+                val toCity = cityByName[it.to] ?: error("City ${it.to.value} not present in game map")
+                mapSegment {
+                    this.map = map
+                    mapZoom = state.mapZoom
+                    segmentProps(this, fromCity, toCity, it)
                 }
             }
         }

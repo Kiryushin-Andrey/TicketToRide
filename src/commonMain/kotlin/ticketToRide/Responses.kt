@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 sealed class Response {
 
     @Serializable
+    class GameMap(val map: ticketToRide.GameMap) : Response()
+
+    @Serializable
     class GameState(val gameId: GameId, val state: GameStateView, val action: PlayerAction?) : Response()
 
     @Serializable

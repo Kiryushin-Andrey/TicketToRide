@@ -215,7 +215,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     flexWrap = FlexWrap.nowrap
                     width = 80.pct
                 }
-                for ((length, count) in player.occupiedSegments.groupingBy { it.length }.eachCount().entries.sortedByDescending { it.key }) {
+                for ((length, count) in player.occupiedSegments.groupingBy { it.length }.eachCount().entries.sortedByDescending {  it.key }) {
                     val pointsPerSegment = props.gameMap.getPointsForSegments(length)
                     repeatedIconsWithPoints(
                         length,

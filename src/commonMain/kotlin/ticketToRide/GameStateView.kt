@@ -23,10 +23,14 @@ sealed class Card {
     object Loco : Card()
 
     companion object {
-        fun random(): Card {
+        fun random(map: GameMap): Card {
             val colors = CardColor.values()
-            val value = Random.nextInt(colors.size + 1)
-            return if (value < colors.size) Car(colors[value]) else Loco
+            val totalLength = map.segments.filter { it.color != null }.sumBy { it.length }
+            return map.segments.asSequence()
+                .filter { it.color != null }
+                .flatMap { segment -> sequence { repeat(segment.length) { yield(Car(segment.color!!)) } } }
+                .drop(Random.nextInt(totalLength + totalLength / colors.size))
+                .firstOrNull() ?: Loco
         }
     }
 }
@@ -49,27 +53,6 @@ fun List<Card>.getOptionsForCardsToDrop(count: Int, color: CardColor?): List<Lis
     val locoCount = min(count, filterIsInstance<Card.Loco>().count())
     return (0..locoCount).flatMap { getOptionsForCars(it) }
 }
-
-@Serializable
-class Segment constructor(val from: CityName, val to: CityName, val color: CardColor?, val length: Int) {
-    override fun equals(other: Any?) =
-        if (other is Segment)
-            ((from == other.from && to == other.to) || (from == other.to && to == other.from))
-                    && color == other.color && length == other.length
-        else false
-
-    override fun hashCode(): Int {
-        var result =
-            if (from.value < to.value) 31 * from.hashCode() + to.hashCode()
-            else 31 * to.hashCode() + from.hashCode()
-        result = 31 * result + (color?.hashCode() ?: 0)
-        result = 31 * result + length.hashCode()
-        return result
-    }
-}
-
-fun Segment.connects(cityName1: String, cityName2: String) =
-    (from.value == cityName1 && to.value == cityName2) || (from.value == cityName2 && to.value == cityName1)
 
 @Serializable
 data class Ticket(val from: CityName, val to: CityName, val points: Int) {

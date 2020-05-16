@@ -31,13 +31,15 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             "left header right",
             "left map right",
             "send map search",
-            "cards cards cards")
+            "cards cards cards"
+        )
         styledDiv {
             css {
                 height = 100.pct
                 width = 100.pct
                 display = Display.grid
-                gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
+                gridTemplateColumns =
+                    GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
                 gridTemplateRows = GridTemplateRows(*rows.toTypedArray())
                 gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
             }
@@ -157,8 +159,10 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
     }
 
     private fun getCitiesBySearchText() = state.searchText.let { input ->
-        if (input.isNotBlank()) props.gameMap.cities.filter { it.name.startsWith(input) }.map { CityName(it.name) }
-        else emptyList()
+        if (input.isNotBlank())
+            props.gameMap.cities.filter { it.name.value.startsWith(input) }.map { it.name }
+        else
+            emptyList()
     }
 
     private object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
@@ -191,6 +195,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             Locale.Ru to { name -> "Ходит $name" }
         )
     }
+
     private val str = Strings()
 }
 

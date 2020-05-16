@@ -120,8 +120,9 @@ fun Application.module() {
                         is StartGameRequest -> {
                             val game = Game(req.carsCount, redis) { games.remove(it.id) }
                             games[game.id] = game
+                            redis?.saveMap(game.id, req.map)
                             connection = PlayerConnection(game.id, req.playerName, this).also { conn ->
-                                rootScope.launch { game.start(conn) }
+                                rootScope.launch { game.start(conn, req.map) }
                             }
                         }
 
@@ -130,10 +131,10 @@ fun Application.module() {
                             games[req.gameId]?.let {
                                 if (it.joinPlayer(req, conn)) connection = conn
                                 else conn.send(Response.ErrorMessage("Name is taken"))
-                            } ?: redis?.loadFromRedis(conn.gameId)?.let { gameState ->
-                                val game = Game(gameState.initialCarsCount, redis) { games.remove(conn.gameId) }
+                            } ?: redis?.loadGame(conn.gameId)?.let { (state, map) ->
+                                val game = Game(state.initialCarsCount, redis) { games.remove(conn.gameId) }
                                 games[conn.gameId] = game
-                                rootScope.launch { game.restore(conn, gameState) }
+                                rootScope.launch { game.restore(conn, state, map) }
                                 connection = conn
                             } ?: conn.send(Response.ErrorMessage("No such game"))
                         }

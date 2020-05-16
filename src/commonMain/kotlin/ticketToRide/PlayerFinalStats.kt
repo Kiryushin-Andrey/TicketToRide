@@ -13,7 +13,6 @@ class PlayerFinalStats(
 ) {
     val name get() = playerView.name
     val color get() = playerView.color
-    val carsLeft get() = playerView.carsLeft
     val occupiedSegments get() = playerView.occupiedSegments
 
     val fulfilledTicketsPoints get() = fulfilledTickets.sumBy { it.points }

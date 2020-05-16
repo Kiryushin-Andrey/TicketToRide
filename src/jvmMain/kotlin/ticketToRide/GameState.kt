@@ -43,23 +43,23 @@ data class GameState(
     val initialCarsCount: Int
 ) {
     companion object {
-        fun initial(id: GameId, initialCarsCount: Int) =
-            GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random() }, 0, null, initialCarsCount)
+        fun initial(id: GameId, initialCarsCount: Int, map: GameMap) =
+            GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random(map) }, 0, null, initialCarsCount)
     }
 
-    fun getRandomTickets(count: Int, long: Boolean): List<Ticket> {
-        val available = (if (long) GameMap.longTickets else GameMap.shortTickets)
+    fun getRandomTickets(map: GameMap, count: Int, long: Boolean): List<Ticket> {
+        val available = (if (long) map.longTickets else map.shortTickets)
             .filter { ticket ->
                 !players
                     .flatMap { p -> p.ticketsOnHand + (p.ticketsForChoice?.tickets ?: emptyList()) }
-                    .any { it == ticket || (long && it.points >= GameMap.longTicketMinPoints && it.sharesCityWith(ticket)) }
+                    .any { it == ticket || (long && it.points >= map.longTicketMinPoints && it.sharesCityWith(ticket)) }
             }
             .distinct()
         if (available.size < count)
             throw InvalidActionError("Game full, no more players allowed (no tickets left)")
 
         return (1..count).map { available.random() }.distinct()
-            .let { if (it.size == count) it else getRandomTickets(count, long) }
+            .let { if (it.size == count) it else getRandomTickets(map, count, long) }
     }
 
     fun toPlayerView(myName: PlayerName): GameStateView {

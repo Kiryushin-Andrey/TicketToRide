@@ -24,26 +24,33 @@ class Game(
 
     val playerNames get() = players.keys.map { it.value }
 
-    suspend fun start(firstPlayer: PlayerConnection) {
+    suspend fun start(firstPlayer: PlayerConnection, map: GameMap) {
         players[firstPlayer.name] = firstPlayer
         logger.info { "New game started by ${firstPlayer.name.value}" }
         requestsQueue.send(RequestQueueItem.Req(JoinGameRequest(id, firstPlayer.name), firstPlayer))
-        runRequestProcessingLoop(GameState.initial(id, initialCarsCount), false)
+        runRequestProcessingLoop(GameState.initial(id, initialCarsCount, map), map)
     }
 
-    suspend fun restore(byPlayer: PlayerConnection, state: GameState) {
+    suspend fun restore(byPlayer: PlayerConnection, state: GameState, map: GameMap) {
         players[byPlayer.name] = byPlayer
         logger.info { "Game restored from Redis by ${byPlayer.name.value}" }
-        runRequestProcessingLoop(state.restored(byPlayer.name), true)
+        state.restored(byPlayer.name).let {
+            val messages = listOf(
+                SendResponse.ForPlayer(byPlayer.name, Response.GameMap(map)),
+                it.responseMessage(null)
+            )
+            runRequestProcessingLoop(it, map, messages)
+        }
     }
 
-    private suspend fun runRequestProcessingLoop(initialState: GameState, sendState: Boolean) =
+    private suspend fun runRequestProcessingLoop(
+        initialState: GameState,
+        map: GameMap,
+        initialMessages: List<SendResponse> = emptyList()
+    ) =
         supervisorScope {
-            val messages =
-                if (sendState) listOf<SendResponse>(initialState.responseMessage(null))
-                else emptyList()
             requestsQueue.consumeAsFlow()
-                .scan(initialState to messages) { (state, _), req ->
+                .scan(initialState to initialMessages) { (state, _), req ->
                     when (req) {
                         is RequestQueueItem.DumpState -> {
                             req.deferred.complete(state)
@@ -52,7 +59,7 @@ class Game(
                         is RequestQueueItem.Req -> {
                             val playerName = req.conn.name
                             try {
-                                state.processRequest(req.request, playerName)
+                                state.processRequest(req.request, map, playerName)
                             } catch (e: Throwable) {
                                 if (e is InvalidActionError) logger.info { "${e.message} (request $req from ${playerName.value})" }
                                 else logger.warn(e) { "Error while processing request $req from ${playerName.value}" }
@@ -65,7 +72,7 @@ class Game(
                 }
                 .flatMapConcat { (state, messages) ->
                     redis?.apply {
-                        launch { saveToRedis(state) }
+                        launch { saveGame(state) }
                     }
                     messages.asFlow()
                 }

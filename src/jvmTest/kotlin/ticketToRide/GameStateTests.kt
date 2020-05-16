@@ -3,40 +3,47 @@ package ticketToRide
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.*
 
-class GameStateTests: StringSpec({
+val map = createMapOfRussia()
+
+class GameStateTests : StringSpec({
+
     "advance to next turn from first player" {
-        createGameState(5).advanceTurn().turn shouldBe 1
+        createGameState(5).apply {
+            advanceTurnFrom(players[turn].name, map).turn shouldBe 1
+        }
     }
 
     "advance to next turn from last player" {
-        createGameState(5).copy(turn = 4).advanceTurn().turn shouldBe 0
+        createGameState(5).copy(turn = 4).apply {
+            advanceTurnFrom(players[turn].name, map).turn shouldBe 0
+        }
     }
 
     "next player skips the move when thinking on tickets taken in advance" {
-        var state = createGameState(5)
-        state = state.updatePlayer(1) {
-            copy(ticketsForChoice = PendingTicketsChoice(state.getRandomTickets(3, false), 1, false))
+        createGameState(5).run {
+            updatePlayer(1) {
+                copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(map, 3, false), 1, false))
+            }.advanceTurn(map)
+        }.apply {
+            turn shouldBe 2
+            players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
         }
-        val nextState = state.advanceTurn()
-
-        nextState.turn shouldBe  2
-        nextState.players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
     }
 
     "next player doesn't skip the move when thinking on tickets not taken in advance" {
-        var state = createGameState(5)
-        state = state.updatePlayer(1) {
-            copy(ticketsForChoice = PendingTicketsChoice(state.getRandomTickets(3, false), 1, true))
+        createGameState(5).run {
+            updatePlayer(1) {
+                copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(map, 3, false), 1, true))
+            }.advanceTurn(map)
+        }.apply {
+            turn shouldBe 1
+            players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
         }
-        val nextState = state.advanceTurn()
-
-        nextState.turn shouldBe 1
-        nextState.players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
     }
 
     "player should choose from tickets before next move if takes tickets in turn" {
         val state = createGameState(5)
-        val nextState = state.pickTickets(state.players[0].name)
+        val (nextState, _) = state.processRequest(PickTicketsRequest, map, state.players[0].name)
 
         nextState.turn shouldBe 1
         nextState.players[0].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
@@ -44,7 +51,7 @@ class GameStateTests: StringSpec({
 
     "player doesn't have to choose from tickets before next move if takes tickets not in turn" {
         val state = createGameState(5).copy(turn = 3)
-        val nextState = state.pickTickets(state.players[1].name)
+        val (nextState, _) = state.processRequest(PickTicketsRequest, map, state.players[1].name)
 
         nextState.turn shouldBe 3
         nextState.players[0].ticketsForChoice shouldBe null
@@ -61,13 +68,13 @@ fun createGameState(playersCount: Int) =
                 PlayerColor.values().random(),
                 45,
                 3,
-                (1..4).map { Card.random() },
+                (1..4).map { Card.random(map) },
                 emptyList(),
                 emptyList(),
                 null
             )
         },
-        (1..5).map { Card.random() },
+        (1..5).map { Card.random(map) },
         0,
         null,
         45

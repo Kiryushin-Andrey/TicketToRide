@@ -6,7 +6,7 @@ import kotlinx.serialization.*
 sealed class Request
 
 @Serializable
-class StartGameRequest(val playerName: PlayerName, val carsCount: Int) : Request()
+class StartGameRequest(val map: GameMap, val playerName: PlayerName, val carsCount: Int) : Request()
 
 @Serializable
 class ChatMessageRequest(val message: String) : Request()
@@ -54,12 +54,12 @@ sealed class PickCardsRequest : GameRequest() {
         }
     }
 
-    fun getCardsToPick() = when (this) {
+    fun getCardsToPick(map: GameMap) = when (this) {
         is Loco -> listOf(Card.Loco)
         is TwoCards -> cards.toList().map {
             when (it) {
                 is PickedCard.Open -> it.card
-                is PickedCard.Closed -> Card.random()
+                is PickedCard.Closed -> Card.random(map)
             }
         }
     }

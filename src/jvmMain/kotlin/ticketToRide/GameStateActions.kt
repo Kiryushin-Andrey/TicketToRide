@@ -7,28 +7,49 @@ sealed class SendResponse {
 
 fun Response.toAll() = SendResponse.ForAll { this }
 
-fun GameState.processRequest(req: GameRequest, fromPlayerName: PlayerName): Pair<GameState, List<SendResponse>> {
+fun GameState.processRequest(
+    req: GameRequest,
+    map: GameMap,
+    fromPlayerName: PlayerName
+): Pair<GameState, List<SendResponse>> {
     if (turn == endsOnPlayer)
         return this to listOf(Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }).toAll())
 
     val newState = when (req) {
         is JoinGameRequest ->
-            joinPlayer(fromPlayerName)
+            joinPlayer(fromPlayerName, map)
+
         is LeaveGameRequest ->
-            leavePlayer(fromPlayerName)
+            updatePlayer(fromPlayerName) { copy(away = true) }.advanceTurnFrom(fromPlayerName, map)
+
         is ConfirmTicketsChoiceRequest ->
             updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }
+
         is PickTicketsRequest ->
-            pickTickets(fromPlayerName)
+            pickTickets(fromPlayerName, map).advanceTurnFrom(fromPlayerName, map)
+
         is PickCardsRequest ->
-            inTurnOnly(fromPlayerName) { pickCards(fromPlayerName, req) }
+            inTurnOnly(fromPlayerName) {
+                pickCards(fromPlayerName, req, map).advanceTurn(map)
+            }
+
         is BuildSegmentRequest ->
-            inTurnOnly(fromPlayerName) { buildSegment(fromPlayerName, req.from, req.to, req.cards) }
+            inTurnOnly(fromPlayerName) {
+                val segment = map.getSegmentBetween(req.from, req.to)
+                    ?: throw InvalidActionError("There is no segment ${req.from.value} - ${req.to.value} on the map")
+                buildSegment(fromPlayerName, segment, req.cards).advanceTurn(map)
+            }
+
         is BuildStationRequest ->
-            inTurnOnly(fromPlayerName) { buildStation(fromPlayerName, req.target, req.cards) }
+            inTurnOnly(fromPlayerName) {
+                buildStation(fromPlayerName, req.target, req.cards).advanceTurn(map)
+            }
     }
     val message = newState.responseMessage(req.toAction(fromPlayerName))
-    return newState to listOf(message)
+    val messages = if (req is JoinGameRequest)
+        listOf(SendResponse.ForPlayer(fromPlayerName, Response.GameMap(map)), message)
+        else listOf(message)
+    return newState to messages
 }
 
 fun GameState.responseMessage(action: Response.PlayerAction?) = SendResponse.ForAll { toPlayerName ->
@@ -42,7 +63,7 @@ fun GameState.responseMessage(action: Response.PlayerAction?) = SendResponse.For
         )
 }
 
-fun GameState.joinPlayer(name: PlayerName): GameState {
+private fun GameState.joinPlayer(name: PlayerName, map: GameMap): GameState {
     if (players.any { it.name == name }) {
         return updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") }
     }
@@ -51,8 +72,8 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
     if (availableColors.isEmpty()) throw InvalidActionError("Game full, no more players allowed")
 
     val color = availableColors.random()
-    val cards = (1..4).map { Card.random() }
-    val tickets = getRandomTickets(1, true) + getRandomTickets(3, false)
+    val cards = (1..4).map { Card.random(map) }
+    val tickets = getRandomTickets(map, 1, true) + getRandomTickets(map, 3, false)
     val newPlayer = Player(
         name, color, initialCarsCount, InitialStationsCount, cards, emptyList(), emptyList(),
         PendingTicketsChoice(tickets, 2, true)
@@ -60,16 +81,17 @@ fun GameState.joinPlayer(name: PlayerName): GameState {
     return copy(players = players + newPlayer)
 }
 
-fun GameState.leavePlayer(name: PlayerName) =
-    updatePlayer(name) { copy(away = true) }.let {
-        if (players[turn].name == name) it.advanceTurn() else it
-    }
-
-fun GameState.inTurnOnly(name: PlayerName, block: GameState.() -> GameState) =
+private fun GameState.inTurnOnly(name: PlayerName, block: GameState.() -> GameState) =
     if (players[turn].name == name) block() else throw InvalidActionError("Not your turn")
 
-fun GameState.advanceTurn(): GameState {
-    if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == GameMap.totalSegmentsLength) {
+fun GameState.advanceTurn(map: GameMap) = advanceTurnFrom(players[turn].name, map)
+
+fun GameState.advanceTurnFrom(name: PlayerName, map: GameMap): GameState {
+    if (players[turn].name != name) {
+        return this
+    }
+
+    if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == map.totalSegmentsLength) {
         return copy(endsOnPlayer = turn)
     }
 
@@ -81,52 +103,52 @@ fun GameState.advanceTurn(): GameState {
         .updatePlayer(nextTurn) {
             copy(ticketsForChoice = ticketsForChoice?.copy(shouldChooseOnNextTurn = true))
         }
-    return if (skipsMove) nextState.advanceTurn() else nextState
+    return if (skipsMove) nextState.advanceTurnFrom(players[nextTurn].name, map) else nextState
 }
 
-fun GameState.pickCards(name: PlayerName, req: PickCardsRequest): GameState {
+private fun GameState.pickCards(name: PlayerName, req: PickCardsRequest, map: GameMap): GameState {
     val indicesToReplace = req.getIndicesToReplace()
     val newOpenCards = openCards.mapIndexed { ix, card ->
-        if (indicesToReplace.contains(ix)) Card.random() else card
+        if (indicesToReplace.contains(ix)) Card.random(map) else card
     }.let {
-        if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random() }
+        if (it.count { it is Card.Loco } >= 3) (1..OpenCardsCount).map { Card.random(map) }
         else it
     }
 
-    return updatePlayer(name) { copy(cards = cards + req.getCardsToPick()) }
+    return updatePlayer(name) { copy(cards = cards + req.getCardsToPick(map)) }
         .copy(openCards = newOpenCards)
-        .advanceTurn()
 }
 
-fun GameState.pickTickets(playerName: PlayerName): GameState {
+private fun GameState.pickTickets(playerName: PlayerName, map: GameMap): GameState {
     val inTurn = players[turn].name == playerName
-    val state = updatePlayer(playerName) {
+    return updatePlayer(playerName) {
         if (ticketsForChoice == null)
-            copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(3, false), 1, inTurn))
+            copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(map, 3, false), 1, inTurn))
         else
             throw InvalidActionError("Decide on your tickets first")
     }
-    return if (inTurn) state.advanceTurn() else state
 }
 
-fun GameState.buildSegment(name: PlayerName, from: CityName, to: CityName, cards: List<Card>): GameState {
-    val segment = GameMap.getSegmentBetween(from, to)
-        ?: throw InvalidActionError("There is no segment ${from.value} - ${to.value} on the map")
+private fun GameState.buildSegment(
+    name: PlayerName,
+    segment: Segment,
+    cards: List<Card>
+): GameState {
     players.find { it.occupiedSegments.contains(segment) }?.let {
-        throw InvalidActionError("Segment ${from.value} - ${to.value} is already occupied by ${it.name.value}")
+        throw InvalidActionError("Segment ${segment.from.value} - ${segment.to.value} is already occupied by ${it.name.value}")
     }
-    return updatePlayer(name) { occupySegment(segment, cards) }.advanceTurn()
+    return updatePlayer(name) { occupySegment(segment, cards) }
 }
 
-fun GameState.buildStation(name: PlayerName, target: CityName, cards: List<Card>): GameState {
+private fun GameState.buildStation(name: PlayerName, target: CityName, cards: List<Card>): GameState {
     players.find { it.placedStations.contains(target) }?.let {
         throw InvalidActionError("There is already a station in ${target.value} owned by ${it.name.value}")
     }
 
-    return updatePlayer(name) { buildStation(target, cards) }.advanceTurn()
+    return updatePlayer(name) { buildStation(target, cards) }
 }
 
-fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
+private fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
     ticketsForChoice == null ->
         throw InvalidActionError("You do not have any pending tickets choice")
     ticketsToKeep.any { !ticketsForChoice.tickets.contains(it) } ->
@@ -140,7 +162,7 @@ fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
         )
 }
 
-fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
+private fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
     segment.length > carsLeft ->
         throw InvalidActionError("Not enough wagons ($carsLeft) to build ${segment.from.value} - ${segment.to.value} segment")
 
@@ -159,7 +181,7 @@ fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
     )
 }
 
-fun Player.buildStation(target: CityName, cardsToDrop: List<Card>) = when {
+private fun Player.buildStation(target: CityName, cardsToDrop: List<Card>) = when {
     cardsToDrop.filterIsInstance<Card.Car>().distinct().size > 1 ->
         throw InvalidActionError("Only cards of the same color (or locos) are allowed to be dropped for building a station")
 
@@ -179,7 +201,7 @@ fun Player.buildStation(target: CityName, cardsToDrop: List<Card>) = when {
     )
 }
 
-fun List<Card>.drop(cardsToDrop: List<Card>) = cardsToDrop.toMutableList().let { list ->
+private fun List<Card>.drop(cardsToDrop: List<Card>) = cardsToDrop.toMutableList().let { list ->
     filter {
         if (list.contains(it)) {
             list -= it; false
@@ -187,11 +209,11 @@ fun List<Card>.drop(cardsToDrop: List<Card>) = cardsToDrop.toMutableList().let {
     }
 }
 
-fun List<Card>.contains(other: List<Card>) = other.groupingBy { it }.eachCount().let { another ->
+private fun List<Card>.contains(other: List<Card>) = other.groupingBy { it }.eachCount().let { another ->
     groupingBy { it }.eachCount().all { (card, count) -> count >= (another[card] ?: 0) }
 }
 
-fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
+private fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
     if (cardsToDrop.size != length) {
         return false
     }

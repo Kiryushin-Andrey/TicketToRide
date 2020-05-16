@@ -28,7 +28,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     interface Props : RProps {
         var locale: Locale
         var onLocaleChanged: (Locale) -> Unit
-        var onStartGame: (PlayerName, Int) -> Unit
+        var onStartGame: (GameMap, PlayerName, Int) -> Unit
         var onJoinGame: (GameId, PlayerName) -> Unit
     }
 
@@ -158,8 +158,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         if (state.playerName.isNotBlank()) {
             Notification.requestPermission()
             val playerName = PlayerName(state.playerName)
-            if (gameId == null)
-                props.onStartGame(playerName, state.carsNumber)
+            if (gameId == null) {
+                val map = createMapOfRussia()
+                for (entry in map.segments.groupingBy { it.color }.fold(0) { acc, segment -> acc + segment.length }) {
+                    console.log("${entry.key} - ${entry.value}")
+                }
+                props.onStartGame(map, playerName, state.carsNumber)
+            }
             else
                 props.onJoinGame(GameId(gameId), playerName)
         }

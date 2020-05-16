@@ -44,7 +44,6 @@ class App() : RComponent<RProps, AppState>() {
         chatMessages = mutableListOf()
         errorMessage = ""
         secsToReconnect = 0
-        map = GameMap
     }
 
     private fun CoroutineScope.connectToServer(requests: Channel<Request>, reconnecting: Boolean = false) {
@@ -197,26 +196,26 @@ class App() : RComponent<RProps, AppState>() {
             chatMessages = chatMessages.apply { add(msg) }
         }
 
+        is Response.GameMap -> setState { map = msg.map }
+
         is Response.GameState -> with(state.screen) {
             when (this) {
 
-                is Screen.Welcome -> {
-                    setState {
-                        screen = if (msg.state.players.size == 1) {
-                            val url = "${window.location.origin}/game/${msg.gameId.value}"
-                            window.history.pushState(null, window.document.title, url)
-                            Screen.ShowGameId(msg.gameId, msg.state)
-                        } else {
-                            Screen.GameInProgress(
-                                msg.gameId,
-                                state.map,
-                                msg.state,
-                                PlayerState.initial(state.map, msg.state, requests)
-                            )
-                        }
-                        msg.action?.let {
-                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
-                        }
+                is Screen.Welcome -> setState {
+                    screen = if (msg.state.players.size == 1) {
+                        val url = "${window.location.origin}/game/${msg.gameId.value}"
+                        window.history.pushState(null, window.document.title, url)
+                        Screen.ShowGameId(msg.gameId, msg.state)
+                    } else {
+                        Screen.GameInProgress(
+                            msg.gameId,
+                            state.map,
+                            msg.state,
+                            PlayerState.initial(state.map, msg.state, requests)
+                        )
+                    }
+                    msg.action?.let {
+                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
                     }
                 }
 
@@ -251,7 +250,6 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.GameOver -> {
                 }
             }
-
         }
 
         is Response.GameEnd -> setState {
@@ -269,8 +267,8 @@ class App() : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun startGame(playerName: PlayerName, carsNumber: Int) {
-        requests.offer(StartGameRequest(playerName, carsNumber))
+    private fun startGame(map: GameMap, playerName: PlayerName, carsNumber: Int) {
+        requests.offer(StartGameRequest(map, playerName, carsNumber))
     }
 
     private fun joinGame(gameId: GameId, playerName: PlayerName) {
