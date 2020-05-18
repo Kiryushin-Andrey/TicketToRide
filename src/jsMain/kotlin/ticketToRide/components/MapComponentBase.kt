@@ -87,9 +87,3 @@ fun LatLong.toGoogleMapCoords() = jsObject<Coords> {
     lat = this@toGoogleMapCoords.lat
     lng = this@toGoogleMapCoords.lng
 }
-
-fun RBuilder.finalMap(builder: FinalMapComponent.Props.() -> Unit) {
-    child(FinalMapComponent::class) {
-        attrs(builder)
-    }
-}

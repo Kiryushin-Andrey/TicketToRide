@@ -120,7 +120,6 @@ class App() : RComponent<RProps, AppState>() {
                             setState {
                                 screen = Screen.GameInProgress(
                                     it.gameId,
-                                    state.map,
                                     it.gameState,
                                     PlayerState.initial(state.map, it.gameState, requests)
                                 )
@@ -131,7 +130,7 @@ class App() : RComponent<RProps, AppState>() {
                 is Screen.GameInProgress ->
                     gameScreen {
                         locale = state.locale
-                        gameMap = it.gameMap
+                        gameMap = state.map
                         gameState = it.gameState
                         playerState = it.playerState
                         onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
@@ -209,7 +208,6 @@ class App() : RComponent<RProps, AppState>() {
                     } else {
                         Screen.GameInProgress(
                             msg.gameId,
-                            state.map,
                             msg.state,
                             PlayerState.initial(state.map, msg.state, requests)
                         )
@@ -238,7 +236,7 @@ class App() : RComponent<RProps, AppState>() {
                     }
                     val newPlayerState =
                         if (playerState is PlayerState.ChoosingTickets) playerState
-                        else PlayerState.initial(gameMap, msg.state, requests)
+                        else PlayerState.initial(state.map, msg.state, requests)
                     setState {
                         screen = copy(gameState = msg.state, playerState = newPlayerState)
                         msg.action?.let {
@@ -268,6 +266,7 @@ class App() : RComponent<RProps, AppState>() {
     }
 
     private fun startGame(map: GameMap, playerName: PlayerName, carsNumber: Int) {
+        setState { this.map = map }
         requests.offer(StartGameRequest(map, playerName, carsNumber))
     }
 

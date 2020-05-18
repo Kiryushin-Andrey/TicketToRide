@@ -23,7 +23,7 @@ class PlayerFinalStats(
             .sumBy { (length, count) -> map.getPointsForSegments(length) * count }
 
     fun getLongestPathPoints(longestPathOfAll: Int) =
-        if (longestPath == longestPathOfAll) map.pointsForLongestPath else 0
+        if (longestPath == longestPathOfAll) map.pointsForLongestRoute else 0
 
     fun getTotalPoints(longestPathOfAll: Int) =
         fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + stationPoints + getLongestPathPoints(

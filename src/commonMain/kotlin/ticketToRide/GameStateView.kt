@@ -25,11 +25,10 @@ sealed class Card {
     companion object {
         fun random(map: GameMap): Card {
             val colors = CardColor.values()
-            val totalLength = map.segments.filter { it.color != null }.sumBy { it.length }
             return map.segments.asSequence()
                 .filter { it.color != null }
                 .flatMap { segment -> sequence { repeat(segment.length) { yield(Car(segment.color!!)) } } }
-                .drop(Random.nextInt(totalLength + totalLength / colors.size))
+                .drop(Random.nextInt(map.totalColoredSegmentsLength + map.totalColoredSegmentsLength / colors.size))
                 .firstOrNull() ?: Loco
         }
     }

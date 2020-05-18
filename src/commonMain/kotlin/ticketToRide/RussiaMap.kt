@@ -1,11 +1,12 @@
 package ticketToRide
 
+import kotlinx.collections.immutable.*
 import kotlin.math.ceil
 import kotlin.random.Random
 
 fun createMapOfRussia(): GameMap {
     fun city(name: String, lat: Double, long: Double) = City(CityName(name), LatLong(lat, long))
-    val cities = listOf(
+    val cities = persistentListOf(
         city("Санкт-Петербург", 59.938732, 30.316229),
         city("Мурманск", 68.970665, 33.07497),
         city("Псков", 57.817398, 28.334368),
@@ -61,7 +62,7 @@ fun createMapOfRussia(): GameMap {
     fun segment(from: String, to: String, points: Int) =
         Segment(CityName(from), CityName(to), null, points)
 
-    val segments = listOf(
+    val segments = sequenceOf(
         segment("Санкт-Петербург", "Москва", 3),
         segment("Санкт-Петербург", "Петрозаводск", 2),
         segment("Санкт-Петербург", "Вологда", 3),
@@ -150,10 +151,10 @@ fun createMapOfRussia(): GameMap {
     )
 
     val segmentsByCities =
-        segments.asSequence().flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
+        segments.flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
 
-    val totalLength = segments.asSequence().filter { it.length <= 4 }.sumBy { it.length }
-    val perColor = ceil(totalLength.toDouble() / CardColor.values().size).toInt()
+    val totalLength = segments.filter { it.length <= 4 }.sumBy { it.length }
+    val countPerColor = ceil(totalLength.toDouble() / CardColor.values().size).toInt()
     val usedByColor = mutableMapOf<CardColor, Int>()
 
     val colorMap = mutableMapOf<Segment, CardColor?>()
@@ -162,12 +163,14 @@ fun createMapOfRussia(): GameMap {
             .flatMap { segmentsByCities[it]?.asSequence() ?: throw Error("City ${it.value} not found in map") }
             .mapNotNull { colorMap[it] }
             .toSet()
+
         val next = CardColor.values().asSequence()
-            .filter { !takenColors.contains(it) }
-            .flatMap { color -> sequence { repeat(perColor - usedByColor.getOrElse(color, { 0 })) { yield(color) } } }
+            .filter { !takenColors.contains(it) && (usedByColor[it] ?: 0) + segment.length <= countPerColor }
+            .flatMap { color -> sequence { repeat(countPerColor - usedByColor.getOrElse(color, { 0 })) { yield(color) } } }
             .let { seq ->
                 val until = seq.count() - 1
-                if (until > 0) seq.drop(until).first() else CardColor.values().random()
+                if (until > 0) seq.drop(Random.nextInt(until)).first()
+                else CardColor.values().random()
             }
         colorMap[segment] = next
         usedByColor[next] = (usedByColor[next] ?: 0) + 1
@@ -175,7 +178,7 @@ fun createMapOfRussia(): GameMap {
 
     return GameMap(
         cities,
-        segments.map { Segment(it.from, it.to, colorMap[it], it.length) },
+        segments.map { Segment(it.from, it.to, colorMap[it], it.length) }.toList().toPersistentList(),
         LatLong(57.6012967, 40.4744424),
         4
     )

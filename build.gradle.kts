@@ -39,7 +39,11 @@ kotlin {
         }
     }
     js {
-        browser {}
+        browser {
+            webpackTask {
+                saveEvaluatedConfigFile = true
+            }
+        }
         useCommonJs()
     }
     sourceSets {
@@ -91,6 +95,7 @@ kotlin {
                 implementation(npm("styled-components", "5.0.1"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
                 implementation(npm("google-map-react", "1.1.7"))
+                compileOnly(npm("raw-loader", "4.0.1"))
             }
         }
         val jsTest by getting {

@@ -1,6 +1,8 @@
 package ticketToRide
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.collections.immutable.*
 
 @Serializable
 data class LatLong(val lat: Double, val lng: Double)
@@ -35,7 +37,7 @@ data class GameMap(
     val segments: List<Segment>,
     val mapCenter: LatLong,
     val mapZoom: Int,
-    val pointsForLongestPath: Int = 10,
+    val pointsForLongestRoute: Int = 10,
     val longTicketMinPoints: Int = 20,
     private val shortTicketsPointsRange: Pair<Int, Int> = 5 to 12
 ) {
@@ -46,6 +48,8 @@ data class GameMap(
         pointsForSegments[length] ?: throw Error("Points for ${length}-length segments not defined")
 
     val totalSegmentsLength by lazy { segments.sumBy { it.length } }
+
+    val totalColoredSegmentsLength by lazy { segments.filter { it.color != null }.sumBy { it.length } }
 
     val longTickets by lazy {
         allTickets.takeWhile { it.points >= longTicketMinPoints }
@@ -92,13 +96,10 @@ data class GameMap(
         }.toList().sortedByDescending { it.points }
     }
 
-    private fun getSegmentsByCity(cityName: CityName) =
-        segmentsByCities[cityName] ?: throw Error("City ${cityName.value} not found in map")
-
-    private val segmentsByCities by lazy {
+    @Transient
+    private val segmentsByCities =
         segments.asSequence().flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
-    }
 
     fun getSegmentBetween(from: CityName, to: CityName) =
-        getSegmentsByCity(from).find { it.connects(from, to) }
+        (segmentsByCities[from] ?: throw Error("City ${from.value} not found in map")).find { it.connects(from, to) }
 }

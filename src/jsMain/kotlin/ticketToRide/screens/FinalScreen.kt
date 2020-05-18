@@ -183,7 +183,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                 mTypography(variant = MTypographyVariant.body2) {
                     +str.longestRoute(longestPath)
                 }
-                pointsLabel(props.gameMap.pointsForLongestPath, Color.lightGreen)
+                pointsLabel(props.gameMap.pointsForLongestRoute, Color.lightGreen)
             }
         }
     }

@@ -7,15 +7,16 @@ import com.ccfraser.muirwik.components.expansionpanel.*
 import com.ccfraser.muirwik.components.input.*
 import com.ccfraser.muirwik.components.menu.mMenuItem
 import kotlinx.css.*
-import kotlinx.css.properties.BoxShadows
 import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
 import org.w3c.notifications.*
 import react.*
 import styled.*
 import ticketToRide.*
-import ticketToRide.components.withClasses
+import ticketToRide.components.*
 import kotlin.browser.window
+
+private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 
 class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
@@ -23,6 +24,8 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var playerName: String
         var errorText: String?
         var carsNumber: Int
+        var customMap: CustomGameMap?
+        var gameMapParseErrors: CustomGameMapParseErrors?
     }
 
     interface Props : RProps {
@@ -38,6 +41,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
 
     override fun State.init(props: Props) {
         carsNumber = 45
+        playerName = ""
     }
 
     override fun RBuilder.render() {
@@ -46,7 +50,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 +ComponentStyles.welcomeDialog
             }
             attrs {
-                open = true
+                open = state.gameMapParseErrors == null
                 maxWidth = "sm"
                 fullWidth = true
             }
@@ -75,8 +79,8 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                     mExpansionPanel {
                         attrs {
                             withClasses(
-                                "root" to ComponentStyles.getClassName { it::settingsPanel },
-                                "expanded" to ComponentStyles.getClassName { it::settingsPanelExpanded })
+                                "root" to ComponentStyles.getClassName { it::expansionPanelRoot },
+                                "expanded" to ComponentStyles.getClassName { it::expansionPanelExpanded })
                         }
 
                         mExpansionPanelSummary {
@@ -86,38 +90,27 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                                 }
                                 expandIcon = buildElement { mIcon("expand_more") }!!
                                 withClasses(
-                                    "root" to ComponentStyles.getClassName { it::settingsPanelSummaryRoot },
-                                    "content" to ComponentStyles.getClassName { it::settingsPanelSummaryContent },
-                                    "expanded" to ComponentStyles.getClassName { it::settingsPanelExpanded })
+                                    "root" to ComponentStyles.getClassName { it::expansionPanelSummaryRoot },
+                                    "content" to ComponentStyles.getClassName { it::expansionPanelSummaryContent },
+                                    "expanded" to ComponentStyles.getClassName { it::expansionPanelExpanded })
                             }
-                            mInputLabel(str.moreSettings)
+                            mTypography(str.moreSettings, MTypographyVariant.body1)
                         }
 
                         mExpansionPanelDetails {
                             attrs {
                                 withClasses(
-                                    "root" to ComponentStyles.getClassName { it::settingsPanelContent }
+                                    "root" to ComponentStyles.getClassName { it::expansionPanelDetailsRoot }
                                 )
                             }
-                            mInputLabel(str.numberOfCarsOnHand) {
-                                mInput {
-                                    css {
-                                        marginLeft = 10.px
-                                        width = 40.px
-                                    }
-                                    attrs {
-                                        type = InputType.number
-                                        value = state.carsNumber.toString()
-                                        asDynamic().min = 5
-                                        asDynamic().max = 60
-                                        onChange = { e ->
-                                            e.targetInputValue.trim().toIntOrNull()?.let {
-                                                setState { carsNumber = it }
-                                            }
-                                        }
-                                    }
-                                }
+
+                            chooseGameMap(props.locale) {
+                                customMap = state.customMap
+                                onCustomMapChanged = { map -> setState { customMap = map } }
+                                onShowParseErrors = { err -> setState { gameMapParseErrors = err } }
                             }
+                            mDivider()
+                            initialCarsOnHand()
                         }
                     }
                 }
@@ -152,56 +145,66 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                     onClick = { proceed() })
             }
         }
-    }
 
-    private fun proceed() {
-        if (state.playerName.isNotBlank()) {
-            Notification.requestPermission()
-            val playerName = PlayerName(state.playerName)
-            if (gameId == null) {
-                val map = createMapOfRussia()
-                for (entry in map.segments.groupingBy { it.color }.fold(0) { acc, segment -> acc + segment.length }) {
-                    console.log("${entry.key} - ${entry.value}")
-                }
-                props.onStartGame(map, playerName, state.carsNumber)
+        state.gameMapParseErrors?.let {
+            gameMapParseErrorsDialog {
+                locale = props.locale
+                filename = it.filename
+                errors = it.errors
+                onClose = { setState { gameMapParseErrors = null } }
             }
-            else
-                props.onJoinGame(GameId(gameId), playerName)
         }
     }
 
-    object ComponentStyles : StyleSheet("Welcome", isStatic = true) {
+    private fun RBuilder.initialCarsOnHand() {
+        mInputLabel(str.numberOfCarsOnHand) {
+            mInput {
+                css {
+                    marginLeft = 10.px
+                    width = 40.px
+                }
+                attrs {
+                    type = InputType.number
+                    value = state.carsNumber.toString()
+                    asDynamic().min = 5
+                    asDynamic().max = 60
+                    onChange = { e ->
+                        e.targetInputValue.trim().toIntOrNull()?.let {
+                            setState { carsNumber = it }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun proceed() {
+        if (state.playerName.isNullOrBlank()) {
+            setState { errorText = str.enterYourName }
+            return
+        }
+        Notification.requestPermission()
+        val playerName = PlayerName(state.playerName)
+        if (gameId == null) {
+            val map = state.customMap?.map ?: (defaultMap as? Try.Success)?.value
+            if (map != null) {
+                for (entry in map.segments.groupingBy { it.color }
+                    .fold(0) { acc, segment -> acc + segment.length }) {
+                    console.log("${entry.key} - ${entry.value}")
+                }
+                props.onStartGame(map, playerName, state.carsNumber)
+            } else {
+                setState { errorText = str.noMapSelected }
+            }
+        } else
+            props.onJoinGame(GameId(gameId), playerName)
+    }
+
+    object ComponentStyles : ExpansionPanelStyleSheet("Welcome") {
         val welcomeDialog by css {
             width = 100.pct
             margin = "0"
         }
-        val settingsPanel by css {
-            borderStyle = BorderStyle.none
-            boxShadow = BoxShadows.none
-            before { display = Display.none }
-            "&.Mui-expanded" {
-                minHeight = 0.px
-                margin = 0.px.toString()
-            }
-        }
-        val settingsPanelSummaryRoot by ComponentStyles.css {
-            "&.Mui-expanded" {
-                minHeight = 0.px
-                margin = 0.px.toString()
-            }
-        }
-        val settingsPanelSummaryContent by ComponentStyles.css {
-            margin = 0.px.toString()
-            padding = 0.px.toString()
-            "&.Mui-expanded" {
-                minHeight = 0.px
-                margin = 0.px.toString()
-            }
-        }
-        val settingsPanelContent by ComponentStyles.css {
-            padding = 0.px.toString()
-        }
-        val settingsPanelExpanded by ComponentStyles.css {}
     }
 
     private inner class Strings : LocalizedStrings({ props.locale }) {
@@ -231,6 +234,11 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             Locale.Ru to "Уведомления подскажут, когда до вас дошла очередь ходить"
         )
 
+        val noMapSelected by loc(
+            Locale.En to "Please load game map file (see \"${moreSettings}\" section)",
+            Locale.Ru to "Загрузите файл с картой для игры (в разделе \"${moreSettings}\")"
+        )
+
         val startGame by loc(
             Locale.En to "Start game!",
             Locale.Ru to "Начать игру!"
@@ -241,6 +249,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             Locale.Ru to "Присоединиться к игре!"
         )
     }
+
     private val str = Strings()
 }
 

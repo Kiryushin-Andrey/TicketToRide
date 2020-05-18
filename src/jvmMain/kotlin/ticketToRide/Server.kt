@@ -71,6 +71,7 @@ fun Application.module() {
         static {
             resource("ticket-to-ride.js")
             resource("favicon.ico")
+            resource("default.map")
         }
         static("icons") { resources("icons") }
         static("cards") { resources("cards") }

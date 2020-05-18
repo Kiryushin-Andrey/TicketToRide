@@ -1,5 +1,6 @@
 package ticketToRide.components
 
+import react.RBuilder
 import ticketToRide.*
 
 class FinalMapComponent(props: Props) :
@@ -21,5 +22,11 @@ class FinalMapComponent(props: Props) :
         if (props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight) {
             occupiedBy = null
         }
+    }
+}
+
+fun RBuilder.finalMap(builder: FinalMapComponent.Props.() -> Unit) {
+    child(FinalMapComponent::class) {
+        attrs(builder)
     }
 }

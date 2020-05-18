@@ -12,7 +12,6 @@ sealed class Screen {
 
     data class GameInProgress(
         override val gameId: GameId,
-        val gameMap: GameMap,
         val gameState: GameStateView,
         val playerState: PlayerState
     ) : Screen(), InGame {
