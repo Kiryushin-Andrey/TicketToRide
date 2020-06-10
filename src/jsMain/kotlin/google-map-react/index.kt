@@ -240,20 +240,20 @@ external interface Props : react.RProps {
     var resetBoundsOnResize: Boolean?
         get() = definedExternally
         set(value) = definedExternally
-    var onChildClick: ((hoverKey: Any, childProps: Any) -> Unit)?
+    var onChildClick: ((hoverKey: String, childProps: Any) -> Unit)?
         get() = definedExternally
         set(value) = definedExternally
-    var onChildMouseEnter: ((hoverKey: Any, childProps: Any) -> Unit)?
+    var onChildMouseEnter: ((hoverKey: String, childProps: Any) -> Unit)?
         get() = definedExternally
         set(value) = definedExternally
-    var onChildMouseLeave: ((hoverKey: Any, childProps: Any) -> Unit)?
+    var onChildMouseLeave: ((hoverKey: String, childProps: Any) -> Unit)?
         get() = definedExternally
         set(value) = definedExternally
-    val onChildMouseDown: ((childKey: Any, childProps: Any, mouse: Any) -> Unit)?
+    val onChildMouseDown: ((childKey: String, childProps: Any, mouse: Any) -> Unit)?
         get() = definedExternally
-    val onChildMouseUp: ((childKey: Any, childProps: Any, mouse: Any) -> Unit)?
+    val onChildMouseUp: ((childKey: String, childProps: Any, mouse: Any) -> Unit)?
         get() = definedExternally
-    val onChildMouseMove: ((childKey: Any, childProps: Any, mouse: Any) -> Unit)?
+    val onChildMouseMove: ((childKey: String, childProps: Any, mouse: Any) -> Unit)?
         get() = definedExternally
     val onDrag: ((map: Any) -> Unit)?
         get() = definedExternally
@@ -261,7 +261,7 @@ external interface Props : react.RProps {
         get() = definedExternally
     val onZoomAnimationStart: ((args: Any) -> Unit)?
         get() = definedExternally
-    var onZoomAnimationEnd: ((args: Any) -> Unit)?
+    var onZoomAnimationEnd: ((zoom: Int) -> Unit)?
         get() = definedExternally
         set(value) = definedExternally
     val onMapTypeIdChange: ((args: Any) -> Unit)?

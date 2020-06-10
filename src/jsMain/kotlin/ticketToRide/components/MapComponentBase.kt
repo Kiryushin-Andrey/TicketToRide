@@ -12,7 +12,7 @@ import kotlin.js.Promise
 interface MapComponentBaseProps : RProps {
     var gameMap: GameMap
     var citiesToHighlight: Set<CityName>
-    var citiesWithStations: kotlin.collections.Map<CityName, PlayerView>
+    var citiesWithStations: Map<CityName, PlayerView>
     var onCityMouseOver: (CityName) -> Unit
     var onCityMouseOut: (CityName) -> Unit
 }
@@ -33,9 +33,9 @@ open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
                 googleMapLoader = { Promise.resolve(js("google.maps") as Any) }
                 onGoogleApiLoaded = { maps -> setState { map = maps.map; mapZoom = props.gameMap.mapZoom } }
                 yesIWantToUseGoogleMapApiInternals = true
-                onChildMouseEnter = { key, _ -> setState { props.onCityMouseOver(CityName(key as String)) } }
-                onChildMouseLeave = { key, _ -> setState { props.onCityMouseOut(CityName(key as String)) } }
-                onZoomAnimationEnd = { zoom -> setState { mapZoom = (zoom as Int) } }
+                onChildMouseEnter = { key, _ -> setState { props.onCityMouseOver(CityName(key)) } }
+                onChildMouseLeave = { key, _ -> setState { props.onCityMouseOut(CityName(key)) } }
+                onZoomAnimationEnd = { zoom -> setState { mapZoom = zoom } }
             }
 
             props.gameMap.cities.forEach { marker { cityMarkerProps(this, it) } }
