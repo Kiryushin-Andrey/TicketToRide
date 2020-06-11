@@ -1,8 +1,7 @@
 package ticketToRide
 
 import io.ktor.application.*
-import io.ktor.features.CachingHeaders
-import io.ktor.features.ContentNegotiation
+import io.ktor.features.*
 import io.ktor.html.respondHtml
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
@@ -51,6 +50,11 @@ fun Application.module() {
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
 
     install(WebSockets)
+    install(Compression) {
+        gzip {
+            matchContentType(ContentType.parse("*/javascript"))
+        }
+    }
     install(ContentNegotiation) { json(json) }
     install(CachingHeaders) {
         options { outgoingContent ->
