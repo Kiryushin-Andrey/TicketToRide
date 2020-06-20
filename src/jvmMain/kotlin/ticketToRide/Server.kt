@@ -5,6 +5,7 @@ import io.ktor.features.*
 import io.ktor.html.respondHtml
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.response.respond
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import mu.KotlinLogging
+import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
 class PlayerConnection(
@@ -35,6 +37,8 @@ private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 private val logger = KotlinLogging.logger("Server")
 
+private val processName = ManagementFactory.getRuntimeMXBean().name
+
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
@@ -48,6 +52,13 @@ fun Application.module() {
         )
     }
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
+    val debug = environment.config.propertyOrNull("debug") != null
+
+    if (debug) {
+        install(DefaultHeaders) {
+            header(HttpHeaders.Server, processName)
+        }
+    }
 
     install(WebSockets)
     install(Compression) {
