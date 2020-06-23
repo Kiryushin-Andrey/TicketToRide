@@ -70,7 +70,6 @@ kotlin {
                 implementation("org.slf4j:slf4j-simple:1.7.29")
             }
             languageSettings.apply {
-                useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
                 useExperimentalAnnotation("kotlinx.coroutines.FlowPreview")
                 useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
             }
@@ -112,6 +111,8 @@ kotlin {
     kotlin.sourceSets.all {
         languageSettings.apply {
             useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+            useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+            useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
             useExperimentalAnnotation("kotlinx.serialization.UnstableDefault")
         }
     }

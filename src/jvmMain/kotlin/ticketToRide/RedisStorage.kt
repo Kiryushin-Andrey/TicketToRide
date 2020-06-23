@@ -11,15 +11,19 @@ private val redisJson = Json(JsonConfiguration.Default.copy(allowStructuredMapKe
 private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 
-fun RedisCredentials.saveMap(id: GameId, map: GameMap) = exec { conn ->
-    val mapJson = redisJson.stringify(GameMap.serializer(), map)
-    conn.call<Any?>("SET", mapKey(id), mapJson, "EX", expireTimeSec)
+fun RedisCredentials.saveMap(id: GameId, map: GameMap) {
+    exec { conn ->
+        val mapJson = redisJson.stringify(GameMap.serializer(), map)
+        conn.call<Any?>("SET", mapKey(id), mapJson, "EX", expireTimeSec)
+    }
 }
 
-fun RedisCredentials.saveGame(state: GameState) = exec { conn ->
-    val gameStateJson = redisJson.stringify(GameState.serializer(), state)
-    conn.call<Any?>("SET", state.id.value, gameStateJson, "EX", expireTimeSec)
-    conn.call<Any?>("EXPIRE", mapKey(state.id), expireTimeSec)
+fun RedisCredentials.saveGame(state: GameState) {
+    exec { conn ->
+        val gameStateJson = redisJson.stringify(GameState.serializer(), state)
+        conn.call<Any?>("SET", state.id.value, gameStateJson, "EX", expireTimeSec)
+        conn.call<Any?>("EXPIRE", mapKey(state.id), expireTimeSec)
+    }
 }
 
 fun RedisCredentials.loadGame(id: GameId) = exec { conn ->
@@ -30,6 +34,11 @@ fun RedisCredentials.loadGame(id: GameId) = exec { conn ->
             state to map
         }
     }
+}
+
+fun RedisCredentials.hasGame(id: GameId) = exec { conn ->
+    conn.call<Long>("EXISTS", id.value)?.let { it == 1L }
+        ?: throw Error("Unexpected answer from Redis EXISTS command")
 }
 
 private fun <T> RedisCredentials.exec(block: (Redis) -> T) = Socket(host, port).use { socket ->

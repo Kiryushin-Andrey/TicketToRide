@@ -4,43 +4,35 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
-import kotlin.random.Random
-
 
 @FlowPreview
 class Game(
+    val id: GameId,
     private val initialCarsCount: Int,
     private val redis: RedisCredentials?,
     private val onAllPlayersLeft: (Game) -> Unit
 ) {
 
-    val id = GameId(Random.nextBytes(5).joinToString("") { "%02x".format(it) })
-
     private val logger = KotlinLogging.logger("Game-$id")
 
     private val requestsQueue = Channel<RequestQueueItem>(Channel.BUFFERED)
 
-    private val players = mutableMapOf<PlayerName, PlayerConnection>()
+    private val players = mutableMapOf<PlayerName, ClientConnection>()
 
     val playerNames get() = players.keys.map { it.value }
 
-    suspend fun start(firstPlayer: PlayerConnection, map: GameMap) {
+    suspend fun start(firstPlayer: ClientConnection, map: GameMap) {
         players[firstPlayer.name] = firstPlayer
         logger.info { "New game started by ${firstPlayer.name.value}" }
-        requestsQueue.send(RequestQueueItem.Req(JoinGameRequest(id, firstPlayer.name), firstPlayer))
+        requestsQueue.send(RequestQueueItem.Connect(firstPlayer.name, firstPlayer))
         runRequestProcessingLoop(GameState.initial(id, initialCarsCount, map), map)
     }
 
-    suspend fun restore(byPlayer: PlayerConnection, state: GameState, map: GameMap) {
+    suspend fun restore(byPlayer: ClientConnection, state: GameState, map: GameMap) {
         players[byPlayer.name] = byPlayer
         logger.info { "Game restored from Redis by ${byPlayer.name.value}" }
-        state.restored(byPlayer.name).let {
-            val messages = listOf(
-                SendResponse.ForPlayer(byPlayer.name, Response.GameMap(map)),
-                it.responseMessage(null)
-            )
-            runRequestProcessingLoop(it, map, messages)
-        }
+        requestsQueue.send(RequestQueueItem.Connect(byPlayer.name, byPlayer))
+        runRequestProcessingLoop(state.restored(byPlayer.name), map)
     }
 
     private suspend fun runRequestProcessingLoop(
@@ -52,11 +44,17 @@ class Game(
             requestsQueue.consumeAsFlow()
                 .scan(initialState to initialMessages) { (state, _), req ->
                     when (req) {
+
                         is RequestQueueItem.DumpState -> {
                             req.deferred.complete(state)
                             state to emptyList()
                         }
-                        is RequestQueueItem.Req -> {
+
+                        is RequestQueueItem.Connect -> {
+                            state.connectPlayer(req.playerName, map)
+                        }
+
+                        is RequestQueueItem.PlayerAction -> {
                             val playerName = req.conn.name
                             try {
                                 state.processRequest(req.request, map, playerName)
@@ -93,28 +91,28 @@ class Game(
         await()
     }
 
-    suspend fun joinPlayer(req: JoinGameRequest, conn: PlayerConnection): Boolean {
-        players[req.playerName]?.let { ping(it) }
-        if (playerNames.contains(req.playerName.value)) {
+    suspend fun joinPlayer(playerName: PlayerName, conn: ClientConnection): Boolean {
+        players[playerName]?.let { ping(it) }
+        if (playerNames.contains(playerName.value)) {
             logger.info { "Player ${conn.name.value} tried to join again" }
             return false
         }
 
         logger.info { "Player ${conn.name.value} joined" }
-        players[req.playerName] = conn
-        requestsQueue.send(RequestQueueItem.Req(req, conn))
+        players[playerName] = conn
+        requestsQueue.send(RequestQueueItem.Connect(playerName, conn))
         return true
     }
 
-    suspend fun leavePlayer(conn: PlayerConnection) {
+    suspend fun leavePlayer(conn: ClientConnection) {
         logger.info { "Player ${conn.name.value} disconnected" }
         players -= conn.name
         handlePlayerLeave(conn)
     }
 
-    suspend fun process(req: GameRequest, conn: PlayerConnection) {
+    suspend fun process(req: GameRequest, conn: ClientConnection) {
         logger.info { "Received $req from ${conn.name.value}" }
-        requestsQueue.send(RequestQueueItem.Req(req, conn))
+        requestsQueue.send(RequestQueueItem.PlayerAction(req, conn))
     }
 
     private suspend fun send(playerName: PlayerName, resp: Response) {
@@ -128,7 +126,7 @@ class Game(
         }
     }
 
-    private suspend fun ping(player: PlayerConnection) {
+    private suspend fun ping(player: ClientConnection) {
         try {
             player.ping()
         } catch (e: CancellationException) {
@@ -150,7 +148,7 @@ class Game(
         }
     }
 
-    private suspend fun handlePlayerLeave(player: PlayerConnection) {
+    private suspend fun handlePlayerLeave(player: ClientConnection) {
         if (players.isEmpty()) {
             requestsQueue.close()
             onAllPlayersLeft(this)
@@ -161,6 +159,7 @@ class Game(
 
     private sealed class RequestQueueItem {
         class DumpState(val deferred: CompletableDeferred<GameState>) : RequestQueueItem()
-        class Req(val request: GameRequest, val conn: PlayerConnection) : RequestQueueItem()
+        class Connect(val playerName: PlayerName, val conn: ClientConnection) : RequestQueueItem()
+        class PlayerAction(val request: GameRequest, val conn: ClientConnection) : RequestQueueItem()
     }
 }

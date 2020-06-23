@@ -1,6 +1,7 @@
 package ticketToRide.playerState
 
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import ticketToRide.*
 
 typealias PickedFirstCard = PlayerState.MyTurn.PickedFirstCard
@@ -11,7 +12,7 @@ typealias BuildingSegment = PlayerState.MyTurn.BuildingSegment
 sealed class PlayerState {
 
     companion object {
-        fun initial(gameMap: GameMap, gameState: GameStateView, requests: Channel<Request>) = when {
+        fun initial(gameMap: GameMap, gameState: GameStateView, requests: SendChannel<Request>) = when {
             gameState.myPendingTicketsChoice != null ->
                 with(gameState.myPendingTicketsChoice) {
                     ChoosingTickets(requests, tickets.map { TicketChoice(it) }, minCountToKeep)
@@ -26,7 +27,7 @@ sealed class PlayerState {
     data class TicketChoice(val ticket: Ticket, val keep: Boolean = false)
 
     class ChoosingTickets internal constructor(
-        private val requests: Channel<Request>,
+        private val requests: SendChannel<Request>,
         val items: List<TicketChoice>,
         val minCountToKeep: Int
     ) : PlayerState() {
@@ -54,12 +55,12 @@ sealed class PlayerState {
     sealed class MyTurn(
         internal val gameMap: GameMap,
         internal val gameState: GameStateView,
-        internal val requests: Channel<Request>
+        internal val requests: SendChannel<Request>
     ) : PlayerState() {
 
         constructor(prev: MyTurn) : this(prev.gameMap, prev.gameState, prev.requests)
 
-        class Blank internal constructor(gameMap: GameMap, gameState: GameStateView, requests: Channel<Request>) :
+        class Blank internal constructor(gameMap: GameMap, gameState: GameStateView, requests: SendChannel<Request>) :
             MyTurn(gameMap, gameState, requests) {
             internal constructor(prev: MyTurn) : this(prev.gameMap, prev.gameState, prev.requests)
         }

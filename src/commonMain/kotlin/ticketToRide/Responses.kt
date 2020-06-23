@@ -54,7 +54,6 @@ sealed class Response {
 }
 
 fun GameRequest.toAction(playerName: PlayerName) = when (this) {
-    is JoinGameRequest -> Response.PlayerAction.JoinGame(playerName)
     is LeaveGameRequest -> Response.PlayerAction.LeaveGame(playerName)
     is ConfirmTicketsChoiceRequest -> Response.PlayerAction.ConfirmTicketsChoice(playerName, ticketsToKeep.size)
     is PickCardsRequest.Loco -> Response.PlayerAction.PickCards.Loco(playerName)

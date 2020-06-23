@@ -18,6 +18,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
     override fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
         super.cityMarkerProps(this, city)
 
+        connected = props.connected
         selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
         hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
         onClick = { act { onCityClick(city.name) } }
@@ -33,6 +34,7 @@ fun RBuilder.gameMap(props: ComponentBaseProps, builder: MapComponentProps.() ->
     child(MapComponent::class) {
         attrs {
             this.locale = props.locale
+            this.connected = props.connected
             this.gameState = props.gameState
             this.playerState = props.playerState
             this.onAction = props.onAction

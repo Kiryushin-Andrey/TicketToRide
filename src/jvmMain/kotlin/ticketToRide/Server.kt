@@ -15,28 +15,16 @@ import io.ktor.routing.routing
 import io.ktor.serialization.json
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import mu.KotlinLogging
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
-class PlayerConnection(
-    val gameId: GameId,
-    val name: PlayerName,
-    private val ws: WebSocketSession
-) {
-    suspend fun send(resp: Response) = ws.send(json.stringify(Response.serializer(), resp))
-    suspend fun ping() = ws.send(Response.Pong)
-}
+val games = mutableMapOf<GameId, Game>()
+val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 
-private val games = mutableMapOf<GameId, Game>()
-private val rootScope = CoroutineScope(Dispatchers.Default + Job())
-private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 private val logger = KotlinLogging.logger("Server")
-
 private val processName = ManagementFactory.getRuntimeMXBean().name
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
@@ -95,7 +83,7 @@ fun Application.module() {
         get("/") {
             call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
         }
-        get("/game/{gameId}") {
+        get("/game/{id}") {
             call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
         }
 
@@ -112,65 +100,51 @@ fun Application.module() {
             }
         }
 
-        webSocket("ws") {
-            var connection: PlayerConnection? = null
-            incoming.consumeAsFlow()
-                .mapNotNull { (it as? Frame.Text)?.readText() }
-                .filter {
-                    if (it == Request.Ping) send(Response.Pong)
-                    it != Request.Ping
-                }
-                .mapNotNull { req ->
-                    kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
-                        logger.info { "Received $req from ${connection?.name?.value}" }
-                        it.exceptionOrNull()?.let { e ->
-                            logger.warn(e) { "Failed to deserialize request: $req" }
-                            connection?.let { conn -> games[conn.gameId]?.leavePlayer(conn) }
-                            close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
-                        }
-                    }.getOrNull()
-                }
-                .collect { req ->
-                    when (req) {
+        webSocket("game/{id}/ws") {
+            val gameId = call.parameters["id"]?.let { GameId(it) }
+                ?: throw Error("No game id specified for WebSocket connection")
 
-                        is StartGameRequest -> {
-                            val game = Game(req.carsCount, redis) { games.remove(it.id) }
-                            games[game.id] = game
-                            redis?.saveMap(game.id, req.map)
-                            connection = PlayerConnection(game.id, req.playerName, this).also { conn ->
-                                rootScope.launch { game.start(conn, req.map) }
-                            }
-                        }
+            when (val outcome = establishConnection(gameId, redis)) {
 
-                        is JoinGameRequest -> {
-                            val conn = PlayerConnection(req.gameId, req.playerName, this)
-                            games[req.gameId]?.let {
-                                if (it.joinPlayer(req, conn)) connection = conn
-                                else conn.send(Response.ErrorMessage("Name is taken"))
-                            } ?: redis?.loadGame(conn.gameId)?.let { (state, map) ->
-                                val game = Game(state.initialCarsCount, redis) { games.remove(conn.gameId) }
-                                games[conn.gameId] = game
-                                rootScope.launch { game.restore(conn, state, map) }
-                                connection = conn
-                            } ?: conn.send(Response.ErrorMessage("No such game"))
+                is ConnectionOutcome.Success -> {
+                    val game = outcome.game
+                    val connection = outcome.connection
+                    incoming.consumeAsFlow()
+                        .mapNotNull { (it as? Frame.Text)?.readText() }
+                        .filter {
+                            if (it == Request.Ping) send(Response.Pong)
+                            it != Request.Ping
                         }
-
-                        is LeaveGameRequest -> {
-                            connection?.let { games[it.gameId]?.leavePlayer(it) }
-                            close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
-                        }
-
-                        is ChatMessageRequest ->
-                            connection?.let { conn ->
-                                games[conn.gameId]?.let {
-                                    it.sendToAll { Response.ChatMessage(conn.name, req.message) }
+                        .mapNotNull { req ->
+                            kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
+                                logger.info { "Received $req from ${connection.name.value}" }
+                                it.exceptionOrNull()?.let { e ->
+                                    logger.warn(e) { "Failed to deserialize request: $req" }
+                                    game.leavePlayer(connection)
+                                    close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
                                 }
-                            }
+                            }.getOrNull()
+                        }
+                        .collect { req ->
+                            when (req) {
+                                is LeaveGameRequest -> {
+                                    game.leavePlayer(connection)
+                                    close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
+                                }
 
-                        is GameRequest ->
-                            connection?.let { games[it.gameId]?.process(req, it) }
-                    }
+                                is Request.ChatMessage ->
+                                    game.sendToAll { Response.ChatMessage(connection.name, req.message) }
+
+                                is GameRequest ->
+                                    game.process(req, connection)
+                            }
+                        }
                 }
+
+                is ConnectionOutcome.Failure -> {
+                    close(CloseReason(CloseReason.Codes.NORMAL, "Failed to join game"))
+                }
+            }
         }
     }
 }

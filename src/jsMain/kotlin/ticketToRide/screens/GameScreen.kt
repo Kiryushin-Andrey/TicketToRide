@@ -76,6 +76,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     height = 100.pct
                 }
                 gameMap(props) {
+                    connected = props.connected
                     gameMap = props.gameMap
                     citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
                     citiesWithStations = players.getStations()

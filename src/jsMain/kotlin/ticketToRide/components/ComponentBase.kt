@@ -7,6 +7,7 @@ import ticketToRide.playerState.PlayerState
 
 interface ComponentBaseProps : RProps {
     var locale: Locale
+    var connected: Boolean
     var playerState: PlayerState
     var gameState: GameStateView
     var onAction: (PlayerState) -> Unit
@@ -29,8 +30,9 @@ abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBasePro
     val openCards get() = gameState.openCards
     val canPickCards get() = myTurn && playerState !is PlayerState.ChoosingTickets
 
-    protected fun act(block: PlayerState.() -> PlayerState) =
-        props.onAction(playerState.block())
+    protected fun act(block: PlayerState.() -> PlayerState) {
+        if (props.connected) props.onAction(playerState.block())
+    }
 }
 
 inline fun <reified T : ComponentBase<P, *>, P : ComponentBaseProps> RBuilder.componentBase(
@@ -40,6 +42,7 @@ inline fun <reified T : ComponentBase<P, *>, P : ComponentBaseProps> RBuilder.co
     child(T::class) {
         attrs {
             this.locale = props.locale
+            this.connected = props.connected
             this.gameState = props.gameState
             this.playerState = props.playerState
             this.onAction = props.onAction

@@ -47,16 +47,22 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
                         paddingLeft = 10.px
                     }
                 }
-                mTooltip(str.youNeedToKeepAtLeastNTickets(choice.minCountToKeep)) {
+
+                val disabledTooltip = when {
+                    !props.connected -> str.disconnected
+                    !choice.isValid ->  str.youNeedToKeepAtLeastNTickets(choice.minCountToKeep)
+                    else -> ""
+                }
+                mTooltip(disabledTooltip) {
                     attrs {
-                        disableHoverListener = choice.isValid
+                        disableHoverListener = choice.isValid && props.connected
                     }
                     span {
                         mButton(str.ticketsChoiceDone, MColor.primary, MButtonVariant.contained) {
                             attrs {
-                                disabled = !choice.isValid
+                                disabled = !choice.isValid || !props.connected
                                 onClick = {
-                                    if (choice.isValid)
+                                    if (choice.isValid && props.connected)
                                         act { choice.confirm() }
                                 }
                             }
@@ -102,6 +108,11 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
         val ticketsChoiceDone by loc(
             Locale.En to "Done",
             Locale.Ru to "Готово"
+        )
+
+        val disconnected by loc(
+            Locale.En to "Server connection lost",
+            Locale.Ru to "Нет соединения с сервером"
         )
     }
 

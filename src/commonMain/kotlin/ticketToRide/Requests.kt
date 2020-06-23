@@ -3,19 +3,14 @@ package ticketToRide
 import kotlinx.serialization.*
 
 @Serializable
-sealed class Request
+sealed class Request {
 
-@Serializable
-class StartGameRequest(val map: GameMap, val playerName: PlayerName, val carsCount: Int) : Request()
-
-@Serializable
-class ChatMessageRequest(val message: String) : Request()
+    @Serializable
+    class ChatMessage(val message: String) : Request()
+}
 
 @Serializable
 sealed class GameRequest: Request()
-
-@Serializable
-class JoinGameRequest(val gameId: GameId, val playerName: PlayerName) : GameRequest()
 
 @Serializable
 object LeaveGameRequest : GameRequest()

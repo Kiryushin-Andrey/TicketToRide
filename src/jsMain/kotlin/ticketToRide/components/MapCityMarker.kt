@@ -18,6 +18,7 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
         var selected: Boolean
         var station: PlayerView?
         var hasOccupiedSegment: Boolean
+        var connected: Boolean
         var onClick: (() -> Unit)?
     }
 
@@ -25,7 +26,8 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
         styledDiv {
             css {
                 position = Position.absolute
-                cursor = Cursor.pointer
+                if (props.connected)
+                    cursor = Cursor.pointer
                 if (props.selected) {
                     transform { scale(1.2) }
                     zIndex = 150

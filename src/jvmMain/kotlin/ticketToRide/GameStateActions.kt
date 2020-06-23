@@ -7,6 +7,13 @@ sealed class SendResponse {
 
 fun Response.toAll() = SendResponse.ForAll { this }
 
+fun GameState.connectPlayer(playerName: PlayerName, map: GameMap) =
+    joinPlayer(playerName, map).run {
+        this to listOf(
+            SendResponse.ForPlayer(playerName, Response.GameMap(map)),
+            responseMessage(Response.PlayerAction.JoinGame(playerName)))
+    }
+
 fun GameState.processRequest(
     req: GameRequest,
     map: GameMap,
@@ -16,8 +23,6 @@ fun GameState.processRequest(
         return this to listOf(Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }).toAll())
 
     val newState = when (req) {
-        is JoinGameRequest ->
-            joinPlayer(fromPlayerName, map)
 
         is LeaveGameRequest ->
             updatePlayer(fromPlayerName) { copy(away = true) }.advanceTurnFrom(fromPlayerName, map)
@@ -45,11 +50,7 @@ fun GameState.processRequest(
                 buildStation(fromPlayerName, req.target, req.cards).advanceTurn(map)
             }
     }
-    val message = newState.responseMessage(req.toAction(fromPlayerName))
-    val messages = if (req is JoinGameRequest)
-        listOf(SendResponse.ForPlayer(fromPlayerName, Response.GameMap(map)), message)
-        else listOf(message)
-    return newState to messages
+    return newState to listOf(newState.responseMessage(req.toAction(fromPlayerName)))
 }
 
 fun GameState.responseMessage(action: Response.PlayerAction?) = SendResponse.ForAll { toPlayerName ->

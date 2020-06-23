@@ -37,6 +37,8 @@ class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
     private val chosenCardIx get() = (playerState as? PickedFirstCard)?.chosenCardIx
 
     private fun getDisabledTooltip(cardIx: Int?) = when {
+        !props.connected ->
+            str.disconnected
         !myTurn ->
             str.waitingForYouTurn
         playerState is PlayerState.ChoosingTickets ->
@@ -91,6 +93,11 @@ class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
     }
 
     private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val disconnected by loc(
+            Locale.En to "Server connection lost",
+            Locale.Ru to "Нет соединения с сервером"
+        )
 
         val waitingForYouTurn by loc(
             Locale.En to "Wait for you turn to move",
