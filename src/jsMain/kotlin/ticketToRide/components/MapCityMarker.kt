@@ -18,6 +18,7 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
         var selected: Boolean
         var station: PlayerView?
         var hasOccupiedSegment: Boolean
+        var isTicketTarget: Boolean
         var connected: Boolean
         var onClick: (() -> Unit)?
     }
@@ -42,6 +43,7 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
                     val img = props.station?.let { "station-${it.color.name.toLowerCase()}" } ?: when {
                         props.selected -> "city-marker-red"
                         props.hasOccupiedSegment -> "city-marker-green"
+                        props.isTicketTarget -> "city-marker-yellow"
                         else -> "city-marker-blue"
                     }
                     backgroundImage = Image("url(/icons/${img}.svg)")

@@ -21,6 +21,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
         connected = props.connected
         selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
         hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
+        isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.name || it.to == city.name }
         onClick = { act { onCityClick(city.name) } }
     }
 
