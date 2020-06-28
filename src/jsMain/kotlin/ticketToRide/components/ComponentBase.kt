@@ -17,8 +17,8 @@ abstract class ComponentBase<P, S> : RComponent<P, S> where P : ComponentBasePro
 
     constructor() : super()
 
-    private val gameState get() = props.gameState
-    open val playerState get() = props.playerState
+    val gameState get() = props.gameState
+    val playerState get() = props.playerState
 
     val players get() = gameState.players
     val me get() = gameState.me

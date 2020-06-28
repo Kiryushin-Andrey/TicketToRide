@@ -7,11 +7,8 @@ import kotlinx.css.*
 import react.*
 import react.dom.span
 import styled.*
-import ticketToRide.CityName
-import ticketToRide.Locale
-import ticketToRide.LocalizedStrings
+import ticketToRide.*
 import ticketToRide.playerState.PlayerState
-import ticketToRide.Ticket
 
 class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
 
@@ -30,7 +27,8 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
             }
         }
 
-        myTickets.forEach { render(it) }
+        val fulfilledTickets = me.getFulfilledTickets(myTickets, gameState.players)
+        myTickets.forEach { render(it, fulfilledTickets.contains(it)) }
 
         (playerState as? PlayerState.ChoosingTickets)?.let { choice ->
             styledDiv {
@@ -72,16 +70,18 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
             }
 
             choice.items.forEach {
-                render(it.ticket, TicketCheckbox(it.keep) {
+                render(it.ticket, false, TicketCheckbox(it.keep) {
                     act { choice.toggleTicket(it.ticket) }
                 })
             }
         }
     }
 
-    private fun RBuilder.render(ticket: Ticket, checkbox: TicketCheckbox? = null) {
+    private fun RBuilder.render(ticket: Ticket, isFulfilled: Boolean, checkbox: TicketCheckbox? = null) {
         ticket(ticket) {
+            finalScreen = false
             highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
+            fulfilled = isFulfilled
             onMouseOver = { props.onTicketMouseOver(ticket) }
             onMouseOut = { props.onTicketMouseOut(ticket) }
             this.checkbox = checkbox

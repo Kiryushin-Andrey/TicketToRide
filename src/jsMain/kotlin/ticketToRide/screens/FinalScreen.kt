@@ -191,6 +191,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
     private fun RBuilder.playerTicketStats(player: PlayerFinalStats) {
         for (ticket in player.fulfilledTickets) {
             ticket(ticket) {
+                finalScreen = true
                 fulfilled = true
                 onMouseOver = { setState { citiesToHighlight += listOf(ticket.from, ticket.to) } }
                 onMouseOut = { setState { citiesToHighlight -= listOf(ticket.from, ticket.to) } }
@@ -198,6 +199,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
         }
         for (ticket in player.unfulfilledTickets) {
             ticket(ticket) {
+                finalScreen = true
                 fulfilled = false
                 onMouseOver = { setState { citiesToHighlight += listOf(ticket.from, ticket.to) } }
                 onMouseOut = { setState { citiesToHighlight -= listOf(ticket.from, ticket.to) } }

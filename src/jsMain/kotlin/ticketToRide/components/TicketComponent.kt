@@ -14,7 +14,8 @@ class TicketComponent : RComponent<TicketComponent.Props, RState>() {
     interface Props : RProps {
         var ticket: Ticket
         var highlighted: Boolean
-        var fulfilled: Boolean?
+        var fulfilled: Boolean
+        var finalScreen: Boolean
         var checkbox: TicketCheckbox?
         var onMouseOver: () -> Unit
         var onMouseOut: () -> Unit
@@ -34,7 +35,7 @@ class TicketComponent : RComponent<TicketComponent.Props, RState>() {
                 margin = 4.px.toString()
                 paddingLeft = 12.px
                 paddingRight = 12.px
-                backgroundColor = Color.linen
+                backgroundColor = if (props.fulfilled && !props.finalScreen) Color.lightGreen else Color.linen
             }
             label {
                 styledDiv {
@@ -60,12 +61,12 @@ class TicketComponent : RComponent<TicketComponent.Props, RState>() {
                         }
                         +"${props.ticket.from.value} - ${props.ticket.to.value}"
                     }
-                    when (props.fulfilled) {
-                        true ->
+                    when {
+                        props.finalScreen && props.fulfilled ->
                             pointsLabel("+${props.ticket.points}", Color.lightGreen)
-                        false ->
+                        props.finalScreen && !props.fulfilled ->
                             pointsLabel("-${props.ticket.points}", Color.lightCoral)
-                        null ->
+                        else ->
                             pointsLabel(props.ticket.points, Color.orange)
                     }
                 }
