@@ -1,42 +1,27 @@
 package ticketToRide
 
 import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.button.MButtonVariant
-import com.ccfraser.muirwik.components.button.mButton
-import com.ccfraser.muirwik.components.button.variant
+import com.ccfraser.muirwik.components.button.mIconButton
 import kotlinext.js.jsObject
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import kotlinx.css.*
 import org.w3c.notifications.Notification
 import react.*
 import styled.css
+import ticketToRide.ConnectResponse.Failure
+import ticketToRide.ConnectResponse.Success
+import ticketToRide.ConnectionState.*
 import ticketToRide.playerState.PlayerState
-import ticketToRide.screens.*
-import ticketToRide.ConnectResponse.*
+import ticketToRide.screens.endScreen
+import ticketToRide.screens.gameScreen
+import ticketToRide.screens.showGameIdScreen
+import ticketToRide.screens.welcomeScreen
 import kotlin.browser.window
 
-enum class ConnectionState {
-    NotConnected {
-        override val showErrorMessage = false
-    },
-    Connected {
-        override val showErrorMessage = false
-    },
-    Reconnecting {
-        override val showErrorMessage = true
-    },
-    CannotJoinGame {
-        override val showErrorMessage = true
-    },
-    CannotConnect {
-        override val showErrorMessage = true
-    };
-
-    abstract val showErrorMessage: Boolean
-}
-
 interface AppState : RState {
+    var gameId: GameId?
     var screen: Screen
     var locale: Locale
     var chatMessages: MutableList<Response.ChatMessage>
@@ -47,63 +32,50 @@ interface AppState : RState {
 }
 
 private const val ErrorMessageTimeoutSecs = 4
+private const val RetryTimeoutSecs = 5
 
-class App : RComponent<RProps, AppState>(), AppComponent {
+class App : RComponent<RProps, AppState>() {
+
     private val rootScope = CoroutineScope(Dispatchers.Default + Job())
+    private val requests = Channel<Request>(Channel.CONFLATED)
+    private var connection: ServerConnection? = null
 
     override fun componentWillUnmount() {
         rootScope.cancel()
     }
 
     override fun AppState.init() {
+        gameId =
+            if (window.location.pathname.startsWith("/game/")) GameId(window.location.pathname.substringAfterLast('/'))
+            else null
+
         locale = Locale.En
-        screen = Screen.Welcome
+        screen = Screen.Welcome(gameId?.let { listOf<PlayerView>() } ?: listOf())
         chatMessages = mutableListOf()
-        connectionState = ConnectionState.NotConnected
+        connectionState = NotConnected
         errorMessage = ""
     }
 
-    override fun onConnected(connection: ServerConnection) {
+    private fun cannotJoinGame(reason: Failure) {
         setState {
-            connectionState = ConnectionState.Connected
-            (state.screen as? Screen.InGame)?.let {
-                screen = it.onReconnect(connection.requests)
+            errorMessage = when (reason) {
+                is Failure.GameIdTaken -> str.gameIdTaken
+                is Failure.NoSuchGame -> str.noSuchGame
+                is Failure.PlayerNameTaken -> str.playerNameTaken
+                is Failure.CannotConnect -> str.cannotConnect
             }
         }
     }
-
-    override fun onReconnecting(reason: String?, secsToReconnect: Int) {
-        setState {
-            connectionState = ConnectionState.Reconnecting
-            errorMessage =
-                if (secsToReconnect > 0) str.disconnected(reason to secsToReconnect)
-                else str.reconnecting
-        }
-    }
-
-    override fun cannotJoinGame(reason: Failure) = setState {
-        connectionState =
-            if (reason == Failure.CannotConnect) ConnectionState.CannotConnect
-            else ConnectionState.CannotJoinGame
-        errorMessage = when (reason) {
-            is Failure.GameIdTaken -> str.gameIdTaken
-            is Failure.NoSuchGame -> str.noSuchGame
-            is Failure.PlayerNameTaken -> str.playerNameTaken
-            is Failure.CannotConnect -> str.cannotConnect
-        }
-    }
-
-    override val me
-        get() = (state.screen as? Screen.InGame)?.me
 
     override fun RBuilder.render() {
         state.screen.let {
             when (it) {
                 is Screen.Welcome ->
                     welcomeScreen {
+                        gameId = state.gameId
                         locale = state.locale
                         onLocaleChanged = ::onLocaleChanged
-                        onStartGame = ::startGame
+                        onStartGame = { map, playerName, carsCount -> startGame(map, playerName, carsCount) }
                         onJoinGame = ::joinGame
                     }
 
@@ -115,9 +87,8 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                             setState {
                                 screen = Screen.GameInProgress(
                                     it.gameId,
-                                    it.requests,
                                     it.gameState,
-                                    PlayerState.initial(state.map, it.gameState, it.requests)
+                                    PlayerState.initial(state.map, it.gameState, requests)
                                 )
                             }
                         }
@@ -126,13 +97,13 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                 is Screen.GameInProgress ->
                     gameScreen {
                         locale = state.locale
-                        connected = state.connectionState == ConnectionState.Connected
+                        connected = state.connectionState == Connected
                         gameMap = state.map
                         gameState = it.gameState
                         playerState = it.playerState
                         onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> it.requests.offer(Request.ChatMessage(message)) }
+                        onSendMessage = { message -> requests.offer(Request.ChatMessage(message)) }
                     }
 
                 is Screen.GameOver -> {
@@ -149,7 +120,7 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                             )
                         }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> it.requests.offer(Request.ChatMessage(message)) }
+                        onSendMessage = { message -> requests.offer(Request.ChatMessage(message)) }
                     }
                 }
             }
@@ -163,7 +134,7 @@ class App : RComponent<RProps, AppState>(), AppComponent {
             attrs {
                 open = state.showErrorMessage || state.connectionState.showErrorMessage
                 onClose = { _, _ -> setState { showErrorMessage = false } }
-                if (state.connectionState == ConnectionState.CannotJoinGame)
+                if (state.connectionState == CannotJoinGame)
                     autoHideDuration = ErrorMessageTimeoutSecs * 1000
             }
             mPaper(elevation = 6) {
@@ -182,21 +153,15 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                 }
                 mTypography(state.errorMessage, MTypographyVariant.body1)
 
-                if (state.connectionState == ConnectionState.CannotConnect) {
-                    (state.screen as? Screen.InGame)?.let { inGameScreen ->
-                        mButton(str.retryConnect) {
-                            attrs {
-                                css {
-                                    marginLeft = 10.pt
-                                    color = Color.white
-                                }
-                                variant = MButtonVariant.text
-                                onClick = {
-                                    setState {
-                                        connectionState = ConnectionState.Reconnecting
-                                        errorMessage = str.reconnecting
+                if (state.connectionState == CannotConnect) {
+                    (state.screen as? Screen.InGame)?.me?.name?.let { playerName ->
+                        mTooltip(str.retryConnect) {
+                            mIconButton("autorenew") {
+                                attrs {
+                                    css {
+                                        marginLeft = 10.pt
                                     }
-                                    rootScope.joinGame(this@App, inGameScreen.gameId, inGameScreen.me.name)
+                                    onClick = { reconnect(playerName) }
                                 }
                             }
                         }
@@ -206,7 +171,48 @@ class App : RComponent<RProps, AppState>(), AppComponent {
         }
     }
 
-    override fun processMessageFromServer(msg: Response, requests: SendChannel<Request>) = when (msg) {
+    private fun startGame(map: GameMap, playerName: PlayerName, carsCount: Int, retriesCount: Int = 0) {
+        ServerConnection(rootScope, GameId.random().webSocketUrl) {
+            val request = ConnectRequest.Start(playerName, map, carsCount)
+            when (val connectResponse = connect(request)) {
+                is Success -> runGame(playerName)
+                is Failure -> {
+                    close()
+                    if (connectResponse is Failure.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
+                        startGame(map, playerName, carsCount, retriesCount + 1)
+                    else
+                        cannotJoinGame(connectResponse)
+                }
+            }
+        }
+    }
+
+    private fun joinGame(playerName: PlayerName) {
+        state.gameId?.let { gameId ->
+            ServerConnection(rootScope, gameId.webSocketUrl) {
+                when (val connectResponse = connect(ConnectRequest.Join(playerName))) {
+                    is Success -> runGame(playerName)
+                    is Failure -> {
+                        close()
+                        cannotJoinGame(connectResponse)
+                    }
+                }
+            }
+        } ?: throw Error("Cannot join game without game id")
+    }
+
+    private suspend fun ServerConnection.runGame(playerName: PlayerName) {
+        connection = this
+        onDisconnected = { reason -> handleLostConnection(playerName, reason) }
+        window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
+        runRequestSendingLoop(requests, Request.serializer())
+        coroutineScope {
+            launch { state.collect { onConnectionStateChanged(it) } }
+            launch { responses(Response.serializer()).collect { processResponse(it) } }
+        }
+    }
+
+    private fun processResponse(msg: Response) = when (msg) {
 
         is Response.ErrorMessage -> setState {
             errorMessage = msg.text
@@ -226,11 +232,10 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                     screen = if (msg.state.players.size == 1) {
                         val url = "${window.location.origin}/game/${msg.gameId.value}"
                         window.history.pushState(null, window.document.title, url)
-                        Screen.ShowGameId(msg.gameId, requests, msg.state)
+                        Screen.ShowGameId(msg.gameId, msg.state)
                     } else {
                         Screen.GameInProgress(
                             msg.gameId,
-                            requests,
                             msg.state,
                             PlayerState.initial(state.map, msg.state, requests)
                         )
@@ -278,7 +283,6 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                 screen = Screen.GameOver(
                     msg.gameId,
                     it.gameState.me,
-                    it.requests,
                     state.map,
                     msg.players
                 )
@@ -287,14 +291,42 @@ class App : RComponent<RProps, AppState>(), AppComponent {
                 }
             }
         }
-
     }
 
-    private fun startGame(map: GameMap, playerName: PlayerName, carsCount: Int) =
-        rootScope.startGame(this@App, ConnectRequest.StartGame(playerName, map, carsCount), 0)
+    private fun ServerConnection.handleLostConnection(playerName: PlayerName, reason: String?) {
+        rootScope.launch {
+            for (countdown in RetryTimeoutSecs downTo 1) {
+                setState { errorMessage = str.disconnected(reason to RetryTimeoutSecs) }
+                delay(1000)
+            }
+            setState { errorMessage = str.reconnecting }
+            val resp = reconnect(ConnectRequest.Join(playerName))
+            if (resp is Failure)
+                cannotJoinGame(resp)
+        }
+    }
 
-    private fun joinGame(gameId: GameId, playerName: PlayerName) =
-        rootScope.joinGame(this@App, gameId, playerName)
+    private fun reconnect(playerName: PlayerName) {
+        rootScope.launch {
+            connection?.reconnect(ConnectRequest.Join(playerName))
+        }
+    }
+
+    private fun onConnectionStateChanged(newState: ConnectionState) = setState {
+        connectionState = newState
+        when (newState) {
+            CannotConnect ->
+                errorMessage = str.cannotConnect
+            Reconnecting ->
+                errorMessage = str.reconnecting
+            else -> {
+            }
+        }
+    }
+
+    private val ConnectionState.showErrorMessage
+        get() =
+            this == Reconnecting || this == CannotConnect || this == CannotJoinGame
 
     private fun onLocaleChanged(value: Locale) = setState { locale = value }
 

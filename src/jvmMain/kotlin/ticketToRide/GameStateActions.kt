@@ -1,17 +1,19 @@
 package ticketToRide
 
 sealed class SendResponse {
-    data class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
-    data class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
+    class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
+    class ForObservers(val resp: GameStateForObservers) : SendResponse()
+    class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
 }
-
-fun Response.toAll() = SendResponse.ForAll { this }
 
 fun GameState.connectPlayer(playerName: PlayerName, map: GameMap) =
     joinPlayer(playerName, map).run {
+        val action = PlayerAction.JoinGame(playerName)
         this to listOf(
             SendResponse.ForPlayer(playerName, Response.GameMap(map)),
-            responseMessage(Response.PlayerAction.JoinGame(playerName)))
+            SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) },
+            SendResponse.ForObservers(this.forObservers(action))
+        )
     }
 
 fun GameState.processRequest(
@@ -20,7 +22,8 @@ fun GameState.processRequest(
     fromPlayerName: PlayerName
 ): Pair<GameState, List<SendResponse>> {
     if (turn == endsOnPlayer)
-        return this to listOf(Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }).toAll())
+        return this to listOf(
+            SendResponse.ForAll { Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }) })
 
     val newState = when (req) {
 
@@ -50,12 +53,16 @@ fun GameState.processRequest(
                 buildStation(fromPlayerName, req.target, req.cards).advanceTurn(map)
             }
     }
-    return newState to listOf(newState.responseMessage(req.toAction(fromPlayerName)))
+    val action = req.toAction(fromPlayerName)
+    return newState to listOf(
+        SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
+        SendResponse.ForObservers(newState.forObservers(action))
+    )
 }
 
-fun GameState.responseMessage(action: Response.PlayerAction?) = SendResponse.ForAll { toPlayerName ->
+fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {
     if (turn != endsOnPlayer)
-        Response.GameState(id, toPlayerView(toPlayerName), action)
+        Response.GameState(id, toPlayerView(playerName), action)
     else
         Response.GameEnd(
             id,

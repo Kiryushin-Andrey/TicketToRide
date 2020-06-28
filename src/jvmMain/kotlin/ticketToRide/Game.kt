@@ -17,22 +17,39 @@ class Game(
 
     private val requestsQueue = Channel<RequestQueueItem>(Channel.BUFFERED)
 
-    private val players = mutableMapOf<PlayerName, ClientConnection>()
+    private val players = mutableMapOf<PlayerName, ClientConnection.Player>()
+    private val observers = mutableListOf<ClientConnection.Observer>()
 
     val playerNames get() = players.keys.map { it.value }
 
-    suspend fun start(firstPlayer: ClientConnection, map: GameMap) {
+    suspend fun start(firstPlayer: ClientConnection.Player, map: GameMap) {
         players[firstPlayer.name] = firstPlayer
         logger.info { "New game started by ${firstPlayer.name.value}" }
         requestsQueue.send(RequestQueueItem.Connect(firstPlayer.name, firstPlayer))
         runRequestProcessingLoop(GameState.initial(id, initialCarsCount, map), map)
     }
 
-    suspend fun restore(byPlayer: ClientConnection, state: GameState, map: GameMap) {
-        players[byPlayer.name] = byPlayer
-        logger.info { "Game restored from Redis by ${byPlayer.name.value}" }
-        requestsQueue.send(RequestQueueItem.Connect(byPlayer.name, byPlayer))
-        runRequestProcessingLoop(state.restored(byPlayer.name), map)
+    suspend fun restore(conn: ClientConnection, state: GameState, map: GameMap) {
+        logger.info { "Game restored from Redis by $conn" }
+        when (conn) {
+            is ClientConnection.Player -> {
+                players[conn.name] = conn
+                requestsQueue.send(RequestQueueItem.Connect(conn.name, conn))
+            }
+            is ClientConnection.Observer -> {
+                observers += conn
+            }
+        }
+        runRequestProcessingLoop(state.restored(), map)
+    }
+
+    private fun processRequestHandleError(state: GameState, req: Any, playerName: PlayerName, e: Throwable) = let {
+        val message =
+            if (e is InvalidActionError) e.message!! else "Server error - ${e.message}"
+        state to listOf(SendResponse.ForPlayer(playerName, Response.ErrorMessage(message)))
+    }.also {
+        if (e is InvalidActionError) logger.info { "${e.message} (request $req from ${playerName.value})" }
+        else logger.warn(e) { "Error while processing request $req from ${playerName.value}" }
     }
 
     private suspend fun runRequestProcessingLoop(
@@ -50,22 +67,19 @@ class Game(
                             state to emptyList()
                         }
 
-                        is RequestQueueItem.Connect -> {
-                            state.connectPlayer(req.playerName, map)
-                        }
-
-                        is RequestQueueItem.PlayerAction -> {
-                            val playerName = req.conn.name
-                            try {
-                                state.processRequest(req.request, map, playerName)
-                            } catch (e: Throwable) {
-                                if (e is InvalidActionError) logger.info { "${e.message} (request $req from ${playerName.value})" }
-                                else logger.warn(e) { "Error while processing request $req from ${playerName.value}" }
-                                val message =
-                                    if (e is InvalidActionError) e.message!! else "Server error - ${e.message}"
-                                state to listOf(SendResponse.ForPlayer(playerName, Response.ErrorMessage(message)))
+                        is RequestQueueItem.Connect ->
+                            runCatching {
+                                state.connectPlayer(req.playerName, map)
+                            }.getOrElse { e ->
+                                processRequestHandleError(state, req, req.conn.name, e)
                             }
-                        }
+
+                        is RequestQueueItem.PlayerAction ->
+                            runCatching {
+                                state.processRequest(req.request, map, req.conn.name)
+                            }.getOrElse { e ->
+                                processRequestHandleError(state, req, req.conn.name, e)
+                            }
                     }
                 }
                 .flatMapConcat { (state, messages) ->
@@ -76,7 +90,8 @@ class Game(
                 }
                 .map { message ->
                     when (message) {
-                        is SendResponse.ForAll -> sendToAll(message.resp)
+                        is SendResponse.ForAll -> sendToAllPlayers(message.resp)
+                        is SendResponse.ForObservers -> sendToAllObservers(message.resp)
                         is SendResponse.ForPlayer -> send(message.to, message.resp)
                     }
                 }
@@ -91,7 +106,7 @@ class Game(
         await()
     }
 
-    suspend fun joinPlayer(playerName: PlayerName, conn: ClientConnection): Boolean {
+    suspend fun joinPlayer(playerName: PlayerName, conn: ClientConnection.Player): Boolean {
         players[playerName]?.let { ping(it) }
         if (playerNames.contains(playerName.value)) {
             logger.info { "Player ${conn.name.value} tried to join again" }
@@ -104,13 +119,20 @@ class Game(
         return true
     }
 
-    suspend fun leavePlayer(conn: ClientConnection) {
-        logger.info { "Player ${conn.name.value} disconnected" }
-        players -= conn.name
-        handlePlayerLeave(conn)
+    fun joinObserver(conn: ClientConnection.Observer) {
+        observers += conn
     }
 
-    suspend fun process(req: GameRequest, conn: ClientConnection) {
+    suspend fun leavePlayer(conn: ClientConnection) {
+        logger.info { "$conn disconnected" }
+        when (conn) {
+            is ClientConnection.Player -> players -= conn.name
+            is ClientConnection.Observer -> observers -= conn
+        }
+        onConnectionLost(conn)
+    }
+
+    suspend fun process(req: GameRequest, conn: ClientConnection.Player) {
         logger.info { "Received $req from ${conn.name.value}" }
         requestsQueue.send(RequestQueueItem.PlayerAction(req, conn))
     }
@@ -118,48 +140,55 @@ class Game(
     private suspend fun send(playerName: PlayerName, resp: Response) {
         players[playerName]?.let { player ->
             try {
-                player.send(resp)
+                player.send(resp, Response.serializer())
             } catch (e: CancellationException) {
-                players -= playerName
-                handlePlayerLeave(player)
+                leavePlayer(player)
             }
         }
     }
 
-    private suspend fun ping(player: ClientConnection) {
+    private suspend fun ping(conn: ClientConnection) {
         try {
-            player.ping()
+            conn.ping()
         } catch (e: CancellationException) {
-            players -= player.name
-            handlePlayerLeave(player)
+            leavePlayer(conn)
         }
     }
 
-    suspend fun sendToAll(resp: (PlayerName) -> Response) {
-        with(players.iterator()) {
-            forEach {
-                try {
-                    it.value.send(resp(it.key))
-                } catch (e: CancellationException) {
-                    remove()
-                    handlePlayerLeave(it.value)
-                }
+    suspend fun sendToAllPlayers(resp: (PlayerName) -> Response) = with(players.iterator()) {
+        forEach {
+            try {
+                it.value.send(resp(it.value.name), Response.serializer())
+            } catch (e: CancellationException) {
+                remove()
+                onConnectionLost(it.value)
             }
         }
     }
 
-    private suspend fun handlePlayerLeave(player: ClientConnection) {
-        if (players.isEmpty()) {
+    suspend fun sendToAllObservers(resp: GameStateForObservers) = with(observers.iterator()) {
+        forEach {
+            try {
+                it.send(resp, GameStateForObservers.serializer())
+            } catch (e: CancellationException) {
+                remove()
+                onConnectionLost(it)
+            }
+        }
+    }
+
+    private suspend fun onConnectionLost(conn: ClientConnection) {
+        if (players.isEmpty() && observers.isEmpty()) {
             requestsQueue.close()
             onAllPlayersLeft(this)
-        } else {
-            process(LeaveGameRequest, player)
+        } else if (conn is ClientConnection.Player) {
+            process(LeaveGameRequest, conn)
         }
     }
 
     private sealed class RequestQueueItem {
         class DumpState(val deferred: CompletableDeferred<GameState>) : RequestQueueItem()
-        class Connect(val playerName: PlayerName, val conn: ClientConnection) : RequestQueueItem()
-        class PlayerAction(val request: GameRequest, val conn: ClientConnection) : RequestQueueItem()
+        class Connect(val playerName: PlayerName, val conn: ClientConnection.Player) : RequestQueueItem()
+        class PlayerAction(val request: GameRequest, val conn: ClientConnection.Player) : RequestQueueItem()
     }
 }

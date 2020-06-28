@@ -1,27 +1,45 @@
 package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.button.*
-import com.ccfraser.muirwik.components.dialog.*
-import com.ccfraser.muirwik.components.expansionpanel.*
-import com.ccfraser.muirwik.components.input.*
+import com.ccfraser.muirwik.components.button.MButtonVariant
+import com.ccfraser.muirwik.components.button.mButton
+import com.ccfraser.muirwik.components.dialog.mDialog
+import com.ccfraser.muirwik.components.dialog.mDialogActions
+import com.ccfraser.muirwik.components.dialog.mDialogContent
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanel
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelDetails
+import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelSummary
+import com.ccfraser.muirwik.components.input.mInput
+import com.ccfraser.muirwik.components.input.mInputLabel
+import com.ccfraser.muirwik.components.input.type
 import com.ccfraser.muirwik.components.menu.mMenuItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.css.*
 import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
-import org.w3c.notifications.*
+import org.w3c.notifications.DEFAULT
+import org.w3c.notifications.Notification
+import org.w3c.notifications.NotificationPermission
 import react.*
-import styled.*
+import styled.css
+import styled.getClassName
 import ticketToRide.*
 import ticketToRide.components.*
-import kotlin.browser.window
 
 private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 
 class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
+    private val scope = CoroutineScope(Dispatchers.Default + Job())
+    private var peekPlayersConnection: ServerConnection? = null
+
     interface State : RState {
         var playerName: String
+        var otherPlayers: List<PlayerView>
         var errorText: String?
         var carsNumber: Int
         var customMap: CustomGameMap?
@@ -29,19 +47,27 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     }
 
     interface Props : RProps {
+        var gameId: GameId?
         var locale: Locale
         var onLocaleChanged: (Locale) -> Unit
         var onStartGame: (GameMap, PlayerName, Int) -> Unit
-        var onJoinGame: (GameId, PlayerName) -> Unit
+        var onJoinGame: (PlayerName) -> Unit
     }
 
-    private val gameId =
-        if (window.location.pathname.startsWith("/game/")) window.location.pathname.substringAfterLast('/')
-        else null
+    private val Props.startingNewGame get() = gameId == null
 
     override fun State.init(props: Props) {
         carsNumber = 45
         playerName = ""
+    }
+
+    override fun componentDidMount() {
+        props.gameId?.let { observeGamePlayers(it) }
+    }
+
+    override fun componentWillUnmount() {
+        peekPlayersConnection?.close()
+        scope.cancel()
     }
 
     override fun RBuilder.render() {
@@ -75,7 +101,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                         }
                     }
                 }
-                if (gameId == null) {
+                if (props.startingNewGame) {
                     mExpansionPanel {
                         attrs {
                             withClasses(
@@ -139,7 +165,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                         }
                     }
                 }
-                val btnTitle = if (gameId == null) str.startGame else str.joinGame
+                val btnTitle = if (props.startingNewGame) str.startGame else str.joinGame
                 mButton(btnTitle, MColor.primary, MButtonVariant.contained,
                     disabled = state.errorText != null,
                     onClick = { proceed() })
@@ -179,13 +205,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     }
 
     private fun proceed() {
-        if (state.playerName.isNullOrBlank()) {
+        if (state.playerName.isBlank()) {
             setState { errorText = str.enterYourName }
             return
         }
         Notification.requestPermission()
         val playerName = PlayerName(state.playerName)
-        if (gameId == null) {
+        if (props.startingNewGame) {
             val map = state.customMap?.map ?: (defaultMap as? Try.Success)?.value
             if (map != null) {
                 for (entry in map.segments.groupingBy { it.color }
@@ -196,8 +222,19 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             } else {
                 setState { errorText = str.noMapSelected }
             }
-        } else
-            props.onJoinGame(GameId(gameId), playerName)
+        } else {
+            props.onJoinGame(playerName)
+        }
+    }
+
+    private fun observeGamePlayers(gameId: GameId) {
+        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl) {
+            if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
+                responses(GameStateForObservers.serializer()).collect {
+                    setState { otherPlayers = it.players }
+                }
+            }
+        }
     }
 
     object ComponentStyles : ExpansionPanelStyleSheet("Welcome") {

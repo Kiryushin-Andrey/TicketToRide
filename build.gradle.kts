@@ -59,7 +59,7 @@ kotlin {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains:kotlin-css:1.0.0-pre.94-kotlin-1.3.70")
                 implementation("org.jetbrains:kotlin-css-jvm:1.0.0-pre.94-kotlin-1.3.70")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version")
                 implementation("io.ktor:ktor-server-core:$ktor_version")
                 implementation("io.ktor:ktor-server-netty:$ktor_version")
@@ -84,6 +84,7 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-js"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.7")
                 implementation(npm("react", "16.13.0"))
                 implementation(npm("react-dom", "16.13.0"))
                 implementation(npm("@types/googlemaps", "3.39.6"))

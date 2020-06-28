@@ -9,6 +9,8 @@ data class GameId(val value: String)
 
 fun GameId.Companion.random() = GameId(Random.nextBytes(5).joinToString("") { it.toUByte().toString(16).padStart(2, '0') })
 
+val GameId.webSocketUrl get() = "/game/$value/ws"
+
 @Serializable
 data class CityName(val value: String)
 
@@ -89,7 +91,7 @@ data class PlayerView(
 fun List<PlayerView>.getStations() = flatMap { p -> p.placedStations.map { it to p } }.associate { it }
 
 @Serializable
-data class GameStateView(
+class GameStateView(
     val players: List<PlayerView>,
     val openCards: List<Card>,
     val turn: Int,

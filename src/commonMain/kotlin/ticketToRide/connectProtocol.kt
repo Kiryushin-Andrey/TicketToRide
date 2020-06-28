@@ -5,13 +5,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class ConnectRequest() {
 
-    abstract val playerName: PlayerName
+    @Serializable
+    class Start(val playerName: PlayerName, val map: GameMap, val carsCount: Int) : ConnectRequest()
 
     @Serializable
-    class StartGame(override val playerName: PlayerName, val map: GameMap, val carsCount: Int) : ConnectRequest()
+    class Join(val playerName: PlayerName) : ConnectRequest()
 
     @Serializable
-    class JoinGame(override val playerName: PlayerName) : ConnectRequest()
+    object Observe : ConnectRequest()
 }
 
 @Serializable

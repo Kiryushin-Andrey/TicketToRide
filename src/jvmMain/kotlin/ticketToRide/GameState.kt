@@ -76,12 +76,22 @@ data class GameState(
         )
     }
 
+    fun forObservers(action: PlayerAction?) = GameStateForObservers(
+        id,
+        players.map { it.toPlayerView() },
+        openCards,
+        turn,
+        endsOnPlayer != null,
+        endsOnPlayer == turn,
+        action
+    )
+
     fun updatePlayer(name: PlayerName, block: Player.() -> Player) =
         copy(players = players.map { if (it.name == name) it.block() else it })
 
     fun updatePlayer(ix: Int, block: Player.() -> Player) =
         copy(players = players.mapIndexed { i, player -> if (i == ix) player.block() else player })
 
-    fun restored(byPlayerName: PlayerName) =
-        copy(players = players.map { it.copy(away = it.name != byPlayerName) })
+    fun restored() =
+        copy(players = players.map { it.copy(away = true) })
 }

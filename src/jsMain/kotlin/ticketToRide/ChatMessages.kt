@@ -1,7 +1,7 @@
 package ticketToRide
 
 import ticketToRide.Response.*
-import ticketToRide.Response.PlayerAction.*
+import ticketToRide.PlayerAction.*
 
 fun PlayerAction.chatMessage(locale: Locale) = with(str(locale)) {
     when (this@chatMessage) {

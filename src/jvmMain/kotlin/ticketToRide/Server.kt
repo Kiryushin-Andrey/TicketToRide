@@ -117,7 +117,7 @@ fun Application.module() {
                         }
                         .mapNotNull { req ->
                             kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
-                                logger.info { "Received $req from ${connection.name.value}" }
+                                logger.info { "Received $req from $connection" }
                                 it.exceptionOrNull()?.let { e ->
                                     logger.warn(e) { "Failed to deserialize request: $req" }
                                     game.leavePlayer(connection)
@@ -132,13 +132,23 @@ fun Application.module() {
                                     close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
                                 }
 
-                                is Request.ChatMessage ->
-                                    game.sendToAll { Response.ChatMessage(connection.name, req.message) }
+                                is Request.ChatMessage -> {
+                                    Response.ChatMessage(connection.name, req.message).let { resp ->
+                                        game.sendToAllPlayers { resp }
+                                    }
+                                }
 
                                 is GameRequest ->
                                     game.process(req, connection)
                             }
                         }
+                }
+
+                is ConnectionOutcome.ObserveSuccess -> {
+                    incoming.consumeAsFlow()
+                        .mapNotNull { (it as? Frame.Text)?.readText() }
+                        .filter { it == Request.Ping }
+                        .collect { send(Response.Pong) }
                 }
 
                 is ConnectionOutcome.Failure -> {

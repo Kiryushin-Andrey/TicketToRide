@@ -2,137 +2,185 @@ package ticketToRide
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.*
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.w3c.dom.WebSocket
+import org.w3c.dom.events.Event
 import kotlin.browser.window
 
 private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
-private const val MaxRetriesCount = 5
-private const val RetryTimeoutSecs = 5
+
+enum class ConnectionState {
+    NotConnected,
+    Connected,
+    Reconnecting,
+    CannotJoinGame,
+    CannotConnect
+}
 
 class ServerConnection(
-    private val app: AppComponent,
-    private val webSocket: WebSocket,
-    private val gameId: GameId,
-    scope: CoroutineScope
+    parentScope: CoroutineScope,
+    private val url: String,
+    establishConnection: suspend ServerConnection.() -> Unit
 ) {
-    val requests: Channel<Request> = Channel<Request>(Channel.CONFLATED).also {
-        window.onbeforeunload = {
-            webSocket.send(json.stringify(Request.serializer(), LeaveGameRequest))
-            webSocket.onclose = null
-            webSocket.close()
-            undefined
+    companion object {
+        const val MaxRetriesCount = 5
+    }
+
+    private val scope = CoroutineScope(parentScope.coroutineContext)
+
+    private val _state = MutableStateFlow(ConnectionState.NotConnected)
+    val state: StateFlow<ConnectionState> get() = _state
+
+    private val _responses = Channel<String>()
+
+    var onDisconnected: (String?) -> Unit = {}
+
+    private var wsDeferred = CompletableDeferred<WebSocket?>()
+    private fun getWebSocketOrNull() = wsDeferred.takeIf { it.isCompleted }?.getCompleted()
+    private val closeWebSocket: (Event) -> Unit = {
+        getWebSocketOrNull()?.apply {
+            onclose = null
+            close()
         }
     }
 
-    private val sendRequestsJob: Job
-
-    private val pingTimerHandle = window.setInterval({ webSocket.send(Request.Ping) }, 10000)
+    private var sendRequestsJob: Job? = null
+    private val pingTimerHandle: Int
 
     init {
+        pingTimerHandle = window.setInterval({
+            getWebSocketOrNull()?.takeIf { it.readyState == 1.toShort() /* OPEN */ }?.send(Request.Ping)
+        }, 10000)
 
+        window.addEventListener("onbeforeunload", closeWebSocket)
+        window.onbeforeunload = {
+            getWebSocketOrNull()?.apply {
+                onclose = null
+                close()
+            }
+            undefined
+        }
+
+        scope.launch { establishConnection() }
+    }
+    
+    suspend fun reconnect(request: ConnectRequest): ConnectResponse {
+        assertState(ConnectionState.Reconnecting, ConnectionState.CannotConnect)
+        _state.value = ConnectionState.Reconnecting
+        wsDeferred = CompletableDeferred()
+        return connect(request)
+    }
+
+    fun <T> runRequestSendingLoop(requests: ReceiveChannel<T>, serializer: SerializationStrategy<T>) {
+        assertState(ConnectionState.Connected)
+        sendRequestsJob?.cancel()
         sendRequestsJob = scope.launch {
             for (req in requests) {
-                webSocket.send(json.stringify(Request.serializer(), req))
-            }
-        }
-
-        webSocket.onmessage = { msg ->
-            (msg.data as? String)?.takeUnless { it == Response.Pong }?.let { reqStr ->
-                val message = json.parse(Response.serializer(), reqStr)
-                app.processMessageFromServer(message, requests)
-            }
-        }
-
-        webSocket.onclose = { e ->
-            webSocket.apply {
-                onopen = null
-                onmessage = null
-                onclose = null
-            }
-            sendRequestsJob.cancel()
-            window.clearInterval(pingTimerHandle)
-            val reason = e.asDynamic().reason as? String
-            scope.launch { showCountdown(app, reason) }.invokeOnCompletion {
-                app.me?.let { me -> scope.connectToServer(app, gameId, ConnectRequest.JoinGame(me.name), 0) }
+                wsDeferred.await()?.send(json.stringify(serializer, req))
             }
         }
     }
 
-    private suspend fun showCountdown(app: AppComponent, reason: String?) {
-        app.onReconnecting(reason, RetryTimeoutSecs)
-        for (countdown in (RetryTimeoutSecs - 1 downTo 0)) {
-            delay(1000)
-            app.onReconnecting(reason, countdown)
-        }
-    }
-}
+    fun <T> responses(serializer: DeserializationStrategy<T>) =
+        _responses.consumeAsFlow().map { json.parse(serializer, it) }
 
-interface AppComponent {
-    val me: PlayerView?
-    fun onConnected(connection: ServerConnection)
-    fun onReconnecting(reason: String?, secsToReconnect: Int)
-    fun cannotJoinGame(reason: ConnectResponse.Failure)
-    fun processMessageFromServer(msg: Response, requests: SendChannel<Request>)
-}
-
-fun CoroutineScope.startGame(app: AppComponent, request: ConnectRequest.StartGame, retriesCount: Int) =
-    connectToServer(app, GameId.random(), request, retriesCount)
-
-fun CoroutineScope.joinGame(app: AppComponent, gameId: GameId, playerName: PlayerName) =
-    connectToServer(app, gameId, ConnectRequest.JoinGame(playerName), 0)
-
-// This method establishes WebSocket connection with server for the current game.
-// The procedure consists of the following steps:
-// * initiate WebSocket connection by creating an instance of the WebSocket class
-// * wire up event handlers for open, message and close events of this class
-// * wait for the open event signalling that connection has been successfully established
-// * send first request (either StartGame or JoinGame)
-// * wait for ConnectResponse (either Connected or CannotJoinGame)
-// * establish requests queue processing coroutine and timer for ping requests, then pack both into a ServerConnection instance
-private fun CoroutineScope.connectToServer(app: AppComponent, gameId: GameId, connectRequest: ConnectRequest, retriesCount: Int) {
-
-    val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
-    val webSocket = WebSocket("$protocol//" + window.location.host + "/game/${gameId.value}/ws")
-
-    webSocket.onopen = {
-        webSocket.send(json.stringify(ConnectRequest.serializer(), connectRequest))
-    }
-
-    webSocket.onmessage = { msg ->
-        (msg.data as? String)?.let { reqStr ->
-            when (val message = json.parse(ConnectResponse.serializer(), reqStr)) {
-                is ConnectResponse.Success -> {
-                    webSocket.onopen = null
-                    ServerConnection(app, webSocket, gameId, this).also {
-                        app.onConnected(it)
-                    }
-                }
-                is ConnectResponse.Failure -> {
-                    webSocket.onclose = null
-                    webSocket.close()
-                    if (message is ConnectResponse.Failure.GameIdTaken && retriesCount < MaxRetriesCount)
-                        connectToServer(app, GameId.random(), connectRequest, retriesCount + 1)
-                    else
-                        app.cannotJoinGame(message)
-                }
-            }
-        }
-    }
-
-    webSocket.onclose = { e ->
-        val reason = e.asDynamic().reason as? String
-        webSocket.apply {
+    fun close() {
+        window.removeEventListener("onbeforeunload", closeWebSocket)
+        window.clearInterval(pingTimerHandle)
+        scope.cancel()
+        getWebSocketOrNull()?.apply {
             onopen = null
             onmessage = null
             onclose = null
+            close()
         }
-        app.onReconnecting(reason, 0)
-        if (retriesCount < MaxRetriesCount)
-            connectToServer(app, gameId, connectRequest, retriesCount + 1)
-        else
-            app.cannotJoinGame(ConnectResponse.Failure.CannotConnect)
+    }
+
+    suspend fun connect(connectRequest: ConnectRequest): ConnectResponse {
+        fun createWebSocket(retriesCount: Int = 0) {
+            val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
+            WebSocket("$protocol//" + window.location.host + url).apply {
+                onopen = {
+                    wsDeferred.complete(this)
+                }
+                onclose = {
+                    onopen = null
+                    onmessage = null
+                    onclose = null
+                    _state.value = ConnectionState.Reconnecting
+                    if (retriesCount < MaxRetriesCount) {
+                        createWebSocket(retriesCount + 1)
+                    } else {
+                        _state.value = ConnectionState.CannotConnect
+                        wsDeferred.complete(null)
+                    }
+                }
+            }
+        }
+
+        assertState(ConnectionState.NotConnected, ConnectionState.Reconnecting)
+        createWebSocket()
+        val ws = wsDeferred.await() ?: return ConnectResponse.Failure.CannotConnect
+        val response = CompletableDeferred<ConnectResponse>()
+        ws.onmessage = { msg ->
+            kotlin.runCatching {
+                val reqStr = msg.data as? String
+                if (reqStr == null) {
+                    response.completeExceptionally(Error("Unexpected response from server: ${msg.data}"))
+                } else {
+                    val message = json.parse(ConnectResponse.serializer(), reqStr)
+                    when (message) {
+                        is ConnectResponse.Success -> {
+                            ws.onopen = null
+                        }
+                        is ConnectResponse.Failure -> {
+                            ws.onclose = null
+                            ws.close()
+                            wsDeferred = CompletableDeferred()
+                        }
+                    }
+                    response.complete(message)
+                }
+            }.onFailure { response.completeExceptionally(it) }
+        }
+        ws.send(json.stringify(ConnectRequest.serializer(), connectRequest))
+        return response.await().also { resp ->
+            _state.value = when (resp) {
+                is ConnectResponse.Success -> {
+                    ws.onmessage = { msg ->
+                        scope.launch {
+                            (msg.data as? String)?.takeUnless { it == Response.Pong }?.let { reqStr ->
+                                _responses.send(reqStr)
+                            }
+                        }
+                    }
+                    ws.onclose = { e ->
+                        ws.apply {
+                            onopen = null
+                            onmessage = null
+                            onclose = null
+                        }
+                        wsDeferred = CompletableDeferred()
+                        _state.value = ConnectionState.Reconnecting
+                        onDisconnected(e.asDynamic().reason as? String)
+                    }
+                    ConnectionState.Connected
+                }
+                is ConnectResponse.Failure.CannotConnect ->
+                    ConnectionState.CannotConnect
+                is ConnectResponse.Failure ->
+                    ConnectionState.CannotJoinGame
+            }
+        }
+    }
+
+    private fun assertState(vararg required: ConnectionState) {
+        if (!required.contains(state.value))
+            throw Error("This operation was called in $state state but is valid only in one of the following states: ${required.joinToString()}")
     }
 }
