@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.tickets
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.MButtonVariant
@@ -8,6 +8,9 @@ import react.*
 import react.dom.span
 import styled.*
 import ticketToRide.*
+import ticketToRide.components.ComponentBase
+import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState
 
 class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {

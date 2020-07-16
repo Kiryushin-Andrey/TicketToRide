@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.building
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
@@ -7,6 +7,9 @@ import react.*
 import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.components.ComponentBase
+import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.componentBase
 import ticketToRide.playerState.*
 import kotlin.browser.window
 

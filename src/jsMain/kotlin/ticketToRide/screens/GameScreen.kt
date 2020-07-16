@@ -6,6 +6,15 @@ import react.*
 import styled.*
 import ticketToRide.*
 import ticketToRide.components.*
+import ticketToRide.components.building.buildingSegment
+import ticketToRide.components.building.buildingStation
+import ticketToRide.components.building.pickedCity
+import ticketToRide.components.cards.cardsDeck
+import ticketToRide.components.cards.myCards
+import ticketToRide.components.chat.chatMessages
+import ticketToRide.components.chat.chatSendMessageTextBox
+import ticketToRide.components.map.gameMap
+import ticketToRide.components.tickets.myTickets
 import ticketToRide.playerState.*
 
 interface GameScreenProps : ComponentBaseProps {

@@ -1,10 +1,12 @@
-package ticketToRide.components
+package ticketToRide.components.map
 
 import react.RBuilder
 import ticketToRide.*
+import ticketToRide.components.ComponentBaseProps
 import ticketToRide.playerState.*
 
-interface MapComponentProps : MapComponentBaseProps, ComponentBaseProps
+interface MapComponentProps : MapComponentBaseProps,
+    ComponentBaseProps
 
 class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProps, MapComponentBaseState>(props) {
 

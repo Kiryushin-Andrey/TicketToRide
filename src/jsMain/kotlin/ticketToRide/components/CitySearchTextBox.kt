@@ -15,7 +15,7 @@ import react.RState
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-class SearchTextBox : RComponent<SearchTextBox.Props, RState>() {
+class CitySearchTextBox : RComponent<CitySearchTextBox.Props, RState>() {
 
     interface Props : RProps {
         var text: String
@@ -63,7 +63,7 @@ class SearchTextBox : RComponent<SearchTextBox.Props, RState>() {
     private val str = Strings()
 }
 
-fun RBuilder.searchTextBox(locale: Locale, builder: SearchTextBox.Props.() -> Unit) = child(SearchTextBox::class) {
+fun RBuilder.searchTextBox(locale: Locale, builder: CitySearchTextBox.Props.() -> Unit) = child(CitySearchTextBox::class) {
     attrs {
         this.locale = locale
         builder()

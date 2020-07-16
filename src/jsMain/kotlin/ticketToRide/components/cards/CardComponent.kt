@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.cards
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
@@ -131,7 +131,8 @@ private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
     )
 }
 
-private fun RBuilder.card(builder: CardComponent.Props.() -> Unit) = child(CardComponent::class) {
+private fun RBuilder.card(builder: CardComponent.Props.() -> Unit) = child(
+    CardComponent::class) {
     attrs { builder() }
 }
 

@@ -29,6 +29,10 @@ import styled.css
 import styled.getClassName
 import ticketToRide.*
 import ticketToRide.components.*
+import ticketToRide.components.welcomeScreen.CustomGameMap
+import ticketToRide.components.welcomeScreen.CustomGameMapParseErrors
+import ticketToRide.components.welcomeScreen.chooseGameMap
+import ticketToRide.components.welcomeScreen.gameMapParseErrorsDialog
 
 private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 

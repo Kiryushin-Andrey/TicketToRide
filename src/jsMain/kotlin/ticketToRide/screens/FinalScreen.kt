@@ -8,6 +8,11 @@ import react.*
 import styled.*
 import ticketToRide.*
 import ticketToRide.components.*
+import ticketToRide.components.chat.chatMessages
+import ticketToRide.components.chat.chatSendMessageTextBox
+import ticketToRide.components.map.finalMap
+import ticketToRide.components.tickets.pointsLabel
+import ticketToRide.components.tickets.ticket
 
 interface FinalScreenProps : RProps {
     var locale: Locale

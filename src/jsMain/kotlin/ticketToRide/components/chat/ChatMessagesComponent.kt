@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.chat
 
 import kotlinx.css.*
 import react.*

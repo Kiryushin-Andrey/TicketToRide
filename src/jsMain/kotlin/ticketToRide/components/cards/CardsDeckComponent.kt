@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.cards
 
 import kotlinx.css.*
 import org.w3c.dom.events.Event
@@ -11,6 +11,9 @@ import styled.styledDiv
 import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.components.ComponentBase
+import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.componentBase
 import ticketToRide.playerState.*
 import kotlin.browser.document
 

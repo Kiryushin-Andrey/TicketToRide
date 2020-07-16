@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.building
 
 import com.ccfraser.muirwik.components.MColor
 import com.ccfraser.muirwik.components.MTypographyVariant
@@ -12,6 +12,9 @@ import styled.styledDiv
 import styled.styledImg
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.components.ComponentBase
+import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState
 
 class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {

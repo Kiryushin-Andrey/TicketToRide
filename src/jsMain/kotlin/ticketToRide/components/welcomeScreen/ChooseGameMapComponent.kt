@@ -1,8 +1,7 @@
-package ticketToRide.components
+package ticketToRide.components.welcomeScreen
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
-import com.ccfraser.muirwik.components.input.mInputLabel
 import kotlinx.css.*
 import kotlinx.html.InputType
 import kotlinx.html.id
@@ -11,7 +10,6 @@ import org.w3c.dom.HTMLInputElement
 import org.w3c.files.FileReader
 import org.w3c.files.get
 import react.*
-import react.dom.RDOMBuilder
 import styled.*
 import ticketToRide.*
 
@@ -84,7 +82,12 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
                                         (e.target.asDynamic().result as? String)?.let {
                                             when (val map = GameMap.parse(it)) {
                                                 is Try.Success -> {
-                                                    props.onCustomMapChanged(CustomGameMap(file.name, map.value))
+                                                    props.onCustomMapChanged(
+                                                        CustomGameMap(
+                                                            file.name,
+                                                            map.value
+                                                        )
+                                                    )
                                                     setState {
                                                         fileTooLarge = false
                                                         errors = null
@@ -94,7 +97,11 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
                                                     props.onCustomMapChanged(null)
                                                     setState {
                                                         fileTooLarge = false
-                                                        errors = CustomGameMapParseErrors(file.name, map.errors)
+                                                        errors =
+                                                            CustomGameMapParseErrors(
+                                                                file.name,
+                                                                map.errors
+                                                            )
                                                     }
                                                 }
                                             }

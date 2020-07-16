@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.building
 
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.MButtonVariant
@@ -11,6 +11,7 @@ import styled.styledLabel
 import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.components.cards.myCard
 
 class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent.Props, RState>() {
 

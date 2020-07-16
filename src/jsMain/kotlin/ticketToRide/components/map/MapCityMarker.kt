@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.map
 
 import kotlinx.css.*
 import kotlinx.css.properties.*

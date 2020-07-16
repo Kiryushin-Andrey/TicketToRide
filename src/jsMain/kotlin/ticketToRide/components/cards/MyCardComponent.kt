@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.cards
 
 import com.ccfraser.muirwik.components.mPaper
 import com.ccfraser.muirwik.components.mTooltip

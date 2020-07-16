@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.chat
 
 import com.ccfraser.muirwik.components.button.mIconButton
 import com.ccfraser.muirwik.components.form.*

@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.cards
 
 import com.ccfraser.muirwik.components.MTypographyVariant
 import com.ccfraser.muirwik.components.mTypography
@@ -9,6 +9,9 @@ import styled.css
 import styled.styledDiv
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.components.ComponentBase
+import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.componentBase
 
 class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {

@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.map
 
 import google.maps.*
 import kotlinext.js.jsObject

@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.map
 
 import google.map.react.Coords
 import google.map.react.GoogleMapReact

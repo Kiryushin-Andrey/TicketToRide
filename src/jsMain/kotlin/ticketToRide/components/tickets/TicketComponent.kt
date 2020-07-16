@@ -1,4 +1,4 @@
-package ticketToRide.components
+package ticketToRide.components.tickets
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
