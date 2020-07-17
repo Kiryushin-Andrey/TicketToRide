@@ -62,8 +62,12 @@ class App : RComponent<RProps, AppState>() {
                 is Failure.GameIdTaken -> str.gameIdTaken
                 is Failure.NoSuchGame -> str.noSuchGame
                 is Failure.PlayerNameTaken -> str.playerNameTaken
+                is Failure.PlayerColorTaken -> str.playerColorTaken
                 is Failure.CannotConnect -> str.cannotConnect
+                // an exceptional situation, should never occur by design
+                is Failure.NoSuchPlayer -> throw Error("A player with this name haven't joined this game")
             }
+            showErrorMessage = true
         }
     }
 
@@ -75,8 +79,15 @@ class App : RComponent<RProps, AppState>() {
                         gameId = state.gameId
                         locale = state.locale
                         onLocaleChanged = ::onLocaleChanged
-                        onStartGame = { map, playerName, carsCount -> startGame(map, playerName, carsCount) }
-                        onJoinGame = ::joinGame
+                        onStartGame = { map, playerName, playerColor, carsCount ->
+                            startGame(map, playerName, playerColor, carsCount)
+                        }
+                        onJoinGame = { name, color ->
+                            joinGame(ConnectRequest.Join(name, color), name)
+                        }
+                        onReconnect = { name ->
+                            joinGame(ConnectRequest.Reconnect(name), name)
+                        }
                     }
 
                 is Screen.ShowGameId ->
@@ -154,14 +165,14 @@ class App : RComponent<RProps, AppState>() {
                 mTypography(state.errorMessage, MTypographyVariant.body1)
 
                 if (state.connectionState == CannotConnect) {
-                    (state.screen as? Screen.InGame)?.me?.name?.let { playerName ->
+                    (state.screen as? Screen.InGame)?.me?.let { me ->
                         mTooltip(str.retryConnect) {
                             mIconButton("autorenew") {
                                 attrs {
                                     css {
                                         marginLeft = 10.pt
                                     }
-                                    onClick = { reconnect(playerName) }
+                                    onClick = { reconnect(me.name) }
                                 }
                             }
                         }
@@ -171,15 +182,21 @@ class App : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun startGame(map: GameMap, playerName: PlayerName, carsCount: Int, retriesCount: Int = 0) {
+    private fun startGame(
+        map: GameMap,
+        playerName: PlayerName,
+        playerColor: PlayerColor,
+        carsCount: Int,
+        retriesCount: Int = 0
+    ) {
         ServerConnection(rootScope, GameId.random().webSocketUrl) {
-            val request = ConnectRequest.Start(playerName, map, carsCount)
+            val request = ConnectRequest.Start(playerName, playerColor, map, carsCount)
             when (val connectResponse = connect(request)) {
                 is Success -> runGame(playerName)
                 is Failure -> {
                     close()
                     if (connectResponse is Failure.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
-                        startGame(map, playerName, carsCount, retriesCount + 1)
+                        startGame(map, playerName, playerColor, carsCount, retriesCount + 1)
                     else
                         cannotJoinGame(connectResponse)
                 }
@@ -187,10 +204,10 @@ class App : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun joinGame(playerName: PlayerName) {
+    private fun joinGame(request: ConnectRequest, playerName: PlayerName) {
         state.gameId?.let { gameId ->
             ServerConnection(rootScope, gameId.webSocketUrl) {
-                when (val connectResponse = connect(ConnectRequest.Join(playerName))) {
+                when (val connectResponse = connect(request)) {
                     is Success -> runGame(playerName)
                     is Failure -> {
                         close()
@@ -207,7 +224,7 @@ class App : RComponent<RProps, AppState>() {
         window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
         runRequestSendingLoop(requests, Request.serializer())
         coroutineScope {
-            launch { state.collect { onConnectionStateChanged(it) } }
+            launch { connectionState.collect { onConnectionStateChanged(it) } }
             launch { responses(Response.serializer()).collect { processResponse(it) } }
         }
     }
@@ -223,27 +240,26 @@ class App : RComponent<RProps, AppState>() {
             chatMessages = chatMessages.apply { add(msg) }
         }
 
-        is Response.GameMap -> setState { map = msg.map }
+        is Response.GameStateWithMap -> when (state.screen) {
+            is Screen.Welcome -> setState {
+                map = msg.map
+                screen = if (msg.state.players.size == 1) {
+                    val url = "${window.location.origin}/game/${msg.gameId.value}"
+                    window.history.pushState(null, window.document.title, url)
+                    Screen.ShowGameId(msg.gameId, msg.state)
+                } else {
+                    Screen.GameInProgress(
+                        msg.gameId,
+                        msg.state,
+                        PlayerState.initial(msg.map, msg.state, requests)
+                    )
+                }
+            }
+            else -> throw Error("Unexpected response from server")
+        }
 
         is Response.GameState -> with(state.screen) {
             when (this) {
-
-                is Screen.Welcome -> setState {
-                    screen = if (msg.state.players.size == 1) {
-                        val url = "${window.location.origin}/game/${msg.gameId.value}"
-                        window.history.pushState(null, window.document.title, url)
-                        Screen.ShowGameId(msg.gameId, msg.state)
-                    } else {
-                        Screen.GameInProgress(
-                            msg.gameId,
-                            msg.state,
-                            PlayerState.initial(state.map, msg.state, requests)
-                        )
-                    }
-                    msg.action?.let {
-                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
-                    }
-                }
 
                 is Screen.ShowGameId -> setState {
                     screen = withGameState(msg.state)
@@ -273,7 +289,7 @@ class App : RComponent<RProps, AppState>() {
                     }
                 }
 
-                is Screen.GameOver -> {
+                else -> {
                 }
             }
         }
@@ -281,7 +297,7 @@ class App : RComponent<RProps, AppState>() {
         is Response.GameEnd -> setState {
             (state.screen as? Screen.GameInProgress)?.let {
                 screen = Screen.GameOver(
-                    msg.gameId,
+                    it.gameId,
                     it.gameState.me,
                     state.map,
                     msg.players
@@ -300,7 +316,7 @@ class App : RComponent<RProps, AppState>() {
                 delay(1000)
             }
             setState { errorMessage = str.reconnecting }
-            val resp = reconnect(ConnectRequest.Join(playerName))
+            val resp = reconnect(ConnectRequest.Reconnect(playerName))
             if (resp is Failure)
                 cannotJoinGame(resp)
         }
@@ -308,7 +324,7 @@ class App : RComponent<RProps, AppState>() {
 
     private fun reconnect(playerName: PlayerName) {
         rootScope.launch {
-            connection?.reconnect(ConnectRequest.Join(playerName))
+            connection?.reconnect(ConnectRequest.Reconnect(playerName))
         }
     }
 
@@ -366,6 +382,11 @@ class App : RComponent<RProps, AppState>() {
         val playerNameTaken by loc(
             Locale.En to "This name is taken by another player",
             Locale.Ru to "Имя уже занято другим игроком"
+        )
+
+        val playerColorTaken by loc(
+            Locale.En to "This color is taken by another player",
+            Locale.Ru to "Цвет занят другим игроком"
         )
 
         val cannotConnect by loc(

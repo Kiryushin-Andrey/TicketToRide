@@ -32,8 +32,6 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
 
     override fun RBuilder.render() {
 
-        mTypography(str.customMapHint, MTypographyVariant.caption)
-
         styledDiv {
             css {
                 display = Display.flex
@@ -137,6 +135,10 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
                     }
                 }
             }
+        }
+
+        if (!state.fileTooLarge && state.errors == null) {
+            mTypography(str.customMapHint, MTypographyVariant.caption)
         }
 
         if (state.fileTooLarge) {

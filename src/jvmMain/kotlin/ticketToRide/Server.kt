@@ -89,12 +89,12 @@ fun Application.module() {
 
         route("/internal") {
             get("/games") {
-                call.respond(games.entries.associate { it.key.value to it.value.playerNames })
+                call.respond(games.entries.associate { it.key.value to it.value.state.players.map { it.name } })
             }
             get("/game/{id}") {
                 call.parameters["id"]?.let { id ->
                     games[GameId(id)]?.let { game ->
-                        call.respond(game.getState())
+                        call.respond(game.state)
                     }
                 }
             }
@@ -145,6 +145,9 @@ fun Application.module() {
                 }
 
                 is ConnectionOutcome.ObserveSuccess -> {
+                    outcome.apply {
+                        connection.send(game.state.forObservers(null), GameStateForObservers.serializer())
+                    }
                     incoming.consumeAsFlow()
                         .mapNotNull { (it as? Frame.Text)?.readText() }
                         .filter { it == Request.Ping }

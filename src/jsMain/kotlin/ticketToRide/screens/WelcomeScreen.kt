@@ -1,38 +1,21 @@
 package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.button.MButtonVariant
-import com.ccfraser.muirwik.components.button.mButton
-import com.ccfraser.muirwik.components.dialog.mDialog
-import com.ccfraser.muirwik.components.dialog.mDialogActions
-import com.ccfraser.muirwik.components.dialog.mDialogContent
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanel
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelDetails
-import com.ccfraser.muirwik.components.expansionpanel.mExpansionPanelSummary
-import com.ccfraser.muirwik.components.input.mInput
-import com.ccfraser.muirwik.components.input.mInputLabel
-import com.ccfraser.muirwik.components.input.type
+import com.ccfraser.muirwik.components.button.*
+import com.ccfraser.muirwik.components.dialog.*
+import com.ccfraser.muirwik.components.input.*
 import com.ccfraser.muirwik.components.menu.mMenuItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.css.*
 import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
-import org.w3c.notifications.DEFAULT
-import org.w3c.notifications.Notification
-import org.w3c.notifications.NotificationPermission
+import org.w3c.notifications.*
 import react.*
 import styled.css
-import styled.getClassName
+import styled.styledDiv
 import ticketToRide.*
-import ticketToRide.components.*
-import ticketToRide.components.welcomeScreen.CustomGameMap
-import ticketToRide.components.welcomeScreen.CustomGameMapParseErrors
-import ticketToRide.components.welcomeScreen.chooseGameMap
-import ticketToRide.components.welcomeScreen.gameMapParseErrorsDialog
+import ticketToRide.components.welcomeScreen.*
 
 private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 
@@ -43,8 +26,10 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
 
     interface State : RState {
         var playerName: String
+        var playerColor: PlayerColor?
         var otherPlayers: List<PlayerView>
         var errorText: String?
+        var showSettings: Boolean
         var carsNumber: Int
         var customMap: CustomGameMap?
         var gameMapParseErrors: CustomGameMapParseErrors?
@@ -54,15 +39,26 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var gameId: GameId?
         var locale: Locale
         var onLocaleChanged: (Locale) -> Unit
-        var onStartGame: (GameMap, PlayerName, Int) -> Unit
-        var onJoinGame: (PlayerName) -> Unit
+        var onStartGame: (GameMap, PlayerName, PlayerColor, Int) -> Unit
+        var onJoinGame: (PlayerName, PlayerColor) -> Unit
+        var onReconnect: (PlayerName) -> Unit
     }
+
+    private val State.availableColors
+        get() =
+            otherPlayers.find { it.name.value == playerName }?.let {
+                // if a player is reconnecting back into the game under the same name
+                // she should keep the same color as before
+                listOf(it.color)
+            } ?: PlayerColor.values().filter { c -> !otherPlayers.map { it.color }.contains(c) }
 
     private val Props.startingNewGame get() = gameId == null
 
     override fun State.init(props: Props) {
         carsNumber = 45
         playerName = ""
+        playerColor = PlayerColor.values().first()
+        otherPlayers = emptyList()
     }
 
     override fun componentDidMount() {
@@ -85,64 +81,10 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 fullWidth = true
             }
             mDialogContent {
-                mTextField(str.yourName, fullWidth = true) {
-                    attrs {
-                        error = state.errorText != null
-                        helperText = state.errorText ?: ""
-                        autoFocus = true
-                        onChange = {
-                            val value = it.targetInputValue.trim()
-                            setState {
-                                playerName = value
-                                errorText = if (value.isBlank()) str.enterYourName else null
-                            }
-                        }
-                        onKeyDown = { e ->
-                            if (e.keyCode == 13) {
-                                val text = (e.target as HTMLInputElement).value
-                                setState({ it.apply { playerName = text } }, ::proceed)
-                            }
-                        }
-                    }
-                }
-                if (props.startingNewGame) {
-                    mExpansionPanel {
-                        attrs {
-                            withClasses(
-                                "root" to ComponentStyles.getClassName { it::expansionPanelRoot },
-                                "expanded" to ComponentStyles.getClassName { it::expansionPanelExpanded })
-                        }
-
-                        mExpansionPanelSummary {
-                            attrs {
-                                css {
-                                    padding = 0.px.toString()
-                                }
-                                expandIcon = buildElement { mIcon("expand_more") }!!
-                                withClasses(
-                                    "root" to ComponentStyles.getClassName { it::expansionPanelSummaryRoot },
-                                    "content" to ComponentStyles.getClassName { it::expansionPanelSummaryContent },
-                                    "expanded" to ComponentStyles.getClassName { it::expansionPanelExpanded })
-                            }
-                            mTypography(str.moreSettings, MTypographyVariant.body1)
-                        }
-
-                        mExpansionPanelDetails {
-                            attrs {
-                                withClasses(
-                                    "root" to ComponentStyles.getClassName { it::expansionPanelDetailsRoot }
-                                )
-                            }
-
-                            chooseGameMap(props.locale) {
-                                customMap = state.customMap
-                                onCustomMapChanged = { map -> setState { customMap = map } }
-                                onShowParseErrors = { err -> setState { gameMapParseErrors = err } }
-                            }
-                            mDivider()
-                            initialCarsOnHand()
-                        }
-                    }
+                playerName()
+                playerColor()
+                if (state.showSettings) {
+                    settings()
                 }
                 if (Notification.permission == NotificationPermission.DEFAULT) {
                     mTypography(variant = MTypographyVariant.body1) {
@@ -151,6 +93,14 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 }
             }
             mDialogActions {
+                mTooltip(str.settings) {
+                    mIconButton("settings") {
+                        css { marginRight = 15.px }
+                        attrs {
+                            onClick = { setState { showSettings = !showSettings } }
+                        }
+                    }
+                }
                 mSelect(props.locale.toString()) {
                     css { marginRight = 15.px }
                     attrs {
@@ -169,10 +119,14 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                         }
                     }
                 }
+
                 val btnTitle = if (props.startingNewGame) str.startGame else str.joinGame
-                mButton(btnTitle, MColor.primary, MButtonVariant.contained,
-                    disabled = state.errorText != null,
-                    onClick = { proceed() })
+                mButton(btnTitle, MColor.primary, MButtonVariant.contained) {
+                    attrs {
+                        disabled = state.errorText != null
+                        onClick = { proceed() }
+                    }
+                }
             }
         }
 
@@ -186,8 +140,84 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         }
     }
 
+    private fun RBuilder.playerName() {
+        mTextField(str.yourName, fullWidth = true) {
+            attrs {
+                error = state.errorText != null
+                helperText = state.errorText ?: ""
+                autoFocus = true
+                onChange = {
+                    val value = it.targetInputValue.trim()
+                    setState {
+                        playerName = value
+                        errorText = if (value.isBlank()) str.enterYourName else null
+                        otherPlayers.find { it.name.value == value }?.let {
+                            playerColor = it.color
+                        }
+                    }
+                }
+                onKeyDown = { e ->
+                    if (e.keyCode == 13) {
+                        val text = (e.target as HTMLInputElement).value
+                        setState({ it.apply { playerName = text } }, ::proceed)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun RBuilder.playerColor() {
+        mRadioGroup(state.playerColor?.name, row = true) {
+            css {
+                alignItems = Align.center
+            }
+            attrs {
+                onChange = { _, newValue -> setState { playerColor = PlayerColor.valueOf(newValue) } }
+            }
+            mInputLabel(str.yourColor)
+            state.availableColors.forEach {
+                mRadio(color = MOptionColor.default) {
+                    css {
+                        color = Color(it.rgb)
+                    }
+                    attrs { value = it.name }
+                }
+            }
+        }
+    }
+
+    private fun RBuilder.settings() {
+        mPaper {
+            css {
+                marginTop = 15.px
+                padding = 10.px.toString()
+            }
+            attrs { elevation = 2 }
+            mTypography(str.settings, MTypographyVariant.h5)
+            if (props.startingNewGame) {
+                initialCarsOnHand()
+                chooseGameMap()
+            }
+        }
+    }
+
+    private fun RBuilder.chooseGameMap() {
+        styledDiv {
+            css { marginTop = 15.px }
+            chooseGameMap(props.locale) {
+                customMap = state.customMap
+                onCustomMapChanged = { map -> setState { customMap = map } }
+                onShowParseErrors = { err -> setState { gameMapParseErrors = err } }
+            }
+        }
+    }
+
     private fun RBuilder.initialCarsOnHand() {
         mInputLabel(str.numberOfCarsOnHand) {
+            css {
+                marginTop = 15.px
+                color = Color.black
+            }
             mInput {
                 css {
                     marginLeft = 10.px
@@ -213,21 +243,31 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             setState { errorText = str.enterYourName }
             return
         }
+        if (state.playerColor == null) {
+            setState { errorText = str.chooseYourColor }
+            return
+        }
         Notification.requestPermission()
         val playerName = PlayerName(state.playerName)
-        if (props.startingNewGame) {
-            val map = state.customMap?.map ?: (defaultMap as? Try.Success)?.value
-            if (map != null) {
-                for (entry in map.segments.groupingBy { it.color }
-                    .fold(0) { acc, segment -> acc + segment.length }) {
-                    console.log("${entry.key} - ${entry.value}")
+        when {
+            props.startingNewGame -> {
+                val map = state.customMap?.map ?: (defaultMap as? Try.Success)?.value
+                if (map != null) {
+                    for (entry in map.segments.groupingBy { it.color }
+                        .fold(0) { acc, segment -> acc + segment.length }) {
+                        console.log("${entry.key} - ${entry.value}")
+                    }
+                    props.onStartGame(map, playerName, state.playerColor!!, state.carsNumber)
+                } else {
+                    setState { errorText = str.noMapSelected }
                 }
-                props.onStartGame(map, playerName, state.carsNumber)
-            } else {
-                setState { errorText = str.noMapSelected }
             }
-        } else {
-            props.onJoinGame(playerName)
+
+            state.otherPlayers.any { it.name == playerName } ->
+                props.onReconnect(playerName)
+
+            else ->
+                props.onJoinGame(playerName, state.playerColor!!)
         }
     }
 
@@ -235,7 +275,12 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl) {
             if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
                 responses(GameStateForObservers.serializer()).collect {
-                    setState { otherPlayers = it.players }
+                    setState {
+                        otherPlayers = it.players
+                        if (otherPlayers.map { it.color }.contains(playerColor)) {
+                            playerColor = availableColors.firstOrNull()
+                        }
+                    }
                 }
             }
         }
@@ -260,8 +305,18 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             Locale.Ru to "Введите ваше имя"
         )
 
-        val moreSettings by loc(
-            Locale.En to "More settings",
+        val yourColor by loc(
+            Locale.En to "Your color",
+            Locale.Ru to "Ваш цвет"
+        )
+
+        val chooseYourColor by loc(
+            Locale.En to "Choose your color",
+            Locale.Ru to "Выберите ваш цвет"
+        )
+
+        val settings by loc(
+            Locale.En to "Settings",
             Locale.Ru to "Настройки"
         )
 
@@ -276,8 +331,8 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         )
 
         val noMapSelected by loc(
-            Locale.En to "Please load game map file (see \"${moreSettings}\" section)",
-            Locale.Ru to "Загрузите файл с картой для игры (в разделе \"${moreSettings}\")"
+            Locale.En to "Please load game map file (see \"${settings}\" section)",
+            Locale.Ru to "Загрузите файл с картой для игры (в разделе \"${settings}\")"
         )
 
         val startGame by loc(

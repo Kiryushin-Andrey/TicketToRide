@@ -31,10 +31,10 @@ class ServerConnection(
         const val MaxRetriesCount = 5
     }
 
-    private val scope = CoroutineScope(parentScope.coroutineContext)
+    private val scope = CoroutineScope(parentScope.coroutineContext + Job())
 
     private val _state = MutableStateFlow(ConnectionState.NotConnected)
-    val state: StateFlow<ConnectionState> get() = _state
+    val connectionState: StateFlow<ConnectionState> get() = _state
 
     private val _responses = Channel<String>()
 
@@ -180,7 +180,7 @@ class ServerConnection(
     }
 
     private fun assertState(vararg required: ConnectionState) {
-        if (!required.contains(state.value))
-            throw Error("This operation was called in $state state but is valid only in one of the following states: ${required.joinToString()}")
+        if (!required.contains(connectionState.value))
+            throw Error("This operation was called in $connectionState state but is valid only in one of the following states: ${required.joinToString()}")
     }
 }

@@ -10,19 +10,23 @@ class GameStateForObservers(
     val turn: Int,
     val lastRound: Boolean,
     val gameEnded: Boolean,
-    val action: PlayerAction?)
+    val action: PlayerAction?
+)
 
 @Serializable
 sealed class Response {
 
     @Serializable
-    class GameMap(val map: ticketToRide.GameMap) : Response()
+    class GameStateWithMap(val gameId: GameId, val state: GameStateView, val map: GameMap) : Response()
 
     @Serializable
-    class GameState(val gameId: GameId, val state: GameStateView, val action: PlayerAction?) : Response()
+    class GameState(val state: GameStateView, val action: PlayerAction?) : Response()
 
     @Serializable
-    class GameEnd(val gameId: GameId, val players: List<Pair<PlayerView, List<Ticket>>>, val action: PlayerAction? = null) : Response()
+    class GameEnd(
+        val players: List<Pair<PlayerView, List<Ticket>>>,
+        val action: PlayerAction? = null
+    ) : Response()
 
     @Serializable
     class ErrorMessage(val text: String) : Response()
@@ -57,7 +61,8 @@ sealed class PlayerAction {
     class PickTickets(val playerName: PlayerName) : PlayerAction()
 
     @Serializable
-    class BuildSegment(val playerName: PlayerName, val from: CityName, val to: CityName, val cards: List<Card>) : PlayerAction()
+    class BuildSegment(val playerName: PlayerName, val from: CityName, val to: CityName, val cards: List<Card>) :
+        PlayerAction()
 
     @Serializable
     class BuildStation(val playerName: PlayerName, val target: CityName) : PlayerAction()

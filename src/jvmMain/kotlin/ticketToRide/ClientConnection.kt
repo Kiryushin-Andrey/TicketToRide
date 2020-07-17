@@ -13,12 +13,15 @@ import kotlinx.serialization.SerializationStrategy
 private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 
 sealed class ClientConnection(private val webSocket: WebSocketSession) {
-    suspend fun <T> send(resp: T, serializer: SerializationStrategy<T>) = webSocket.send(json.stringify(serializer, resp))
+    suspend fun <T> send(resp: T, serializer: SerializationStrategy<T>) =
+        webSocket.send(json.stringify(serializer, resp))
+
     suspend fun ping() = webSocket.send(Response.Pong)
 
     class Player(val name: PlayerName, webSocket: WebSocketSession) : ClientConnection(webSocket) {
         override fun toString() = name.value
     }
+
     class Observer(webSocket: WebSocketSession) : ClientConnection(webSocket) {
         override fun toString() = "anonymous observer"
     }
@@ -26,11 +29,27 @@ sealed class ClientConnection(private val webSocket: WebSocketSession) {
 
 sealed class ConnectionOutcome {
     class Success(val game: Game, val connection: ClientConnection.Player) : ConnectionOutcome()
-    object ObserveSuccess : ConnectionOutcome()
+    class ObserveSuccess(val game: Game, val connection: ClientConnection.Observer) : ConnectionOutcome()
     class Failure(val reason: ConnectResponse.Failure) : ConnectionOutcome()
 }
 
 fun gameExists(id: GameId, redis: RedisCredentials?) = redis?.hasGame(id) ?: games.containsKey(id)
+
+suspend fun loadGame(
+    id: GameId,
+    redis: RedisCredentials?,
+    process: suspend (Game) -> ConnectionOutcome
+): ConnectionOutcome {
+    val game = games.getOrElse(id) {
+        redis?.loadGame(id)?.let { (state, map) ->
+            Game.restore(rootScope, state, map, redis) { games.remove(id) }.also { game ->
+                games[id] = game
+            }
+        }
+    }
+    return if (game != null) process(game)
+    else ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
+}
 
 suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisCredentials?): ConnectionOutcome {
     val req = (incoming.receive() as Frame.Text).readText()
@@ -38,48 +57,38 @@ suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisCre
 
     val outcome = when (req) {
         is ConnectRequest.Start ->
-            ClientConnection.Player(req.playerName, this).let { conn ->
-                if (!gameExists(gameId, redis))
-                    Game(gameId, req.carsCount, redis) { games.remove(it.id) }.let { game ->
-                        games[gameId] = game
-                        redis?.saveMap(gameId, req.map)
-                        rootScope.launch { game.start(conn, req.map) }
-                        ConnectionOutcome.Success(game, conn)
-                    }
-                else
-                    ConnectionOutcome.Failure(ConnectResponse.Failure.GameIdTaken)
-            }
+            if (!gameExists(gameId, redis)) {
+                val game = Game.start(rootScope, gameId, req.carsCount, req.map, redis) { games.remove(it.id) }
+                games[gameId] = game
+                redis?.saveMap(gameId, req.map)
+                game.joinPlayer(req.playerName, req.playerColor, this)
+            } else
+                ConnectionOutcome.Failure(ConnectResponse.Failure.GameIdTaken)
 
         is ConnectRequest.Join ->
-            ClientConnection.Player(req.playerName, this).let { conn ->
-                games[gameId]?.let { game ->
-                    if (game.joinPlayer(req.playerName, conn))
-                        ConnectionOutcome.Success(game, conn)
-                    else
-                        ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerNameTaken)
-                } ?: redis?.loadGame(gameId)?.let { (state, map) ->
-                    Game(gameId, state.initialCarsCount, redis) { games.remove(gameId) }.let { game ->
-                        games[gameId] = game
-                        rootScope.launch { game.restore(conn, state, map) }
-                        ConnectionOutcome.Success(game, conn)
-                    }
-                } ?: ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
+            loadGame(gameId, redis) {
+                it.joinPlayer(req.playerName, req.playerColor, this)
+            }
+
+        is ConnectRequest.Reconnect ->
+            loadGame(gameId, redis) {
+                it.reconnectPlayer(req.playerName, this)
             }
 
         is ConnectRequest.Observe ->
-            ClientConnection.Observer(this).let { conn ->
-                games[gameId]?.let { game ->
-                    game.joinObserver(conn)
-                    ConnectionOutcome.ObserveSuccess
-                } ?: ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
+            loadGame(gameId, redis) {
+                val conn = ClientConnection.Observer(this)
+                it.joinObserver(conn)
+                ConnectionOutcome.ObserveSuccess(it, conn)
             }
     }
 
-    when (outcome) {
+    val resp = when (outcome) {
         is ConnectionOutcome.Success -> ConnectResponse.Success
         is ConnectionOutcome.ObserveSuccess -> ConnectResponse.Success
         is ConnectionOutcome.Failure -> outcome.reason
-    }.let { resp -> send(json.stringify(ConnectResponse.serializer(), resp)) }
+    }
+    send(json.stringify(ConnectResponse.serializer(), resp))
 
     return outcome
 }

@@ -6,24 +6,32 @@ sealed class SendResponse {
     class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
 }
 
-fun GameState.connectPlayer(playerName: PlayerName, map: GameMap) =
-    joinPlayer(playerName, map).run {
-        val action = PlayerAction.JoinGame(playerName)
-        this to listOf(
-            SendResponse.ForPlayer(playerName, Response.GameMap(map)),
+fun GameState.connectPlayer(name: PlayerName, color: PlayerColor, map: GameMap) =
+    joinPlayer(name, color, map).run {
+        val action = PlayerAction.JoinGame(name)
+        GameFlowValue(this, listOf(
+            SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map)),
             SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) },
             SendResponse.ForObservers(this.forObservers(action))
-        )
+        ))
     }
+
+fun GameState.reconnectPlayer(name: PlayerName, map: GameMap) =
+    GameFlowValue(
+        updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") },
+        listOf(SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map))))
 
 fun GameState.processRequest(
     req: GameRequest,
     map: GameMap,
     fromPlayerName: PlayerName
-): Pair<GameState, List<SendResponse>> {
+): GameFlowValue {
     if (turn == endsOnPlayer)
-        return this to listOf(
-            SendResponse.ForAll { Response.GameEnd(id, players.map { it.toPlayerView() to it.ticketsOnHand }) })
+        return GameFlowValue(
+            this,
+            listOf(
+                SendResponse.ForAll { Response.GameEnd(players.map { it.toPlayerView() to it.ticketsOnHand }) })
+        )
 
     val newState = when (req) {
 
@@ -54,32 +62,35 @@ fun GameState.processRequest(
             }
     }
     val action = req.toAction(fromPlayerName)
-    return newState to listOf(
-        SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
-        SendResponse.ForObservers(newState.forObservers(action))
+    return GameFlowValue(
+        newState,
+        listOf(
+            SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
+            SendResponse.ForObservers(newState.forObservers(action))
+        )
     )
 }
 
 fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {
     if (turn != endsOnPlayer)
-        Response.GameState(id, toPlayerView(playerName), action)
+        Response.GameState(toPlayerView(playerName), action)
     else
         Response.GameEnd(
-            id,
             players.map { it.toPlayerView() to it.ticketsOnHand },
             action
         )
 }
 
-private fun GameState.joinPlayer(name: PlayerName, map: GameMap): GameState {
+private fun GameState.joinPlayer(name: PlayerName, color: PlayerColor, map: GameMap): GameState {
     if (players.any { it.name == name }) {
         return updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") }
     }
 
+    if (players.map { it.color }.contains(color)) throw InvalidActionError("Color is taken")
+
     val availableColors = PlayerColor.values().filter { color -> !players.map { it.color }.contains(color) }
     if (availableColors.isEmpty()) throw InvalidActionError("Game full, no more players allowed")
 
-    val color = availableColors.random()
     val cards = (1..4).map { Card.random(map) }
     val tickets = getRandomTickets(map, 1, true) + getRandomTickets(map, 3, false)
     val newPlayer = Player(

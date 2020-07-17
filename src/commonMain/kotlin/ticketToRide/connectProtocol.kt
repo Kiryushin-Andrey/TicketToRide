@@ -6,10 +6,14 @@ import kotlinx.serialization.Serializable
 sealed class ConnectRequest() {
 
     @Serializable
-    class Start(val playerName: PlayerName, val map: GameMap, val carsCount: Int) : ConnectRequest()
+    class Start(val playerName: PlayerName, val playerColor: PlayerColor, val map: GameMap, val carsCount: Int) :
+        ConnectRequest()
 
     @Serializable
-    class Join(val playerName: PlayerName) : ConnectRequest()
+    class Join(val playerName: PlayerName, val playerColor: PlayerColor) : ConnectRequest()
+
+    @Serializable
+    class Reconnect(val playerName: PlayerName) : ConnectRequest()
 
     @Serializable
     object Observe : ConnectRequest()
@@ -28,10 +32,16 @@ sealed class ConnectResponse {
         object NoSuchGame : Failure()
 
         @Serializable
+        object NoSuchPlayer : Failure()
+
+        @Serializable
         object GameIdTaken : Failure()
 
         @Serializable
         object PlayerNameTaken : Failure()
+
+        @Serializable
+        object PlayerColorTaken : Failure()
 
         @Serializable
         object CannotConnect : Failure()
