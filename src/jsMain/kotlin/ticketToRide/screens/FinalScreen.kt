@@ -17,7 +17,7 @@ import ticketToRide.components.tickets.ticket
 interface FinalScreenProps : RProps {
     var locale: Locale
     var gameMap: GameMap
-    var players: List<PlayerFinalStats>
+    var players: List<PlayerScore>
     var chatMessages: List<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
 }
@@ -33,7 +33,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
     }
 
     override fun RBuilder.render() {
-        val longestPathOfAll = props.players.map { it.longestPath }.max()!!
+        val longestPathOfAll = props.players.map { it.longestRoute }.max()!!
         val winner = props.players.maxBy { it.getTotalPoints(longestPathOfAll) }!!
 
         styledDiv {
@@ -68,10 +68,10 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                 }
                 finalMap {
                     gameMap = props.gameMap
-                    players = props.players.map { it.playerView }
+                    players = props.players
                     playerToHighlight = state.playerToHighlight
                     citiesToHighlight = state.citiesToHighlight
-                    citiesWithStations = props.players.map { it.playerView }.getStations()
+                    citiesWithStations = props.players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
                     onCityMouseOver = { setState { citiesToHighlight += it } }
                     onCityMouseOut = { setState { citiesToHighlight -= it } }
                 }
@@ -90,7 +90,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
     }
 
 
-    private fun RBuilder.headerMessage(winner: PlayerFinalStats) {
+    private fun RBuilder.headerMessage(winner: PlayerScore) {
         styledDiv {
             css {
                 put("grid-area", "header")
@@ -106,7 +106,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
         }
     }
 
-    private fun RBuilder.playerStats(player: PlayerFinalStats, longestPathOfAll: Int, expanded: Boolean) {
+    private fun RBuilder.playerStats(player: PlayerScore, longestPathOfAll: Int, expanded: Boolean) {
 
         mPaper {
             css { margin = 4.px.toString() }
@@ -142,7 +142,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                         className = ComponentStyles.getClassName { it::playerDetailsRoot }
                     }
 
-                    if (player.longestPath == longestPathOfAll)
+                    if (player.longestRoute == longestPathOfAll)
                         longestPathPanel(longestPathOfAll)
 
                     playerTicketStats(player)
@@ -154,7 +154,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
         }
     }
 
-    private fun RBuilder.playerBlockHeader(player: PlayerFinalStats, totalPoints: Int) {
+    private fun RBuilder.playerBlockHeader(player: PlayerScore, totalPoints: Int) {
         styledDiv {
             css {
                 +ComponentStyles.playerStatsBar
@@ -193,7 +193,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
         }
     }
 
-    private fun RBuilder.playerTicketStats(player: PlayerFinalStats) {
+    private fun RBuilder.playerTicketStats(player: PlayerScore) {
         for (ticket in player.fulfilledTickets) {
             ticket(ticket) {
                 finalScreen = true
@@ -212,7 +212,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
         }
     }
 
-    private fun RBuilder.playerSegmentStats(player: PlayerFinalStats) {
+    private fun RBuilder.playerSegmentStats(player: PlayerScore) {
         styledDiv {
             css { +ComponentStyles.playerSegmentStats }
             styledDiv {
@@ -230,7 +230,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                         "$count * $pointsPerSegment = ${pointsPerSegment * count}"
                     )
                 }
-                player.playerView.stationsLeft.takeIf { it > 0 }?.let {
+                player.stationsLeft.takeIf { it > 0 }?.let {
                     repeatedIconsWithPoints(it, "/icons/station.png", "$it * $PointsPerStation = ${it * PointsPerStation}")
                 }
             }

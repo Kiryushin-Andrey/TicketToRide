@@ -3,7 +3,9 @@ package ticketToRide
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.*
 
-val map = createMapOfRussia()
+val map = java.io.File("src/commonMain/resources/default.map").readText().let {
+    (GameMap.parse(it) as Try.Success).value
+}
 
 class GameStateTests : StringSpec({
 
@@ -66,6 +68,7 @@ fun createGameState(playersCount: Int) =
             Player(
                 PlayerName(it.toString()),
                 PlayerColor.values().random(),
+                null,
                 45,
                 3,
                 (1..4).map { Card.random(map) },
@@ -77,5 +80,6 @@ fun createGameState(playersCount: Int) =
         (1..5).map { Card.random(map) },
         0,
         null,
-        45
+        45,
+        false
     )

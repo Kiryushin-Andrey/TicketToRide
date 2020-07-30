@@ -7,7 +7,6 @@ import io.ktor.http.cio.websocket.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationStrategy
 
 private val rootScope = CoroutineScope(Dispatchers.Default + Job())
@@ -33,11 +32,11 @@ sealed class ConnectionOutcome {
     class Failure(val reason: ConnectResponse.Failure) : ConnectionOutcome()
 }
 
-fun gameExists(id: GameId, redis: RedisCredentials?) = redis?.hasGame(id) ?: games.containsKey(id)
+private fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)
 
-suspend fun loadGame(
+private suspend fun loadGame(
     id: GameId,
-    redis: RedisCredentials?,
+    redis: RedisStorage?,
     process: suspend (Game) -> ConnectionOutcome
 ): ConnectionOutcome {
     val game = games.getOrElse(id) {
@@ -51,14 +50,21 @@ suspend fun loadGame(
     else ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
 }
 
-suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisCredentials?): ConnectionOutcome {
+suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisStorage?): ConnectionOutcome {
     val req = (incoming.receive() as Frame.Text).readText()
         .let { json.parse(ConnectRequest.serializer(), it) }
 
     val outcome = when (req) {
         is ConnectRequest.Start ->
             if (!gameExists(gameId, redis)) {
-                val game = Game.start(rootScope, gameId, req.carsCount, req.map, redis) { games.remove(it.id) }
+                val game = Game.start(
+                    rootScope,
+                    gameId,
+                    req.carsCount,
+                    req.calculateScoresInProcess,
+                    req.map,
+                    redis
+                ) { games.remove(it.id) }
                 games[gameId] = game
                 redis?.saveMap(gameId, req.map)
                 game.joinPlayer(req.playerName, req.playerColor, this)

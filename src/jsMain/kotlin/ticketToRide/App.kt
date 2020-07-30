@@ -24,6 +24,7 @@ interface AppState : RState {
     var gameId: GameId?
     var screen: Screen
     var locale: Locale
+    var calculateScoresInProcess: Boolean
     var chatMessages: MutableList<Response.ChatMessage>
     var errorMessage: String
     var connectionState: ConnectionState
@@ -79,8 +80,8 @@ class App : RComponent<RProps, AppState>() {
                         gameId = state.gameId
                         locale = state.locale
                         onLocaleChanged = ::onLocaleChanged
-                        onStartGame = { map, playerName, playerColor, carsCount ->
-                            startGame(map, playerName, playerColor, carsCount)
+                        onStartGame = { map, playerName, playerColor, carsCount, calculateScoresInProcess ->
+                            startGame(map, playerName, playerColor, carsCount, calculateScoresInProcess)
                         }
                         onJoinGame = { name, color ->
                             joinGame(ConnectRequest.Join(name, color), name)
@@ -108,6 +109,7 @@ class App : RComponent<RProps, AppState>() {
                 is Screen.GameInProgress ->
                     gameScreen {
                         locale = state.locale
+                        calculateScores = state.calculateScoresInProcess
                         connected = state.connectionState == Connected
                         gameMap = state.map
                         gameState = it.gameState
@@ -123,10 +125,13 @@ class App : RComponent<RProps, AppState>() {
                         locale = state.locale
                         gameMap = it.gameMap
                         players = it.players.map { (player, tickets) ->
-                            PlayerFinalStats(
-                                player,
+                            PlayerScore(
+                                player.name,
+                                player.color,
+                                player.occupiedSegments,
+                                player.placedStations,
                                 tickets,
-                                allPlayers,
+                                allPlayers.filter { it != player }.flatMap { it.occupiedSegments },
                                 state.map
                             )
                         }
@@ -187,16 +192,17 @@ class App : RComponent<RProps, AppState>() {
         playerName: PlayerName,
         playerColor: PlayerColor,
         carsCount: Int,
+        calculateScoresInProcess: Boolean,
         retriesCount: Int = 0
     ) {
         ServerConnection(rootScope, GameId.random().webSocketUrl) {
-            val request = ConnectRequest.Start(playerName, playerColor, map, carsCount)
+            val request = ConnectRequest.Start(playerName, playerColor, map, carsCount, calculateScoresInProcess)
             when (val connectResponse = connect(request)) {
                 is Success -> runGame(playerName)
                 is Failure -> {
                     close()
                     if (connectResponse is Failure.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
-                        startGame(map, playerName, playerColor, carsCount, retriesCount + 1)
+                        startGame(map, playerName, playerColor, carsCount, calculateScoresInProcess, retriesCount + 1)
                     else
                         cannotJoinGame(connectResponse)
                 }
@@ -243,6 +249,7 @@ class App : RComponent<RProps, AppState>() {
         is Response.GameStateWithMap -> when (state.screen) {
             is Screen.Welcome -> setState {
                 map = msg.map
+                calculateScoresInProcess = msg.calculateScoresInProcess
                 screen = if (msg.state.players.size == 1) {
                     val url = "${window.location.origin}/game/${msg.gameId.value}"
                     window.history.pushState(null, window.document.title, url)

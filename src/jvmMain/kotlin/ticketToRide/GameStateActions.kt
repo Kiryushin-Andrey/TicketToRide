@@ -10,7 +10,7 @@ fun GameState.connectPlayer(name: PlayerName, color: PlayerColor, map: GameMap) 
     joinPlayer(name, color, map).run {
         val action = PlayerAction.JoinGame(name)
         GameFlowValue(this, listOf(
-            SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map)),
+            SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map, calculateScoresInProcess)),
             SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) },
             SendResponse.ForObservers(this.forObservers(action))
         ))
@@ -19,7 +19,7 @@ fun GameState.connectPlayer(name: PlayerName, color: PlayerColor, map: GameMap) 
 fun GameState.reconnectPlayer(name: PlayerName, map: GameMap) =
     GameFlowValue(
         updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") },
-        listOf(SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map))))
+        listOf(SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map, calculateScoresInProcess))))
 
 fun GameState.processRequest(
     req: GameRequest,
@@ -39,7 +39,7 @@ fun GameState.processRequest(
             updatePlayer(fromPlayerName) { copy(away = true) }.advanceTurnFrom(fromPlayerName, map)
 
         is ConfirmTicketsChoiceRequest ->
-            updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }
+            updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }.recalculatePlayerScores(map)
 
         is PickTicketsRequest ->
             pickTickets(fromPlayerName, map).advanceTurnFrom(fromPlayerName, map)
@@ -53,12 +53,12 @@ fun GameState.processRequest(
             inTurnOnly(fromPlayerName) {
                 val segment = map.getSegmentBetween(req.from, req.to)
                     ?: throw InvalidActionError("There is no segment ${req.from.value} - ${req.to.value} on the map")
-                buildSegment(fromPlayerName, segment, req.cards).advanceTurn(map)
+                buildSegment(fromPlayerName, segment, req.cards).recalculatePlayerScores(map).advanceTurn(map)
             }
 
         is BuildStationRequest ->
             inTurnOnly(fromPlayerName) {
-                buildStation(fromPlayerName, req.target, req.cards).advanceTurn(map)
+                buildStation(fromPlayerName, req.target, req.cards).recalculatePlayerScores(map).advanceTurn(map)
             }
     }
     val action = req.toAction(fromPlayerName)
@@ -73,7 +73,7 @@ fun GameState.processRequest(
 
 fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {
     if (turn != endsOnPlayer)
-        Response.GameState(toPlayerView(playerName), action)
+        Response.GameState(state.toPlayerView(playerName), action)
     else
         Response.GameEnd(
             players.map { it.toPlayerView() to it.ticketsOnHand },
@@ -88,13 +88,20 @@ private fun GameState.joinPlayer(name: PlayerName, color: PlayerColor, map: Game
 
     if (players.map { it.color }.contains(color)) throw InvalidActionError("Color is taken")
 
-    val availableColors = PlayerColor.values().filter { color -> !players.map { it.color }.contains(color) }
+    val availableColors = PlayerColor.values().filter { c -> !players.map { it.color }.contains(c) }
     if (availableColors.isEmpty()) throw InvalidActionError("Game full, no more players allowed")
 
     val cards = (1..4).map { Card.random(map) }
     val tickets = getRandomTickets(map, 1, true) + getRandomTickets(map, 3, false)
     val newPlayer = Player(
-        name, color, initialCarsCount, InitialStationsCount, cards, emptyList(), emptyList(),
+        name,
+        color,
+        if (calculateScoresInProcess) 0 else null,
+        initialCarsCount,
+        InitialStationsCount,
+        cards,
+        emptyList(),
+        emptyList(),
         PendingTicketsChoice(tickets, 2, true)
     )
     return copy(players = players + newPlayer)
@@ -166,6 +173,25 @@ private fun GameState.buildStation(name: PlayerName, target: CityName, cards: Li
 
     return updatePlayer(name) { buildStation(target, cards) }
 }
+
+private fun GameState.recalculatePlayerScores(map: GameMap) = if (calculateScoresInProcess) {
+    val scores = players.map {
+        val segmentsOfOtherPlayers = players.filter { p -> p != it }.flatMap { it.occupiedSegments }
+        PlayerScore(
+            it.name,
+            it.color,
+            it.occupiedSegments,
+            it.placedStations,
+            it.ticketsOnHand,
+            segmentsOfOtherPlayers,
+            map
+        )
+    }
+    val longestRoute = scores.map { it.longestRoute }.max()!!
+    copy(players = players.zip(scores) { player, score ->
+        player.copy(points = score.getTotalPoints(longestRoute))
+    })
+} else this
 
 private fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
     ticketsForChoice == null ->

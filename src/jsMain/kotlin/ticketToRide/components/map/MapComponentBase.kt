@@ -12,7 +12,7 @@ import kotlin.js.Promise
 interface MapComponentBaseProps : RProps {
     var gameMap: GameMap
     var citiesToHighlight: Set<CityName>
-    var citiesWithStations: Map<CityName, PlayerView>
+    var citiesWithStations: Map<CityName, PlayerId>
     var onCityMouseOver: (CityName) -> Unit
     var onCityMouseOut: (CityName) -> Unit
 }

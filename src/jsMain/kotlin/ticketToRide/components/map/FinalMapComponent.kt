@@ -7,7 +7,7 @@ class FinalMapComponent(props: Props) :
     MapComponentBase<FinalMapComponent.Props, MapComponentBaseState>(props) {
 
     interface Props : MapComponentBaseProps {
-        var players: List<PlayerView>
+        var players: List<PlayerScore>
         var playerToHighlight: PlayerName?
     }
 

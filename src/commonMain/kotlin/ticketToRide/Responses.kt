@@ -17,7 +17,12 @@ class GameStateForObservers(
 sealed class Response {
 
     @Serializable
-    class GameStateWithMap(val gameId: GameId, val state: GameStateView, val map: GameMap) : Response()
+    class GameStateWithMap(
+        val gameId: GameId,
+        val state: GameStateView,
+        val map: GameMap,
+        val calculateScoresInProcess: Boolean
+    ) : Response()
 
     @Serializable
     class GameState(val state: GameStateView, val action: PlayerAction?) : Response()

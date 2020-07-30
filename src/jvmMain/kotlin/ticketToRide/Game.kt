@@ -12,8 +12,9 @@ data class GameFlowValue(val state: GameState, val responses: List<SendResponse>
 class Game private constructor(
     val id: GameId,
     initialCarsCount: Int,
+    calculateScoresInProcess: Boolean,
     private val map: GameMap,
-    private val redis: RedisCredentials?,
+    private val redis: RedisStorage?,
     private val onAllPlayersLeft: (Game) -> Unit
 ) {
 
@@ -23,11 +24,12 @@ class Game private constructor(
             scope: CoroutineScope,
             id: GameId,
             initialCarsCount: Int,
+            calculateScoresInProcess: Boolean,
             map: GameMap,
-            redis: RedisCredentials?,
+            redis: RedisStorage?,
             onAllPlayersLeft: (Game) -> Unit
         ): Game {
-            val game = Game(id, initialCarsCount, map, redis, onAllPlayersLeft)
+            val game = Game(id, initialCarsCount, calculateScoresInProcess, map, redis, onAllPlayersLeft)
             scope.launch { game.runRequestProcessingLoop() }
             return game
         }
@@ -36,10 +38,10 @@ class Game private constructor(
             scope: CoroutineScope,
             state: GameState,
             map: GameMap,
-            redis: RedisCredentials?,
+            redis: RedisStorage?,
             onAllPlayersLeft: (Game) -> Unit
         ): Game {
-            val game = Game(state.id, state.initialCarsCount, map, redis, onAllPlayersLeft)
+            val game = Game(state.id, state.initialCarsCount, state.calculateScoresInProcess, map, redis, onAllPlayersLeft)
             game.state = state.restored()
             scope.launch { game.runRequestProcessingLoop() }
             return game
@@ -53,7 +55,7 @@ class Game private constructor(
     private val players = mutableMapOf<PlayerName, ClientConnection.Player>()
     private val observers = mutableListOf<ClientConnection.Observer>()
 
-    var state = GameState.initial(id, initialCarsCount, map)
+    var state = GameState.initial(id, initialCarsCount, calculateScoresInProcess, map)
         private set
 
     private fun processRequestHandleError(

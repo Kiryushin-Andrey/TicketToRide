@@ -8,6 +8,9 @@ import kotlinx.collections.immutable.*
 data class LatLong(val lat: Double, val lng: Double)
 
 @Serializable
+data class CityName(val value: String)
+
+@Serializable
 data class City(val name: CityName, val latLng: LatLong)
 
 @Serializable

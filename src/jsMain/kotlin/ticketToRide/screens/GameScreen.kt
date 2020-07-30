@@ -19,6 +19,7 @@ import ticketToRide.playerState.*
 
 interface GameScreenProps : ComponentBaseProps {
     var gameMap: GameMap
+    var calculateScores: Boolean
     var chatMessages: List<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
 }
@@ -66,7 +67,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     put("resize", "horizontal")
                 }
 
-                playersList(players, turn, props.locale)
+                playersList(players, turn, props.calculateScores, props.locale)
                 horizontalDivider()
                 chatMessages(props.chatMessages)
             }
@@ -88,7 +89,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     connected = props.connected
                     gameMap = props.gameMap
                     citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
-                    citiesWithStations = players.getStations()
+                    citiesWithStations = players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
                     onCityMouseOver = { setState { citiesToHighlight += it } }
                     onCityMouseOut = { setState { citiesToHighlight -= it } }
                 }

@@ -2,13 +2,13 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 
-const val InitialStationsCount = 3
 const val OpenCardsCount = 5
 
 @Serializable
 data class Player(
-    val name: PlayerName,
-    val color: PlayerColor,
+    override val name: PlayerName,
+    override val color: PlayerColor,
+    val points: Int?,
     val carsLeft: Int,
     val stationsLeft: Int,
     val cards: List<Card>,
@@ -17,11 +17,12 @@ data class Player(
     val ticketsForChoice: PendingTicketsChoice?,
     val ticketsOnHand: List<Ticket> = emptyList(),
     val away: Boolean = false
-) {
+) : PlayerId {
     fun toPlayerView() =
         PlayerView(
             name,
             color,
+            points,
             carsLeft,
             stationsLeft,
             cards.size,
@@ -40,11 +41,20 @@ data class GameState(
     val openCards: List<Card>,
     val turn: Int,
     val endsOnPlayer: Int?,
-    val initialCarsCount: Int
+    val initialCarsCount: Int,
+    val calculateScoresInProcess: Boolean
 ) {
     companion object {
-        fun initial(id: GameId, initialCarsCount: Int, map: GameMap) =
-            GameState(id, emptyList(), (1..OpenCardsCount).map { Card.random(map) }, 0, null, initialCarsCount)
+        fun initial(id: GameId, initialCarsCount: Int, calculateScoresInProcess: Boolean, map: GameMap) =
+            GameState(
+                id,
+                emptyList(),
+                (1..OpenCardsCount).map { Card.random(map) },
+                0,
+                null,
+                initialCarsCount,
+                calculateScoresInProcess
+            )
     }
 
     fun getRandomTickets(map: GameMap, count: Int, long: Boolean): List<Ticket> {

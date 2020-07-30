@@ -33,7 +33,7 @@ fun Application.module() {
     val googleApiKey = environment.config.property("google-api-key").getString()
     val host = environment.config.property("ktor.deployment.host").getString()
     val redis = environment.config.propertyOrNull("redis.host")?.let {
-        RedisCredentials(
+        RedisStorage(
             it.getString(),
             environment.config.property("redis.port").getString().toInt(),
             environment.config.propertyOrNull("redis.password")?.getString()

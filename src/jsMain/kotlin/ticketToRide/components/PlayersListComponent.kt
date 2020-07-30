@@ -6,7 +6,10 @@ import react.*
 import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
+import ticketToRide.PlayerScore
 import ticketToRide.PlayerView
+import ticketToRide.components.tickets.pointsLabel
+import ticketToRide.screens.FinalScreen
 
 class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
 
@@ -14,6 +17,7 @@ class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
         var players: List<PlayerView>
         var turn: Int
         var locale: Locale
+        var calculateScores: Boolean
     }
 
     override fun RBuilder.render() {
@@ -33,8 +37,16 @@ class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
                             borderWidth = 4.px
                         }
                     }
-                    mTypography(variant = MTypographyVariant.h6) {
-                        +player.name.value
+                    styledDiv {
+                        css {
+                            +ComponentStyles.playerStatsBar
+                        }
+                        mTypography(variant = MTypographyVariant.h6) {
+                            +player.name.value
+                        }
+                        player.points?.let {
+                            pointsLabel(it.toString(), Color.lightYellow)
+                        }
                     }
                     styledDiv {
                         css { +ComponentStyles.playerCardIcons }
@@ -62,6 +74,14 @@ class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
             paddingLeft = 12.px
             paddingRight = 12.px
         }
+        val playerStatsBar by css {
+            width = 100.pct
+            display = Display.flex
+            flexDirection = FlexDirection.row
+            justifyContent = JustifyContent.spaceBetween
+            alignItems = Align.center
+            paddingRight = 16.px
+        }
         val playerCardIcons by css {
             display = Display.flex
             flexDirection = FlexDirection.row
@@ -77,6 +97,7 @@ class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
             Locale.Ru to "Отключился"
         )
     }
+
     private val str = Strings()
 }
 
@@ -95,10 +116,12 @@ fun RBuilder.playerCardIcon(iconUrl: String, number: Int, style: RuleSet = {}) {
     }
 }
 
-fun RBuilder.playersList(players: List<PlayerView>, turn: Int, locale: Locale) = child(PlayersListComponent::class) {
-    attrs {
-        this.players = players
-        this.turn = turn
-        this.locale = locale
+fun RBuilder.playersList(players: List<PlayerView>, turn: Int, calculateScores: Boolean, locale: Locale) =
+    child(PlayersListComponent::class) {
+        attrs {
+            this.players = players
+            this.turn = turn
+            this.calculateScores = calculateScores
+            this.locale = locale
+        }
     }
-}

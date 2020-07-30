@@ -31,6 +31,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var errorText: String?
         var showSettings: Boolean
         var carsNumber: Int
+        var calculateScoresInProcess: Boolean
         var customMap: CustomGameMap?
         var gameMapParseErrors: CustomGameMapParseErrors?
     }
@@ -39,7 +40,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var gameId: GameId?
         var locale: Locale
         var onLocaleChanged: (Locale) -> Unit
-        var onStartGame: (GameMap, PlayerName, PlayerColor, Int) -> Unit
+        var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
         var onJoinGame: (PlayerName, PlayerColor) -> Unit
         var onReconnect: (PlayerName) -> Unit
     }
@@ -55,9 +56,11 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     private val Props.startingNewGame get() = gameId == null
 
     override fun State.init(props: Props) {
-        carsNumber = 45
         playerName = ""
         playerColor = PlayerColor.values().first()
+        showSettings = false
+        carsNumber = 45
+        calculateScoresInProcess = false
         otherPlayers = emptyList()
     }
 
@@ -196,6 +199,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
             mTypography(str.settings, MTypographyVariant.h5)
             if (props.startingNewGame) {
                 initialCarsOnHand()
+                calculateScoresInProcess()
                 chooseGameMap()
             }
         }
@@ -238,6 +242,14 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         }
     }
 
+    private fun RBuilder.calculateScoresInProcess() {
+        mCheckboxWithLabel(str.calculateScoresInProcess, state.calculateScoresInProcess, MOptionColor.primary) {
+            attrs {
+                onChange = { _, value -> setState { calculateScoresInProcess = value } }
+            }
+        }
+    }
+
     private fun proceed() {
         if (state.playerName.isBlank()) {
             setState { errorText = str.enterYourName }
@@ -257,7 +269,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                         .fold(0) { acc, segment -> acc + segment.length }) {
                         console.log("${entry.key} - ${entry.value}")
                     }
-                    props.onStartGame(map, playerName, state.playerColor!!, state.carsNumber)
+                    props.onStartGame(
+                        map,
+                        playerName,
+                        state.playerColor!!,
+                        state.carsNumber,
+                        state.calculateScoresInProcess
+                    )
                 } else {
                     setState { errorText = str.noMapSelected }
                 }
@@ -323,6 +341,11 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         val numberOfCarsOnHand by loc(
             Locale.En to "Initial number of cars on hand",
             Locale.Ru to "Количество вагонов в начале игры"
+        )
+
+        val calculateScoresInProcess by loc(
+            Locale.En to "Calculate scores during the game",
+            Locale.Ru to "Подсчет очков в процессе игры"
         )
 
         val notificationNote by loc(

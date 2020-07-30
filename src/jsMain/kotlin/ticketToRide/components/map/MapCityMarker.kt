@@ -4,8 +4,10 @@ import kotlinx.css.*
 import kotlinx.css.properties.*
 import kotlinx.html.js.onClickFunction
 import react.*
-import styled.*
-import ticketToRide.PlayerView
+import styled.StyleSheet
+import styled.css
+import styled.styledDiv
+import ticketToRide.PlayerId
 
 class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
 
@@ -16,7 +18,7 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
         var name: String
         var displayAllCityNames: Boolean
         var selected: Boolean
-        var station: PlayerView?
+        var station: PlayerId?
         var hasOccupiedSegment: Boolean
         var isTicketTarget: Boolean
         var connected: Boolean

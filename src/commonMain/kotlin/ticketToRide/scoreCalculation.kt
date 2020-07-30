@@ -4,7 +4,7 @@ import graph.*
 import kotlinx.collections.immutable.persistentMapOf
 
 // build a weighted graph of all segments occupied by the player
-fun PlayerView.getOccupiedSegmentsGraph(): Graph<String> {
+fun buildSegmentsGraph(occupiedSegments: List<Segment>): Graph<String> {
     val segments = occupiedSegments.map { GraphSegment(it.from.value, it.to.value, it.length) }
     val vertices = segments.flatMap { listOf(it.from, it.to) }.distinct().toList()
     return vertices.map { city ->
@@ -19,10 +19,12 @@ fun PlayerView.getOccupiedSegmentsGraph(): Graph<String> {
 }
 
 // calculate the list of tickets fulfilled by the player
-fun PlayerView.getFulfilledTickets(
+fun getFulfilledTickets(
     tickets: List<Ticket>,
-    allPlayers: List<PlayerView>,
-    graph: Graph<String> = getOccupiedSegmentsGraph(),
+    occupiedSegments: List<Segment>,
+    placedStations: List<CityName>,
+    segmentsOccupiedByOtherPlayers: List<Segment>,
+    graph: Graph<String> = buildSegmentsGraph(occupiedSegments),
     subgraphs: List<Graph<String>> = graph.splitIntoConnectedSubgraphs().toList()
 ): List<Ticket> {
 
@@ -34,8 +36,7 @@ fun PlayerView.getFulfilledTickets(
         .asSequence()
         // get adjacent occupied segments for each station
         .map { city ->
-            allPlayers.filter { it != this }
-                .flatMap { it.occupiedSegments.filter { s -> s.from == city || s.to == city } }
+            segmentsOccupiedByOtherPlayers.filter { s -> s.from == city || s.to == city }
         }
         .filter { it.isNotEmpty() }
         // pick one segment per each of the stations and add it to the graph of the player's segments
@@ -49,3 +50,10 @@ fun PlayerView.getFulfilledTickets(
         .maxBy { it.sumBy { it.points } }
         ?: getFulfilledTickets(subgraphs)
 }
+
+fun PlayerView.getFulfilledTickets(tickets: List<Ticket>, allPlayers: List<PlayerView>) =
+    getFulfilledTickets(
+        tickets,
+        occupiedSegments,
+        placedStations,
+        allPlayers.filter { it != this }.flatMap { it.occupiedSegments })

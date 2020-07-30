@@ -16,7 +16,7 @@ class MapSegmentComponent : RComponent<MapSegmentComponent.Props, RState>() {
         var to: City
         var color: CardColor?
         var points: Int
-        var occupiedBy: PlayerView?
+        var occupiedBy: PlayerId?
     }
 
     private lateinit var line: Polyline
