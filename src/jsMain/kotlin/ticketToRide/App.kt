@@ -9,10 +9,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.css.*
 import org.w3c.notifications.Notification
 import react.*
+import core.ConnectResponse
+import core.ConnectionState
 import styled.css
-import ticketToRide.ConnectResponse.Failure
-import ticketToRide.ConnectResponse.Success
-import ticketToRide.ConnectionState.*
+import core.ConnectionState.*
+import core.ServerConnection
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.endScreen
 import ticketToRide.screens.gameScreen
@@ -39,7 +40,7 @@ class App : RComponent<RProps, AppState>() {
 
     private val rootScope = CoroutineScope(Dispatchers.Default + Job())
     private val requests = Channel<Request>(Channel.CONFLATED)
-    private var connection: ServerConnection? = null
+    private var connection: ServerConnection<ConnectRequest, CannotJoinReason>? = null
 
     override fun componentWillUnmount() {
         rootScope.cancel()
@@ -57,18 +58,21 @@ class App : RComponent<RProps, AppState>() {
         errorMessage = ""
     }
 
-    private fun cannotJoinGame(reason: Failure) {
+    private fun displayConnectionOutcome(response: ConnectResponse<CannotJoinReason>) {
         setState {
-            errorMessage = when (reason) {
-                is Failure.GameIdTaken -> str.gameIdTaken
-                is Failure.NoSuchGame -> str.noSuchGame
-                is Failure.PlayerNameTaken -> str.playerNameTaken
-                is Failure.PlayerColorTaken -> str.playerColorTaken
-                is Failure.CannotConnect -> str.cannotConnect
-                // an exceptional situation, should never occur by design
-                is Failure.NoSuchPlayer -> throw Error("A player with this name haven't joined this game")
+            errorMessage = when (response) {
+                is ConnectResponse.Success -> ""
+                is ConnectResponse.CannotConnect -> str.cannotConnect
+                is ConnectResponse.CannotJoin -> when (response.reason) {
+                    CannotJoinReason.GameIdTaken -> str.gameIdTaken
+                    CannotJoinReason.NoSuchGame -> str.noSuchGame
+                    CannotJoinReason.PlayerNameTaken -> str.playerNameTaken
+                    CannotJoinReason.PlayerColorTaken -> str.playerColorTaken
+                    // an exceptional situation, should never occur by design
+                    CannotJoinReason.NoSuchPlayer -> throw Error("A player with this name haven't joined this game")
+                }
             }
-            showErrorMessage = true
+            showErrorMessage = (response !is ConnectResponse.Success)
         }
     }
 
@@ -150,7 +154,7 @@ class App : RComponent<RProps, AppState>() {
             attrs {
                 open = state.showErrorMessage || state.connectionState.showErrorMessage
                 onClose = { _, _ -> setState { showErrorMessage = false } }
-                if (state.connectionState == CannotJoinGame)
+                if (state.connectionState == CannotJoin)
                     autoHideDuration = ErrorMessageTimeoutSecs * 1000
             }
             mPaper(elevation = 6) {
@@ -195,16 +199,20 @@ class App : RComponent<RProps, AppState>() {
         calculateScoresInProcess: Boolean,
         retriesCount: Int = 0
     ) {
-        ServerConnection(rootScope, GameId.random().webSocketUrl) {
+        ServerConnection(
+            rootScope,
+            GameId.random().webSocketUrlForPlayers,
+            ConnectRequest.serializer(),
+            CannotJoinReason.serializer()
+        ) {
             val request = ConnectRequest.Start(playerName, playerColor, map, carsCount, calculateScoresInProcess)
-            when (val connectResponse = connect(request)) {
-                is Success -> runGame(playerName)
-                is Failure -> {
+            when (val connectResponse = connect(request, ::displayConnectionOutcome)) {
+                is ConnectResponse.Success ->
+                    runGame(playerName)
+                is ConnectResponse.CannotJoin<CannotJoinReason> -> {
                     close()
-                    if (connectResponse is Failure.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
+                    if (connectResponse.reason == CannotJoinReason.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
                         startGame(map, playerName, playerColor, carsCount, calculateScoresInProcess, retriesCount + 1)
-                    else
-                        cannotJoinGame(connectResponse)
                 }
             }
         }
@@ -212,21 +220,23 @@ class App : RComponent<RProps, AppState>() {
 
     private fun joinGame(request: ConnectRequest, playerName: PlayerName) {
         state.gameId?.let { gameId ->
-            ServerConnection(rootScope, gameId.webSocketUrl) {
-                when (val connectResponse = connect(request)) {
-                    is Success -> runGame(playerName)
-                    is Failure -> {
-                        close()
-                        cannotJoinGame(connectResponse)
-                    }
+            ServerConnection(
+                rootScope,
+                gameId.webSocketUrlForPlayers,
+                ConnectRequest.serializer(),
+                CannotJoinReason.serializer()
+            ) {
+                when (connect(request, ::displayConnectionOutcome)) {
+                    is ConnectResponse.Success -> runGame(playerName)
+                    else -> close()
                 }
             }
         } ?: throw Error("Cannot join game without game id")
     }
 
-    private suspend fun ServerConnection.runGame(playerName: PlayerName) {
+    private suspend fun ServerConnection<ConnectRequest, CannotJoinReason>.runGame(playerName: PlayerName) {
         connection = this
-        onDisconnected = { reason -> handleLostConnection(playerName, reason) }
+        onDisconnected = { reason -> handleLostConnection(playerName, reason, ::displayConnectionOutcome) }
         window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
         runRequestSendingLoop(requests, Request.serializer())
         coroutineScope {
@@ -316,22 +326,24 @@ class App : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun ServerConnection.handleLostConnection(playerName: PlayerName, reason: String?) {
+    private fun <T> ServerConnection<ConnectRequest, T>.handleLostConnection(
+        playerName: PlayerName,
+        reason: String?,
+        displayConnectionOutcome: (ConnectResponse<T>) -> Unit
+    ) {
         rootScope.launch {
             for (countdown in RetryTimeoutSecs downTo 1) {
                 setState { errorMessage = str.disconnected(reason to RetryTimeoutSecs) }
                 delay(1000)
             }
             setState { errorMessage = str.reconnecting }
-            val resp = reconnect(ConnectRequest.Reconnect(playerName))
-            if (resp is Failure)
-                cannotJoinGame(resp)
+            reconnect(ConnectRequest.Reconnect(playerName), displayConnectionOutcome)
         }
     }
 
     private fun reconnect(playerName: PlayerName) {
         rootScope.launch {
-            connection?.reconnect(ConnectRequest.Reconnect(playerName))
+            connection?.reconnect(ConnectRequest.Reconnect(playerName), ::displayConnectionOutcome)
         }
     }
 
@@ -349,7 +361,7 @@ class App : RComponent<RProps, AppState>() {
 
     private val ConnectionState.showErrorMessage
         get() =
-            this == Reconnecting || this == CannotConnect || this == CannotJoinGame
+            this == Reconnecting || this == CannotConnect || this == CannotJoin
 
     private fun onLocaleChanged(value: Locale) = setState { locale = value }
 

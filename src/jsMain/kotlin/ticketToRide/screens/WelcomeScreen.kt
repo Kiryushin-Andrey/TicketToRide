@@ -12,6 +12,8 @@ import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
 import org.w3c.notifications.*
 import react.*
+import core.ConnectResponse
+import core.ServerConnection
 import styled.css
 import styled.styledDiv
 import ticketToRide.*
@@ -22,7 +24,7 @@ private val defaultMap = (kotlinext.js.require("default.map").default as String)
 class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
-    private var peekPlayersConnection: ServerConnection? = null
+    private var peekPlayersConnection: ServerConnection<ConnectAsObserverRequest, CannotJoinReason>? = null
 
     interface State : RState {
         var playerName: String
@@ -290,8 +292,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     }
 
     private fun observeGamePlayers(gameId: GameId) {
-        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl) {
-            if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
+        peekPlayersConnection = ServerConnection(
+            scope,
+            gameId.webSocketUrlForObservers,
+            ConnectAsObserverRequest.serializer(),
+            CannotJoinReason.serializer()
+        ) {
+            if (connect(ConnectAsObserverRequest) is ConnectResponse.Success) {
                 responses(GameStateForObservers.serializer()).collect {
                     setState {
                         otherPlayers = it.players

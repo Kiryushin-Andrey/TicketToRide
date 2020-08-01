@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
+import core.ConnectionOutcome
 
 data class GameFlowValue(val state: GameState, val responses: List<SendResponse>)
 
@@ -52,8 +53,8 @@ class Game private constructor(
 
     private val requestsQueue = Channel<RequestQueueItem>(Channel.BUFFERED)
 
-    private val players = mutableMapOf<PlayerName, ClientConnection.Player>()
-    private val observers = mutableListOf<ClientConnection.Observer>()
+    private val players = mutableMapOf<PlayerName, PlayerConnection>()
+    private val observers = mutableListOf<ObserverConnection>()
 
     var state = GameState.initial(id, initialCarsCount, calculateScoresInProcess, map)
         private set
@@ -109,51 +110,48 @@ class Game private constructor(
                 .collect()
         }
 
-    suspend fun joinPlayer(name: PlayerName, color: PlayerColor, ws: WebSocketSession): ConnectionOutcome {
+    suspend fun joinPlayer(name: PlayerName, color: PlayerColor, ws: WebSocketSession): ConnectionOutcome<PlayerConnection, CannotJoinReason> {
         if (state.players.any { it.name == name }) {
             logger.info { "Player ${name.value} tried to join more than once" }
-            return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerNameTaken)
+            return cannotJoin(CannotJoinReason.PlayerNameTaken)
         }
 
         if (state.players.any { it.color == color })
-            return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerColorTaken)
+            return cannotJoin(CannotJoinReason.PlayerColorTaken)
 
         logger.info { "Player ${name.value} joined" }
-        val conn = ClientConnection.Player(name, ws)
+        val conn = PlayerConnection(name, this, ws)
         players[name] = conn
         requestsQueue.send(RequestQueueItem.Connect(color, conn))
-        return ConnectionOutcome.Success(this, conn)
+        return ConnectionOutcome.Success(conn)
     }
 
-    suspend fun reconnectPlayer(name: PlayerName, ws: WebSocketSession): ConnectionOutcome =
+    suspend fun reconnectPlayer(name: PlayerName, ws: WebSocketSession): ConnectionOutcome<PlayerConnection, CannotJoinReason> =
         players[name]?.let { player ->
             ping(player)
             if (players.containsKey(name)) {
                 logger.info { "Player ${name.value} tried to reconnect but was not disconnected" }
-                return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerNameTaken)
+                return cannotJoin(CannotJoinReason.PlayerNameTaken)
             }
 
             logger.info { "Player ${name.value} reconnected" }
-            val conn = ClientConnection.Player(name, ws)
+            val conn = PlayerConnection(name, this, ws)
             players[name] = conn
             requestsQueue.send(RequestQueueItem.Reconnect(conn))
-            return ConnectionOutcome.Success(this, conn)
-        } ?: ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchPlayer)
+            return ConnectionOutcome.Success(conn)
+        } ?: cannotJoin(CannotJoinReason.NoSuchPlayer)
 
-    fun joinObserver(conn: ClientConnection.Observer) {
+    fun joinObserver(conn: ObserverConnection) {
         observers += conn
     }
 
-    suspend fun leavePlayer(conn: ClientConnection) {
+    suspend fun leavePlayer(conn: PlayerConnection) {
         logger.info { "$conn disconnected" }
-        when (conn) {
-            is ClientConnection.Player -> players -= conn.name
-            is ClientConnection.Observer -> observers -= conn
-        }
+        players -= conn.name
         onConnectionLost(conn)
     }
 
-    suspend fun process(req: GameRequest, conn: ClientConnection.Player) {
+    suspend fun process(req: GameRequest, conn: PlayerConnection) {
         logger.info { "Received $req from ${conn.name.value}" }
         requestsQueue.send(RequestQueueItem.PlayerAction(req, conn))
     }
@@ -161,14 +159,14 @@ class Game private constructor(
     private suspend fun send(playerName: PlayerName, resp: Response) {
         players[playerName]?.let { player ->
             try {
-                player.send(resp, Response.serializer())
+                player.send(resp)
             } catch (e: CancellationException) {
                 leavePlayer(player)
             }
         }
     }
 
-    private suspend fun ping(conn: ClientConnection) {
+    private suspend fun ping(conn: PlayerConnection) {
         try {
             conn.ping()
         } catch (e: CancellationException) {
@@ -179,7 +177,7 @@ class Game private constructor(
     suspend fun sendToAllPlayers(resp: (PlayerName) -> Response) = with(players.iterator()) {
         forEach {
             try {
-                it.value.send(resp(it.value.name), Response.serializer())
+                it.value.send(resp(it.value.name))
             } catch (e: CancellationException) {
                 remove()
                 onConnectionLost(it.value)
@@ -190,26 +188,25 @@ class Game private constructor(
     private suspend fun sendToAllObservers(resp: GameStateForObservers) = with(observers.iterator()) {
         forEach {
             try {
-                it.send(resp, GameStateForObservers.serializer())
+                it.send(resp)
             } catch (e: CancellationException) {
                 remove()
-                onConnectionLost(it)
             }
         }
     }
 
-    private suspend fun onConnectionLost(conn: ClientConnection) {
-        if (players.isEmpty() && observers.isEmpty()) {
+    private suspend fun onConnectionLost(conn: PlayerConnection) {
+        if (players.isEmpty()) {
             requestsQueue.close()
             onAllPlayersLeft(this)
-        } else if (conn is ClientConnection.Player) {
+        } else {
             process(LeaveGameRequest, conn)
         }
     }
 
-    private sealed class RequestQueueItem(val conn: ClientConnection.Player) {
-        class Connect(val playerColor: PlayerColor, conn: ClientConnection.Player) : RequestQueueItem(conn)
-        class Reconnect(conn: ClientConnection.Player) : RequestQueueItem(conn)
-        class PlayerAction(val request: GameRequest, conn: ClientConnection.Player) : RequestQueueItem(conn)
+    private sealed class RequestQueueItem(val conn: PlayerConnection) {
+        class Connect(val playerColor: PlayerColor, conn: PlayerConnection) : RequestQueueItem(conn)
+        class Reconnect(conn: PlayerConnection) : RequestQueueItem(conn)
+        class PlayerAction(val request: GameRequest, conn: PlayerConnection) : RequestQueueItem(conn)
     }
 }

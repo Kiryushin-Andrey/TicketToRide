@@ -14,7 +14,7 @@ interface PlayerId {
 data class PlayerView(
     override val name: PlayerName,
     override val color: PlayerColor,
-    val points: Int?,
+    val points: Int? = null,
     val carsLeft: Int,
     val stationsLeft: Int,
     val cardsOnHand: Int,

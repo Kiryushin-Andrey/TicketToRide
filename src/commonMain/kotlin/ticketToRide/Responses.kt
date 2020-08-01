@@ -25,7 +25,7 @@ sealed class Response {
     ) : Response()
 
     @Serializable
-    class GameState(val state: GameStateView, val action: PlayerAction?) : Response()
+    class GameState(val state: GameStateView, val action: PlayerAction? = null) : Response()
 
     @Serializable
     class GameEnd(

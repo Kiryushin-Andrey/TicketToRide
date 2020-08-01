@@ -3,42 +3,32 @@ package ticketToRide
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.cio.websocket.readText
-import io.ktor.http.cio.websocket.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.serialization.SerializationStrategy
+import core.*
 
 private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 
-sealed class ClientConnection(private val webSocket: WebSocketSession) {
-    suspend fun <T> send(resp: T, serializer: SerializationStrategy<T>) =
-        webSocket.send(json.stringify(serializer, resp))
+class PlayerConnection(val name: PlayerName, val game: Game, webSocket: WebSocketSession) :
+    ListenerConnection<Response>(webSocket, Response.serializer()) {
 
-    suspend fun ping() = webSocket.send(Response.Pong)
-
-    class Player(val name: PlayerName, webSocket: WebSocketSession) : ClientConnection(webSocket) {
-        override fun toString() = name.value
-    }
-
-    class Observer(webSocket: WebSocketSession) : ClientConnection(webSocket) {
-        override fun toString() = "anonymous observer"
-    }
+    override fun toString() = name.value
 }
 
-sealed class ConnectionOutcome {
-    class Success(val game: Game, val connection: ClientConnection.Player) : ConnectionOutcome()
-    class ObserveSuccess(val game: Game, val connection: ClientConnection.Observer) : ConnectionOutcome()
-    class Failure(val reason: ConnectResponse.Failure) : ConnectionOutcome()
+class ObserverConnection(val game: Game, webSocket: WebSocketSession) :
+    ListenerConnection<GameStateForObservers>(webSocket, GameStateForObservers.serializer()) {
+
+    override fun toString() = "anonymous observer"
 }
 
-private fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)
+fun cannotJoin(reason: CannotJoinReason) = ConnectionOutcome.CannotJoin(reason)
 
-private suspend fun loadGame(
+private suspend fun <T> loadGame(
     id: GameId,
     redis: RedisStorage?,
-    process: suspend (Game) -> ConnectionOutcome
-): ConnectionOutcome {
+    process: suspend (Game) -> ConnectionOutcome<T, CannotJoinReason>
+): ConnectionOutcome<T, CannotJoinReason> {
     val game = games.getOrElse(id) {
         redis?.loadGame(id)?.let { (state, map) ->
             Game.restore(rootScope, state, map, redis) { games.remove(id) }.also { game ->
@@ -47,10 +37,16 @@ private suspend fun loadGame(
         }
     }
     return if (game != null) process(game)
-    else ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
+    else cannotJoin(CannotJoinReason.NoSuchGame)
 }
 
-suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisStorage?): ConnectionOutcome {
+suspend fun WebSocketSession.connectAsPlayer(
+    gameId: GameId,
+    redis: RedisStorage?
+): ConnectionOutcome<PlayerConnection, CannotJoinReason> {
+
+    fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)
+
     val req = (incoming.receive() as Frame.Text).readText()
         .let { json.parse(ConnectRequest.serializer(), it) }
 
@@ -69,7 +65,7 @@ suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisSto
                 redis?.saveMap(gameId, req.map)
                 game.joinPlayer(req.playerName, req.playerColor, this)
             } else
-                ConnectionOutcome.Failure(ConnectResponse.Failure.GameIdTaken)
+                cannotJoin(CannotJoinReason.GameIdTaken)
 
         is ConnectRequest.Join ->
             loadGame(gameId, redis) {
@@ -80,21 +76,33 @@ suspend fun WebSocketSession.establishConnection(gameId: GameId, redis: RedisSto
             loadGame(gameId, redis) {
                 it.reconnectPlayer(req.playerName, this)
             }
-
-        is ConnectRequest.Observe ->
-            loadGame(gameId, redis) {
-                val conn = ClientConnection.Observer(this)
-                it.joinObserver(conn)
-                ConnectionOutcome.ObserveSuccess(it, conn)
-            }
     }
 
     val resp = when (outcome) {
         is ConnectionOutcome.Success -> ConnectResponse.Success
-        is ConnectionOutcome.ObserveSuccess -> ConnectResponse.Success
-        is ConnectionOutcome.Failure -> outcome.reason
+        is ConnectionOutcome.CannotJoin -> ConnectResponse.CannotJoin(outcome.reason)
+        is ConnectionOutcome.CannotConnect -> ConnectResponse.CannotConnect
     }
-    send(json.stringify(ConnectResponse.serializer(), resp))
+    send(Frame.Text(json.stringify(ConnectResponse.serializer(CannotJoinReason.serializer()), resp)))
 
+    return outcome
+}
+
+suspend fun WebSocketSession.connectAsObserver(
+    gameId: GameId,
+    redis: RedisStorage?
+): ConnectionOutcome<ObserverConnection, CannotJoinReason> {
+    incoming.receive()
+    val outcome = loadGame(gameId, redis) { game ->
+        val conn = ObserverConnection(game, this)
+        game.joinObserver(conn)
+        ConnectionOutcome.Success(conn)
+    }
+    val resp = when (outcome) {
+        is ConnectionOutcome.Success -> ConnectResponse.Success
+        is ConnectionOutcome.CannotJoin -> ConnectResponse.CannotJoin(outcome.reason)
+        is ConnectionOutcome.CannotConnect -> ConnectResponse.CannotConnect
+    }
+    send(Frame.Text(json.stringify(ConnectResponse.serializer(CannotJoinReason.serializer()), resp)))
     return outcome
 }

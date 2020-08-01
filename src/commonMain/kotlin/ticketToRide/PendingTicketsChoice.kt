@@ -11,5 +11,4 @@ fun PendingTicketsChoice?.toState() = when {
     else -> PendingTicketsChoiceState.TookInAdvance
 }
 
-@Serializable
 enum class PendingTicketsChoiceState { None, TookInAdvance, Choosing }

@@ -1,31 +1,25 @@
-package ticketToRide
+package core
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
 import kotlin.browser.window
 
-private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
-
-enum class ConnectionState {
-    NotConnected,
-    Connected,
-    Reconnecting,
-    CannotJoinGame,
-    CannotConnect
-}
-
-class ServerConnection(
+class ServerConnection<TConnectRequest, TCannotJoinReason>(
     parentScope: CoroutineScope,
     private val url: String,
-    establishConnection: suspend ServerConnection.() -> Unit
+    private val connectRequestSerializer: KSerializer<TConnectRequest>,
+    private val cannotJoinReasonSerializer: KSerializer<TCannotJoinReason>,
+    establishConnection: suspend ServerConnection<TConnectRequest, TCannotJoinReason>.() -> Unit
 ) {
     companion object {
         const val MaxRetriesCount = 5
@@ -54,7 +48,7 @@ class ServerConnection(
 
     init {
         pingTimerHandle = window.setInterval({
-            getWebSocketOrNull()?.takeIf { it.readyState == 1.toShort() /* OPEN */ }?.send(Request.Ping)
+            getWebSocketOrNull()?.takeIf { it.readyState == 1.toShort() /* OPEN */ }?.send(PingPong.Ping)
         }, 10000)
 
         window.addEventListener("onbeforeunload", closeWebSocket)
@@ -68,12 +62,18 @@ class ServerConnection(
 
         scope.launch { establishConnection() }
     }
-    
-    suspend fun reconnect(request: ConnectRequest): ConnectResponse {
-        assertState(ConnectionState.Reconnecting, ConnectionState.CannotConnect)
+
+    suspend fun reconnect(
+        request: TConnectRequest,
+        displayConnectionOutcome: (ConnectResponse<TCannotJoinReason>) -> Unit
+    ): ConnectResponse<TCannotJoinReason> {
+        assertState(
+            ConnectionState.Reconnecting,
+            ConnectionState.CannotConnect
+        )
         _state.value = ConnectionState.Reconnecting
         wsDeferred = CompletableDeferred()
-        return connect(request)
+        return connect(request, displayConnectionOutcome)
     }
 
     fun <T> runRequestSendingLoop(requests: ReceiveChannel<T>, serializer: SerializationStrategy<T>) {
@@ -101,7 +101,10 @@ class ServerConnection(
         }
     }
 
-    suspend fun connect(connectRequest: ConnectRequest): ConnectResponse {
+    suspend fun connect(
+        connectRequest: TConnectRequest,
+        displayConnectionOutcome: (ConnectResponse<TCannotJoinReason>) -> Unit = {}
+    ): ConnectResponse<TCannotJoinReason> {
         fun createWebSocket(retriesCount: Int = 0) {
             val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
             WebSocket("$protocol//" + window.location.host + url).apply {
@@ -123,38 +126,42 @@ class ServerConnection(
             }
         }
 
-        assertState(ConnectionState.NotConnected, ConnectionState.Reconnecting)
+        assertState(
+            ConnectionState.NotConnected,
+            ConnectionState.Reconnecting
+        )
         createWebSocket()
-        val ws = wsDeferred.await() ?: return ConnectResponse.Failure.CannotConnect
-        val response = CompletableDeferred<ConnectResponse>()
+        val ws = wsDeferred.await() ?: return ConnectResponse.CannotConnect
+        val response = CompletableDeferred<ConnectResponse<TCannotJoinReason>>()
         ws.onmessage = { msg ->
             kotlin.runCatching {
                 val reqStr = msg.data as? String
                 if (reqStr == null) {
                     response.completeExceptionally(Error("Unexpected response from server: ${msg.data}"))
                 } else {
-                    val message = json.parse(ConnectResponse.serializer(), reqStr)
+                    val message = json.parse(ConnectResponse.serializer(cannotJoinReasonSerializer), reqStr)
                     when (message) {
                         is ConnectResponse.Success -> {
                             ws.onopen = null
                         }
-                        is ConnectResponse.Failure -> {
+                        is ConnectResponse.CannotJoin<TCannotJoinReason> -> {
                             ws.onclose = null
                             ws.close()
                             wsDeferred = CompletableDeferred()
                         }
+                        else -> throw Error("Unexpected connect response from server")
                     }
                     response.complete(message)
                 }
             }.onFailure { response.completeExceptionally(it) }
         }
-        ws.send(json.stringify(ConnectRequest.serializer(), connectRequest))
+        ws.send(json.stringify(connectRequestSerializer, connectRequest))
         return response.await().also { resp ->
             _state.value = when (resp) {
                 is ConnectResponse.Success -> {
                     ws.onmessage = { msg ->
                         scope.launch {
-                            (msg.data as? String)?.takeUnless { it == Response.Pong }?.let { reqStr ->
+                            (msg.data as? String)?.takeUnless { it == PingPong.Pong }?.let { reqStr ->
                                 _responses.send(reqStr)
                             }
                         }
@@ -171,11 +178,12 @@ class ServerConnection(
                     }
                     ConnectionState.Connected
                 }
-                is ConnectResponse.Failure.CannotConnect ->
+                is ConnectResponse.CannotConnect ->
                     ConnectionState.CannotConnect
-                is ConnectResponse.Failure ->
-                    ConnectionState.CannotJoinGame
+                is ConnectResponse.CannotJoin ->
+                    ConnectionState.CannotJoin
             }
+            displayConnectionOutcome(resp)
         }
     }
 

@@ -16,13 +16,14 @@ import io.ktor.serialization.json
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.json.*
 import mu.KotlinLogging
+import core.ConnectionOutcome
+import core.PingPong
+import core.json
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
 val games = mutableMapOf<GameId, Game>()
-val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 
 private val logger = KotlinLogging.logger("Server")
 private val processName = ManagementFactory.getRuntimeMXBean().name
@@ -100,20 +101,20 @@ fun Application.module() {
             }
         }
 
-        webSocket("game/{id}/ws") {
+        webSocket("game/{id}/ws/play") {
             val gameId = call.parameters["id"]?.let { GameId(it) }
                 ?: throw Error("No game id specified for WebSocket connection")
 
-            when (val outcome = establishConnection(gameId, redis)) {
+            when (val outcome = connectAsPlayer(gameId, redis)) {
 
                 is ConnectionOutcome.Success -> {
-                    val game = outcome.game
                     val connection = outcome.connection
+                    val game = connection.game
                     incoming.consumeAsFlow()
                         .mapNotNull { (it as? Frame.Text)?.readText() }
                         .filter {
-                            if (it == Request.Ping) send(Response.Pong)
-                            it != Request.Ping
+                            if (it == PingPong.Ping) send(PingPong.Pong)
+                            it != PingPong.Ping
                         }
                         .mapNotNull { req ->
                             kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
@@ -144,17 +145,29 @@ fun Application.module() {
                         }
                 }
 
-                is ConnectionOutcome.ObserveSuccess -> {
+                is ConnectionOutcome.CannotJoin -> {
+                    close(CloseReason(CloseReason.Codes.NORMAL, "Failed to join game"))
+                }
+            }
+        }
+
+        webSocket("game/{id}/ws/observe") {
+            val gameId = call.parameters["id"]?.let { GameId(it) }
+                ?: throw Error("No game id specified for WebSocket connection")
+
+            when (val outcome = connectAsObserver(gameId, redis)) {
+
+                is ConnectionOutcome.Success -> {
                     outcome.apply {
-                        connection.send(game.state.forObservers(null), GameStateForObservers.serializer())
+                        connection.send(connection.game.state.forObservers(null))
                     }
                     incoming.consumeAsFlow()
                         .mapNotNull { (it as? Frame.Text)?.readText() }
-                        .filter { it == Request.Ping }
-                        .collect { send(Response.Pong) }
+                        .filter { it == PingPong.Ping }
+                        .collect { send(PingPong.Pong) }
                 }
 
-                is ConnectionOutcome.Failure -> {
+                is ConnectionOutcome.CannotJoin -> {
                     close(CloseReason(CloseReason.Codes.NORMAL, "Failed to join game"))
                 }
             }
