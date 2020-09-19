@@ -3,38 +3,41 @@ package ticketToRide
 import kotlinx.serialization.*
 
 @Serializable
-sealed class Request {
-
-    @Serializable
-    class ChatMessage(val message: String) : Request()
-}
+sealed class Request
 
 @Serializable
-sealed class GameRequest: Request()
+@SerialName("message")
+class ChatMessage(val message: String) : Request()
 
 @Serializable
-object LeaveGameRequest : GameRequest()
+@SerialName("leave")
+object LeaveGameRequest : Request()
 
 @Serializable
-class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : GameRequest()
+@SerialName("confirmTickets")
+class ConfirmTicketsChoiceRequest(val ticketsToKeep: List<Ticket>) : Request()
 
 @Serializable
 sealed class PickedCard {
 
     @Serializable
+    @SerialName("open")
     data class Open(val ix: Int, val card: Card.Car) : PickedCard()
 
     @Serializable
+    @SerialName("closed")
     object Closed : PickedCard()
 }
 
 @Serializable
-sealed class PickCardsRequest : GameRequest() {
+sealed class PickCardsRequest : Request() {
 
     @Serializable
+    @SerialName("pickLoco")
     class Loco(val ix: Int) : PickCardsRequest()
 
     @Serializable
+    @SerialName("pickTwoCards")
     class TwoCards private constructor(val cards: Pair<PickedCard, PickedCard>) : PickCardsRequest() {
         companion object {
             fun bothOpen(ix1: Int, ix2: Int, openCards: List<Card>) = TwoCards(
@@ -66,10 +69,13 @@ sealed class PickCardsRequest : GameRequest() {
 }
 
 @Serializable
-object PickTicketsRequest : GameRequest()
+@SerialName("pickTickets")
+object PickTicketsRequest : Request()
 
 @Serializable
-class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>) : GameRequest()
+@SerialName("build")
+class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>) : Request()
 
 @Serializable
-class BuildStationRequest(val target: CityName, val cards: List<Card>) : GameRequest()
+@SerialName("station")
+class BuildStationRequest(val target: CityName, val cards: List<Card>) : Request()

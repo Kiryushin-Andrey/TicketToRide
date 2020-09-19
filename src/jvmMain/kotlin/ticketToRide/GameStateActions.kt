@@ -22,7 +22,7 @@ fun GameState.reconnectPlayer(name: PlayerName, map: GameMap) =
         listOf(SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map, calculateScoresInProcess))))
 
 fun GameState.processRequest(
-    req: GameRequest,
+    req: Request,
     map: GameMap,
     fromPlayerName: PlayerName
 ): GameFlowValue {
@@ -60,15 +60,24 @@ fun GameState.processRequest(
             inTurnOnly(fromPlayerName) {
                 buildStation(fromPlayerName, req.target, req.cards).recalculatePlayerScores(map).advanceTurn(map)
             }
+
+        is ChatMessage -> this
     }
-    val action = req.toAction(fromPlayerName)
-    return GameFlowValue(
-        newState,
-        listOf(
-            SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
-            SendResponse.ForObservers(newState.forObservers(action))
-        )
-    )
+
+    val messages = when {
+        req is ChatMessage ->
+            listOf(SendResponse.ForAll { Response.ChatMessage(fromPlayerName, req.message) })
+        newState == this ->
+            emptyList()
+        else -> {
+            val action = req.toAction(fromPlayerName)
+            listOf(
+                SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
+                SendResponse.ForObservers(newState.forObservers(action))
+            )
+        }
+    }
+    return GameFlowValue(newState, messages)
 }
 
 fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {

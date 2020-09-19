@@ -117,7 +117,7 @@ sealed class PlayerState {
 
         val myCards get() = gameState.myCards
 
-        internal fun sendAndResetState(req: GameRequest): PlayerState {
+        internal fun sendAndResetState(req: Request): PlayerState {
             requests.offer(req)
             return None
         }

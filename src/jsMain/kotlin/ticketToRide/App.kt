@@ -39,7 +39,7 @@ class App : RComponent<RProps, AppState>() {
 
     private val rootScope = CoroutineScope(Dispatchers.Default + Job())
     private val requests = Channel<Request>(Channel.CONFLATED)
-    private var connection: ServerConnection? = null
+    private var connection: ServerConnection<Response>? = null
 
     override fun componentWillUnmount() {
         rootScope.cancel()
@@ -66,7 +66,7 @@ class App : RComponent<RProps, AppState>() {
                 is Failure.PlayerColorTaken -> str.playerColorTaken
                 is Failure.CannotConnect -> str.cannotConnect
                 // an exceptional situation, should never occur by design
-                is Failure.NoSuchPlayer -> throw Error("A player with this name haven't joined this game")
+                is Failure.NoSuchPlayer -> "A player with this name haven't joined this game"
             }
             showErrorMessage = true
         }
@@ -116,7 +116,7 @@ class App : RComponent<RProps, AppState>() {
                         playerState = it.playerState
                         onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> requests.offer(Request.ChatMessage(message)) }
+                        onSendMessage = { message -> requests.offer(ChatMessage(message)) }
                     }
 
                 is Screen.GameOver -> {
@@ -136,7 +136,7 @@ class App : RComponent<RProps, AppState>() {
                             )
                         }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> requests.offer(Request.ChatMessage(message)) }
+                        onSendMessage = { message -> requests.offer(ChatMessage(message)) }
                     }
                 }
             }
@@ -195,7 +195,7 @@ class App : RComponent<RProps, AppState>() {
         calculateScoresInProcess: Boolean,
         retriesCount: Int = 0
     ) {
-        ServerConnection(rootScope, GameId.random().webSocketUrl) {
+        ServerConnection(rootScope, GameId.random().webSocketUrl, Response.serializer()) {
             val request = ConnectRequest.Start(playerName, playerColor, map, carsCount, calculateScoresInProcess)
             when (val connectResponse = connect(request)) {
                 is Success -> runGame(playerName)
@@ -212,7 +212,7 @@ class App : RComponent<RProps, AppState>() {
 
     private fun joinGame(request: ConnectRequest, playerName: PlayerName) {
         state.gameId?.let { gameId ->
-            ServerConnection(rootScope, gameId.webSocketUrl) {
+            ServerConnection(rootScope, gameId.webSocketUrl, Response.serializer()) {
                 when (val connectResponse = connect(request)) {
                     is Success -> runGame(playerName)
                     is Failure -> {
@@ -224,14 +224,15 @@ class App : RComponent<RProps, AppState>() {
         } ?: throw Error("Cannot join game without game id")
     }
 
-    private suspend fun ServerConnection.runGame(playerName: PlayerName) {
+    private suspend fun ServerConnection<Response>.runGame(playerName: PlayerName) {
         connection = this
         onDisconnected = { reason -> handleLostConnection(playerName, reason) }
         window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
+        setState { showErrorMessage = false }
         runRequestSendingLoop(requests, Request.serializer())
         coroutineScope {
             launch { connectionState.collect { onConnectionStateChanged(it) } }
-            launch { responses(Response.serializer()).collect { processResponse(it) } }
+            launch { responses().collect { processResponse(it) } }
         }
     }
 
@@ -316,7 +317,7 @@ class App : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun ServerConnection.handleLostConnection(playerName: PlayerName, reason: String?) {
+    private fun <T> ServerConnection<T>.handleLostConnection(playerName: PlayerName, reason: String?) {
         rootScope.launch {
             for (countdown in RetryTimeoutSecs downTo 1) {
                 setState { errorMessage = str.disconnected(reason to RetryTimeoutSecs) }

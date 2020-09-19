@@ -1,5 +1,6 @@
 package ticketToRide
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
@@ -7,9 +8,11 @@ import kotlin.random.Random
 sealed class Card {
 
     @Serializable
+    @SerialName("car")
     data class Car(val color: CardColor) : Card()
 
     @Serializable
+    @SerialName("loco")
     object Loco : Card()
 
     companion object {

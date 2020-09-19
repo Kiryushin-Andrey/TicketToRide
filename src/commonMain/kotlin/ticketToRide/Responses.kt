@@ -1,22 +1,24 @@
 package ticketToRide
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 class GameStateForObservers(
     val gameId: GameId,
-    val players: List<PlayerView>,
-    val openCards: List<Card>,
+    val players: List<PlayerView> = emptyList(),
+    val openCards: List<Card> = emptyList(),
     val turn: Int,
     val lastRound: Boolean,
     val gameEnded: Boolean,
-    val action: PlayerAction?
+    val action: PlayerAction? = null
 )
 
 @Serializable
 sealed class Response {
 
     @Serializable
+    @SerialName("state+map")
     class GameStateWithMap(
         val gameId: GameId,
         val state: GameStateView,
@@ -25,18 +27,22 @@ sealed class Response {
     ) : Response()
 
     @Serializable
-    class GameState(val state: GameStateView, val action: PlayerAction?) : Response()
+    @SerialName("state")
+    class GameState(val state: GameStateView, val action: PlayerAction? = null) : Response()
 
     @Serializable
+    @SerialName("end")
     class GameEnd(
-        val players: List<Pair<PlayerView, List<Ticket>>>,
+        val players: List<Pair<PlayerView, List<Ticket>>> = emptyList(),
         val action: PlayerAction? = null
     ) : Response()
 
     @Serializable
+    @SerialName("error")
     class ErrorMessage(val text: String) : Response()
 
     @Serializable
+    @SerialName("message")
     class ChatMessage(val from: PlayerName, val message: String) : Response()
 }
 
@@ -44,36 +50,48 @@ sealed class Response {
 sealed class PlayerAction {
 
     @Serializable
+    @SerialName("join")
     class JoinGame(val playerName: PlayerName) : PlayerAction()
 
     @Serializable
+    @SerialName("leave")
     class LeaveGame(val playerName: PlayerName) : PlayerAction()
 
     @Serializable
+    @SerialName("confirmTickets")
     class ConfirmTicketsChoice(val playerName: PlayerName, val ticketsToKeep: Int) : PlayerAction()
 
     @Serializable
     sealed class PickCards : PlayerAction() {
 
         @Serializable
+        @SerialName("pickLoco")
         class Loco(val playerName: PlayerName) : PickCards()
 
         @Serializable
+        @SerialName("pickTwoCards")
         class TwoCards(val playerName: PlayerName, val cards: Pair<PickedCard, PickedCard>) : PickCards()
     }
 
     @Serializable
+    @SerialName("pickTickets")
     class PickTickets(val playerName: PlayerName) : PlayerAction()
 
     @Serializable
-    class BuildSegment(val playerName: PlayerName, val from: CityName, val to: CityName, val cards: List<Card>) :
-        PlayerAction()
+    @SerialName("build")
+    class BuildSegment(
+        val playerName: PlayerName,
+        val from: CityName,
+        val to: CityName,
+        val cards: List<Card> = emptyList()
+    ) : PlayerAction()
 
     @Serializable
+    @SerialName("station")
     class BuildStation(val playerName: PlayerName, val target: CityName) : PlayerAction()
 }
 
-fun GameRequest.toAction(playerName: PlayerName) = when (this) {
+fun Request.toAction(playerName: PlayerName) = when (this) {
     is LeaveGameRequest -> PlayerAction.LeaveGame(playerName)
     is ConfirmTicketsChoiceRequest -> PlayerAction.ConfirmTicketsChoice(playerName, ticketsToKeep.size)
     is PickCardsRequest.Loco -> PlayerAction.PickCards.Loco(playerName)
@@ -81,4 +99,5 @@ fun GameRequest.toAction(playerName: PlayerName) = when (this) {
     is PickTicketsRequest -> PlayerAction.PickTickets(playerName)
     is BuildSegmentRequest -> PlayerAction.BuildSegment(playerName, from, to, cards)
     is BuildStationRequest -> PlayerAction.BuildStation(playerName, target)
+    is ChatMessage -> null
 }

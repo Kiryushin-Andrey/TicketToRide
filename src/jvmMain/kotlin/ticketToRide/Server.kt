@@ -2,29 +2,23 @@ package ticketToRide
 
 import io.ktor.application.*
 import io.ktor.features.*
-import io.ktor.html.respondHtml
-import io.ktor.http.CacheControl
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.cio.websocket.*
+import io.ktor.html.*
+import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.route
-import io.ktor.routing.routing
-import io.ktor.serialization.json
-import io.ktor.websocket.WebSockets
-import io.ktor.websocket.webSocket
-import kotlinx.coroutines.flow.*
-import kotlinx.serialization.json.*
-import mu.KotlinLogging
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.serialization.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
 val games = mutableMapOf<GameId, Game>()
-val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 
-private val logger = KotlinLogging.logger("Server")
+private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 private val processName = ManagementFactory.getRuntimeMXBean().name
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
@@ -48,13 +42,12 @@ fun Application.module() {
         }
     }
 
-    install(WebSockets)
     install(Compression) {
         gzip {
             matchContentType(ContentType.parse("*/javascript"))
         }
     }
-    install(ContentNegotiation) { json(json) }
+    install(ContentNegotiation) { json }
     install(CachingHeaders) {
         options { outgoingContent ->
             outgoingContent.contentType?.withoutParameters()?.let {
@@ -99,65 +92,24 @@ fun Application.module() {
                 }
             }
         }
+    }
+    webSocketGameTransport("game/{id}/ws", rootScope, redis)
+}
 
-        webSocket("game/{id}/ws") {
-            val gameId = call.parameters["id"]?.let { GameId(it) }
-                ?: throw Error("No game id specified for WebSocket connection")
+fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)
 
-            when (val outcome = establishConnection(gameId, redis)) {
-
-                is ConnectionOutcome.Success -> {
-                    val game = outcome.game
-                    val connection = outcome.connection
-                    incoming.consumeAsFlow()
-                        .mapNotNull { (it as? Frame.Text)?.readText() }
-                        .filter {
-                            if (it == Request.Ping) send(Response.Pong)
-                            it != Request.Ping
-                        }
-                        .mapNotNull { req ->
-                            kotlin.runCatching { json.parse(Request.serializer(), req) }.also {
-                                logger.info { "Received $req from $connection" }
-                                it.exceptionOrNull()?.let { e ->
-                                    logger.warn(e) { "Failed to deserialize request: $req" }
-                                    game.leavePlayer(connection)
-                                    close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
-                                }
-                            }.getOrNull()
-                        }
-                        .collect { req ->
-                            when (req) {
-                                is LeaveGameRequest -> {
-                                    game.leavePlayer(connection)
-                                    close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
-                                }
-
-                                is Request.ChatMessage -> {
-                                    Response.ChatMessage(connection.name, req.message).let { resp ->
-                                        game.sendToAllPlayers { resp }
-                                    }
-                                }
-
-                                is GameRequest ->
-                                    game.process(req, connection)
-                            }
-                        }
-                }
-
-                is ConnectionOutcome.ObserveSuccess -> {
-                    outcome.apply {
-                        connection.send(game.state.forObservers(null), GameStateForObservers.serializer())
-                    }
-                    incoming.consumeAsFlow()
-                        .mapNotNull { (it as? Frame.Text)?.readText() }
-                        .filter { it == Request.Ping }
-                        .collect { send(Response.Pong) }
-                }
-
-                is ConnectionOutcome.Failure -> {
-                    close(CloseReason(CloseReason.Codes.NORMAL, "Failed to join game"))
-                }
+suspend fun loadGame(
+    id: GameId,
+    redis: RedisStorage?,
+    process: suspend (Game) -> ConnectionOutcome
+): ConnectionOutcome {
+    val game = games.getOrElse(id) {
+        redis?.loadGame(id)?.let { (state, map) ->
+            Game.restore(rootScope, state, map, redis).also { game ->
+                games[id] = game
             }
         }
     }
+    return if (game != null) process(game)
+    else ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchGame)
 }

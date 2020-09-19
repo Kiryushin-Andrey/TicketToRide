@@ -8,13 +8,13 @@ const val OpenCardsCount = 5
 data class Player(
     override val name: PlayerName,
     override val color: PlayerColor,
-    val points: Int?,
+    val points: Int? = null,
     val carsLeft: Int,
     val stationsLeft: Int,
-    val cards: List<Card>,
-    val occupiedSegments: List<Segment>,
-    val placedStations: List<CityName>,
-    val ticketsForChoice: PendingTicketsChoice?,
+    val cards: List<Card> = emptyList(),
+    val occupiedSegments: List<Segment> = emptyList(),
+    val placedStations: List<CityName> = emptyList(),
+    val ticketsForChoice: PendingTicketsChoice? = null,
     val ticketsOnHand: List<Ticket> = emptyList(),
     val away: Boolean = false
 ) : PlayerId {
@@ -37,10 +37,10 @@ data class Player(
 @Serializable
 data class GameState(
     val id: GameId,
-    val players: List<Player>,
-    val openCards: List<Card>,
+    val players: List<Player> = emptyList(),
+    val openCards: List<Card> = emptyList(),
     val turn: Int,
-    val endsOnPlayer: Int?,
+    val endsOnPlayer: Int? = null,
     val initialCarsCount: Int,
     val calculateScoresInProcess: Boolean
 ) {

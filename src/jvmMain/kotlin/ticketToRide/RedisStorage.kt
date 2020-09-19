@@ -1,13 +1,11 @@
 package ticketToRide
 
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import redisClient.Redis
 import java.net.Socket
 
 class RedisStorage(val host: String, val port: Int, val password: String?)
 
-private val redisJson = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
+private val redisJson = json
 private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 

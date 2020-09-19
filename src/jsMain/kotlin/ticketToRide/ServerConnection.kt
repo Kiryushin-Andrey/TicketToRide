@@ -3,16 +3,17 @@ package ticketToRide
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
+import org.w3c.dom.ARRAYBUFFER
+import org.w3c.dom.BinaryType
+import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
 import kotlin.browser.window
-
-private val json = Json(JsonConfiguration.Default.copy(allowStructuredMapKeys = true))
 
 enum class ConnectionState {
     NotConnected,
@@ -22,10 +23,11 @@ enum class ConnectionState {
     CannotConnect
 }
 
-class ServerConnection(
+class ServerConnection<T>(
     parentScope: CoroutineScope,
     private val url: String,
-    establishConnection: suspend ServerConnection.() -> Unit
+    private val serializer: DeserializationStrategy<T>,
+    establishConnection: suspend ServerConnection<T>.() -> Unit
 ) {
     companion object {
         const val MaxRetriesCount = 5
@@ -36,7 +38,7 @@ class ServerConnection(
     private val _state = MutableStateFlow(ConnectionState.NotConnected)
     val connectionState: StateFlow<ConnectionState> get() = _state
 
-    private val _responses = Channel<String>()
+    private val _responses = Channel<T>()
 
     var onDisconnected: (String?) -> Unit = {}
 
@@ -68,7 +70,7 @@ class ServerConnection(
 
         scope.launch { establishConnection() }
     }
-    
+
     suspend fun reconnect(request: ConnectRequest): ConnectResponse {
         assertState(ConnectionState.Reconnecting, ConnectionState.CannotConnect)
         _state.value = ConnectionState.Reconnecting
@@ -81,13 +83,12 @@ class ServerConnection(
         sendRequestsJob?.cancel()
         sendRequestsJob = scope.launch {
             for (req in requests) {
-                wsDeferred.await()?.send(json.stringify(serializer, req))
+                wsDeferred.await()?.send(req, serializer)
             }
         }
     }
 
-    fun <T> responses(serializer: DeserializationStrategy<T>) =
-        _responses.consumeAsFlow().map { json.parse(serializer, it) }
+    fun responses() = _responses.consumeAsFlow()
 
     fun close() {
         window.removeEventListener("onbeforeunload", closeWebSocket)
@@ -105,6 +106,7 @@ class ServerConnection(
         fun createWebSocket(retriesCount: Int = 0) {
             val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
             WebSocket("$protocol//" + window.location.host + url).apply {
+                prepare()
                 onopen = {
                     wsDeferred.complete(this)
                 }
@@ -129,35 +131,29 @@ class ServerConnection(
         val response = CompletableDeferred<ConnectResponse>()
         ws.onmessage = { msg ->
             kotlin.runCatching {
-                val reqStr = msg.data as? String
-                if (reqStr == null) {
-                    response.completeExceptionally(Error("Unexpected response from server: ${msg.data}"))
-                } else {
-                    val message = json.parse(ConnectResponse.serializer(), reqStr)
-                    when (message) {
-                        is ConnectResponse.Success -> {
-                            ws.onopen = null
-                        }
-                        is ConnectResponse.Failure -> {
-                            ws.onclose = null
-                            ws.close()
-                            wsDeferred = CompletableDeferred()
-                        }
+                val message = deserialize(msg, ConnectResponse.serializer())
+                when (message) {
+                    is ConnectResponse.Success -> {
+                        ws.onopen = null
                     }
-                    response.complete(message)
+                    is ConnectResponse.Failure -> {
+                        ws.onclose = null
+                        ws.close()
+                        wsDeferred = CompletableDeferred()
+                    }
                 }
+                response.complete(message)
             }.onFailure { response.completeExceptionally(it) }
         }
-        ws.send(json.stringify(ConnectRequest.serializer(), connectRequest))
+        ws.send(connectRequest, ConnectRequest.serializer())
         return response.await().also { resp ->
             _state.value = when (resp) {
                 is ConnectResponse.Success -> {
                     ws.onmessage = { msg ->
-                        scope.launch {
-                            (msg.data as? String)?.takeUnless { it == Response.Pong }?.let { reqStr ->
-                                _responses.send(reqStr)
+                        if (msg.data as? String != Response.Pong)
+                            scope.launch {
+                                _responses.send(deserialize(msg, serializer))
                             }
-                        }
                     }
                     ws.onclose = { e ->
                         ws.apply {
@@ -182,5 +178,21 @@ class ServerConnection(
     private fun assertState(vararg required: ConnectionState) {
         if (!required.contains(connectionState.value))
             throw Error("This operation was called in $connectionState state but is valid only in one of the following states: ${required.joinToString()}")
+    }
+
+    // Serialization protocol
+
+    private fun WebSocket.prepare() {
+        binaryType = BinaryType.ARRAYBUFFER
+    }
+
+    private fun <T> WebSocket.send(value: T, serializer: SerializationStrategy<T>) =
+        send(json.stringify(serializer, value))
+
+    private fun <T> deserialize(msg: MessageEvent, serializer: DeserializationStrategy<T>): T {
+        if (msg.data as? String == null)
+            throw Error("Unexpected response from server: ${msg.data}")
+
+        return json.parse(serializer, msg.data as String)
     }
 }

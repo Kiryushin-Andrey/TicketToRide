@@ -22,7 +22,7 @@ private val defaultMap = (kotlinext.js.require("default.map").default as String)
 class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
-    private var peekPlayersConnection: ServerConnection? = null
+    private var peekPlayersConnection: ServerConnection<GameStateForObservers>? = null
 
     interface State : RState {
         var playerName: String
@@ -290,9 +290,9 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     }
 
     private fun observeGamePlayers(gameId: GameId) {
-        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl) {
+        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObservers.serializer()) {
             if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
-                responses(GameStateForObservers.serializer()).collect {
+                responses().collect {
                     setState {
                         otherPlayers = it.players
                         if (otherPlayers.map { it.color }.contains(playerColor)) {

@@ -3,7 +3,11 @@ package ticketToRide
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PendingTicketsChoice(val tickets: List<Ticket>, val minCountToKeep: Int, val shouldChooseOnNextTurn: Boolean)
+data class PendingTicketsChoice(
+    val tickets: List<Ticket> = emptyList(),
+    val minCountToKeep: Int,
+    val shouldChooseOnNextTurn: Boolean
+)
 
 fun PendingTicketsChoice?.toState() = when {
     this == null -> PendingTicketsChoiceState.None
@@ -11,5 +15,4 @@ fun PendingTicketsChoice?.toState() = when {
     else -> PendingTicketsChoiceState.TookInAdvance
 }
 
-@Serializable
 enum class PendingTicketsChoiceState { None, TookInAdvance, Choosing }
