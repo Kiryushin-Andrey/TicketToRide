@@ -7,12 +7,9 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.serialization.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
@@ -35,6 +32,7 @@ fun Application.module() {
     }
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
     val debug = environment.config.propertyOrNull("debug") != null
+    val formatter = if (debug) JsonFormatter() else ProtobufFormatter()
 
     if (debug) {
         install(DefaultHeaders) {
@@ -93,7 +91,7 @@ fun Application.module() {
             }
         }
     }
-    webSocketGameTransport("game/{id}/ws", rootScope, redis)
+    webSocketGameTransport("game/{id}/ws", rootScope, formatter, redis)
 }
 
 fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)

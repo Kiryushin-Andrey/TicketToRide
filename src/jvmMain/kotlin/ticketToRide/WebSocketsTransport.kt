@@ -10,13 +10,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Server")
 
-fun Application.webSocketGameTransport(path: String, rootScope: CoroutineScope, redis: RedisStorage?) {
+fun Application.webSocketGameTransport(
+    path: String,
+    rootScope: CoroutineScope,
+    formatter: Formatter,
+    redis: RedisStorage?
+) {
     install(WebSockets)
     routing {
         webSocket(path) {
@@ -40,9 +44,10 @@ fun Application.webSocketGameTransport(path: String, rootScope: CoroutineScope, 
             }
 
             // initial handshake
-            when (val outcome = establishConnection(gameId, rootScope, redis)) {
+            when (val outcome = establishConnection(gameId, rootScope, formatter, redis)) {
 
-                // consume incoming requests from the connected client as a flow
+                // if handshake resulted in game launch,
+                // then start consuming incoming requests from the connected client as a flow
                 // flow completion means the underlying websocket connection has been closed
                 is ConnectionOutcome.Success -> {
                     val game = outcome.game
@@ -50,7 +55,7 @@ fun Application.webSocketGameTransport(path: String, rootScope: CoroutineScope, 
                     incoming.consumeAsFlow()
                         .filter { handlePing(it) }
                         .collect { msg ->
-                            kotlin.runCatching { deserialize(msg, Request.serializer()) }.fold(
+                            kotlin.runCatching { formatter.deserialize(msg, Request.serializer()) }.fold(
 
                                 onSuccess = { req ->
                                     game.process(req, player)
@@ -85,10 +90,15 @@ fun Application.webSocketGameTransport(path: String, rootScope: CoroutineScope, 
 }
 
 // connection handshake
-private suspend fun WebSocketSession.establishConnection(gameId: GameId, rootScope: CoroutineScope, redis: RedisStorage?): ConnectionOutcome {
-    val req = deserialize(incoming.receive(), ConnectRequest.serializer())
-
-    val outcome = when (req) {
+private suspend fun WebSocketSession.establishConnection(
+    gameId: GameId,
+    rootScope: CoroutineScope,
+    formatter: Formatter,
+    redis: RedisStorage?
+): ConnectionOutcome {
+    // first tell the client what serialization format to use
+    send(formatter.id)
+    val outcome = when (val req = formatter.deserialize(incoming.receive(), ConnectRequest.serializer())) {
         is ConnectRequest.Start ->
             if (!gameExists(gameId, redis)) {
                 val game = Game.start(
@@ -101,25 +111,25 @@ private suspend fun WebSocketSession.establishConnection(gameId: GameId, rootSco
                 )
                 games[gameId] = game
                 redis?.saveMap(gameId, req.map)
-                val conn = Connection.Player(req.playerName, this)
+                val conn = Connection.Player(req.playerName, this, formatter)
                 game.joinPlayer(conn, req.playerColor)
             } else
                 ConnectionOutcome.Failure(ConnectResponse.Failure.GameIdTaken)
 
         is ConnectRequest.Join ->
             loadGame(gameId, redis) {
-                val conn = Connection.Player(req.playerName, this)
+                val conn = Connection.Player(req.playerName, this, formatter)
                 it.joinPlayer(conn, req.playerColor)
             }
 
         is ConnectRequest.Reconnect ->
             loadGame(gameId, redis) {
-                it.reconnectPlayer(Connection.Player(req.playerName, this))
+                it.reconnectPlayer(Connection.Player(req.playerName, this, formatter))
             }
 
         is ConnectRequest.Observe ->
             loadGame(gameId, redis) {
-                val conn = Connection.Observer(this)
+                val conn = Connection.Observer(this, formatter)
                 it.joinObserver(conn)
                 ConnectionOutcome.ObserveSuccess(it, conn)
             }
@@ -130,14 +140,17 @@ private suspend fun WebSocketSession.establishConnection(gameId: GameId, rootSco
         is ConnectionOutcome.ObserveSuccess -> ConnectResponse.Success
         is ConnectionOutcome.Failure -> outcome.reason
     }
-    send(resp, ConnectResponse.serializer())
+    formatter.send(this, resp, ConnectResponse.serializer())
 
     return outcome
 }
 
-private sealed class Connection(private val webSocket: WebSocketSession) : ClientConnection {
+private sealed class Connection(
+    private val webSocket: WebSocketSession,
+    private val formatter: Formatter
+) : ClientConnection {
     override suspend fun <T> send(msg: T, serializer: SerializationStrategy<T>) =
-        webSocket.send(msg, serializer)
+        formatter.send(webSocket, msg, serializer)
 
     override suspend fun isConnected() = try {
         webSocket.send(Response.Pong); true
@@ -145,22 +158,13 @@ private sealed class Connection(private val webSocket: WebSocketSession) : Clien
         false
     }
 
-    class Player(override val name: PlayerName, webSocket: WebSocketSession) : Connection(webSocket),
+    class Player(override val name: PlayerName, webSocket: WebSocketSession, formatter: Formatter) :
+        Connection(webSocket, formatter),
         PlayerConnection {
         override fun toString() = name.value
     }
 
-    class Observer(webSocket: WebSocketSession) : Connection(webSocket) {
+    class Observer(webSocket: WebSocketSession, formatter: Formatter) : Connection(webSocket, formatter) {
         override fun toString() = "anonymous observer"
     }
-}
-
-// Serialization protocol
-
-private suspend fun <T> WebSocketSession.send(msg: T, serializer: SerializationStrategy<T>) =
-    send(json.stringify(serializer, msg))
-
-private fun <T> deserialize(msg: Frame, deserializer: DeserializationStrategy<T>): T {
-    val reqStr = (msg as Frame.Text).readText()
-    return json.parse(deserializer, reqStr)
 }
