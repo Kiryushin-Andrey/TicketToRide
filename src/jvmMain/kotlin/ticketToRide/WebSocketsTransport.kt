@@ -42,41 +42,47 @@ fun Application.webSocketGameTransport(path: String, rootScope: CoroutineScope, 
             // initial handshake
             when (val outcome = establishConnection(gameId, rootScope, redis)) {
 
-                // consume incoming requests from the connected client as a flow
-                // flow completion means the underlying websocket connection has been closed
                 is ConnectionOutcome.Success -> {
                     val game = outcome.game
-                    val player = outcome.connection
-                    incoming.consumeAsFlow()
-                        .filter { handlePing(it) }
-                        .collect { msg ->
-                            kotlin.runCatching { deserialize(msg, Request.serializer()) }.fold(
+                    when (val conn = outcome.connection) {
 
-                                onSuccess = { req ->
-                                    game.process(req, player)
-                                    if (req is LeaveGameRequest)
-                                        close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
-                                },
+                        is PlayerConnection -> {
+                            // consume incoming requests from the connected client as a flow
+                            // flow completion means the underlying websocket connection has been closed
+                            incoming.consumeAsFlow()
+                                .filter { handlePing(it) }
+                                .collect { msg ->
+                                    kotlin.runCatching { deserialize(msg, Request.serializer()) }.fold(
 
-                                // request deserialization error - kick out the client, something is wrong with it
-                                onFailure = { e ->
-                                    logger.warn(e) { "Failed to deserialize request: $msg" }
-                                    close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
-                                    game.process(LeaveGameRequest, player)
-                                })
+                                        onSuccess = { req ->
+                                            game.process(req, conn)
+                                            if (req is LeaveGameRequest)
+                                                close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
+                                        },
+
+                                        // request deserialization error - kick out the client, something is wrong with it
+                                        onFailure = { e ->
+                                            logger.warn(e) { "Failed to deserialize request: $msg" }
+                                            close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
+                                            game.process(LeaveGameRequest, conn)
+                                        })
+                                }
+                            logger.info { "$conn disconnected" }
+                            endIfNoOneLeft(game)
                         }
-                    logger.info { "$player disconnected" }
-                    endIfNoOneLeft(game)
+
+                        else -> {
+                            // this is observing connection, just send out all game state updates to it, no requests expected
+                            outcome.apply {
+                                connection.send(game.state.forObservers(null), GameStateForObserver.serializer())
+                                incoming.consumeAsFlow().collect { handlePing(it) }
+                                endIfNoOneLeft(game)
+                            }
+                        }
+                    }
                 }
 
-                // this is observing connection, just send out all game state updates to it, no requests expected
-                is ConnectionOutcome.ObserveSuccess -> outcome.apply {
-                    connection.send(game.state.forObservers(null), GameStateForObservers.serializer())
-                    incoming.consumeAsFlow().collect { handlePing(it) }
-                    endIfNoOneLeft(game)
-                }
-
-                // something went wrong in connection handshake
+                // something went wrong in the connection handshake
                 is ConnectionOutcome.Failure ->
                     close(CloseReason(CloseReason.Codes.NORMAL, "Failed to join game"))
             }
@@ -121,13 +127,17 @@ private suspend fun WebSocketSession.establishConnection(gameId: GameId, rootSco
             loadGame(gameId, redis) {
                 val conn = Connection.Observer(this)
                 it.joinObserver(conn)
-                ConnectionOutcome.ObserveSuccess(it, conn)
+                ConnectionOutcome.Success(it, conn)
             }
     }
 
     val resp = when (outcome) {
-        is ConnectionOutcome.Success -> ConnectResponse.Success
-        is ConnectionOutcome.ObserveSuccess -> ConnectResponse.Success
+        is ConnectionOutcome.Success ->
+            ConnectResponse.Success(
+                outcome.game.id,
+                outcome.game.map,
+                outcome.game.calculateScoresInProcess
+            )
         is ConnectionOutcome.Failure -> outcome.reason
     }
     send(resp, ConnectResponse.serializer())

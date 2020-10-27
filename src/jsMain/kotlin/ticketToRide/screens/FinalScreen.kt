@@ -17,6 +17,7 @@ import ticketToRide.components.tickets.ticket
 interface FinalScreenProps : RProps {
     var locale: Locale
     var gameMap: GameMap
+    var observing: Boolean
     var players: List<PlayerScore>
     var chatMessages: List<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
@@ -34,16 +35,23 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
 
     override fun RBuilder.render() {
         val longestPathOfAll = props.players.map { it.longestRoute }.max()!!
-        val winner = props.players.maxBy { it.getTotalPoints(longestPathOfAll) }!!
+        val winner = props.players.maxBy { it.getTotalPoints(longestPathOfAll, false) }!!
+        val areas =
+            if (props.observing) listOf("left header", "left map")
+            else listOf("left header right", "left map right")
 
         styledDiv {
             css {
                 height = 100.pct
                 width = 100.pct
                 display = Display.grid
-                gridTemplateColumns = GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows("0.2fr"))
+                gridTemplateColumns =
+                    if (props.observing)
+                        GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto)
+                    else
+                        GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows("0.2fr"))
                 gridTemplateRows = GridTemplateRows(GridAutoRows(40.px), GridAutoRows.auto)
-                gridTemplateAreas = GridTemplateAreas("\"left header right\" \"left map right\"")
+                gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
             }
 
             styledDiv {
@@ -53,7 +61,8 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     put("resize", "horizontal")
                 }
 
-                for ((ix, player) in props.players.sortedByDescending { it.getTotalPoints(longestPathOfAll) }.withIndex()) {
+                for ((ix, player) in props.players.sortedByDescending { it.getTotalPoints(longestPathOfAll, false) }
+                    .withIndex()) {
                     playerStats(player, longestPathOfAll, ix == 0)
                 }
             }
@@ -71,20 +80,23 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     players = props.players
                     playerToHighlight = state.playerToHighlight
                     citiesToHighlight = state.citiesToHighlight
-                    citiesWithStations = props.players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
+                    citiesWithStations =
+                        props.players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
                     onCityMouseOver = { setState { citiesToHighlight += it } }
                     onCityMouseOut = { setState { citiesToHighlight -= it } }
                 }
             }
 
-            styledDiv {
-                css {
-                    put("grid-area", "right")
-                    +ComponentStyles.verticalPanel
-                }
+            if (!props.observing) {
+                styledDiv {
+                    css {
+                        put("grid-area", "right")
+                        +ComponentStyles.verticalPanel
+                    }
 
-                chatMessages(props.chatMessages)
-                chatSendMessageTextBox(props.locale, props.onSendMessage)
+                    chatMessages(props.chatMessages)
+                    chatSendMessageTextBox(props.locale, props.onSendMessage)
+                }
             }
         }
     }
@@ -134,7 +146,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                             "expanded" to ComponentStyles.getClassName { it::summaryExpanded },
                             "expandIcon" to ComponentStyles.getClassName { it::summaryExpandIcon })
                     }
-                    playerBlockHeader(player, player.getTotalPoints(longestPathOfAll))
+                    playerBlockHeader(player, player.getTotalPoints(longestPathOfAll, false))
                 }
 
                 mExpansionPanelDetails {
@@ -353,7 +365,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
     private val str = Strings()
 }
 
-fun RBuilder.endScreen(builder: FinalScreenProps.() -> Unit) {
+fun RBuilder.finalScreen(builder: FinalScreenProps.() -> Unit) {
     child(FinalScreen::class) {
         attrs(builder)
     }

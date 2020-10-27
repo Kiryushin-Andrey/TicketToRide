@@ -18,11 +18,11 @@ data class Player(
     val ticketsOnHand: List<Ticket> = emptyList(),
     val away: Boolean = false
 ) : PlayerId {
-    fun toPlayerView() =
+    fun toPlayerView(withScore: Boolean) =
         PlayerView(
             name,
             color,
-            points,
+            if (withScore) points else null,
             carsLeft,
             stationsLeft,
             cards.size,
@@ -75,7 +75,7 @@ data class GameState(
     fun toPlayerView(myName: PlayerName): GameStateView {
         val me = players.single { it.name == myName }
         return GameStateView(
-            players.map { it.toPlayerView() },
+            players.map { it.toPlayerView(calculateScoresInProcess) },
             openCards,
             turn,
             endsOnPlayer != null,
@@ -86,9 +86,10 @@ data class GameState(
         )
     }
 
-    fun forObservers(action: PlayerAction?) = GameStateForObservers(
+    fun forObservers(action: PlayerAction?) = GameStateForObserver(
         id,
-        players.map { it.toPlayerView() },
+        players.map { it.toPlayerView(true) },
+        if (endsOnPlayer == turn) players.map { it.ticketsOnHand } else emptyList(),
         openCards,
         turn,
         endsOnPlayer != null,

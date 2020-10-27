@@ -2,7 +2,7 @@ package ticketToRide
 
 sealed class SendResponse {
     class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
-    class ForObservers(val resp: GameStateForObservers) : SendResponse()
+    class ForObservers(val resp: GameStateForObserver) : SendResponse()
     class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
 }
 
@@ -10,16 +10,18 @@ fun GameState.connectPlayer(name: PlayerName, color: PlayerColor, map: GameMap) 
     joinPlayer(name, color, map).run {
         val action = PlayerAction.JoinGame(name)
         GameFlowValue(this, listOf(
-            SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map, calculateScoresInProcess)),
             SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) },
             SendResponse.ForObservers(this.forObservers(action))
         ))
     }
 
-fun GameState.reconnectPlayer(name: PlayerName, map: GameMap) =
-    GameFlowValue(
-        updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") },
-        listOf(SendResponse.ForPlayer(name, Response.GameStateWithMap(id, toPlayerView(name), map, calculateScoresInProcess))))
+fun GameState.reconnectPlayer(name: PlayerName): GameFlowValue {
+    val action = PlayerAction.JoinGame(name)
+    return GameFlowValue(
+        updatePlayer(name) { copy(away = false) },
+        listOf(SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) })
+    )
+}
 
 fun GameState.processRequest(
     req: Request,
@@ -30,7 +32,7 @@ fun GameState.processRequest(
         return GameFlowValue(
             this,
             listOf(
-                SendResponse.ForAll { Response.GameEnd(players.map { it.toPlayerView() to it.ticketsOnHand }) })
+                SendResponse.ForAll { Response.GameEnd(players.map { it.toPlayerView(false) to it.ticketsOnHand }) })
         )
 
     val newState = when (req) {
@@ -85,7 +87,7 @@ fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerActi
         Response.GameState(state.toPlayerView(playerName), action)
     else
         Response.GameEnd(
-            players.map { it.toPlayerView() to it.ticketsOnHand },
+            players.map { it.toPlayerView(false) to it.ticketsOnHand },
             action
         )
 }
@@ -183,7 +185,7 @@ private fun GameState.buildStation(name: PlayerName, target: CityName, cards: Li
     return updatePlayer(name) { buildStation(target, cards) }
 }
 
-private fun GameState.recalculatePlayerScores(map: GameMap) = if (calculateScoresInProcess) {
+private fun GameState.recalculatePlayerScores(map: GameMap): GameState {
     val scores = players.map {
         val segmentsOfOtherPlayers = players.filter { p -> p != it }.flatMap { it.occupiedSegments }
         PlayerScore(
@@ -197,10 +199,10 @@ private fun GameState.recalculatePlayerScores(map: GameMap) = if (calculateScore
         )
     }
     val longestRoute = scores.map { it.longestRoute }.max()!!
-    copy(players = players.zip(scores) { player, score ->
-        player.copy(points = score.getTotalPoints(longestRoute))
+    return copy(players = players.zip(scores) { player, score ->
+        player.copy(points = score.getTotalPoints(longestRoute, true))
     })
-} else this
+}
 
 private fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
     ticketsForChoice == null ->

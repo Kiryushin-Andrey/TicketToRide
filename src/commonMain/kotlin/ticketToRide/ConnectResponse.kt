@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 sealed class ConnectResponse {
 
     @Serializable
-    object Success : ConnectResponse()
+    class Success(val id: GameId, val map: GameMap, val calculateScoreInProgress: Boolean) : ConnectResponse()
 
     @Serializable
     sealed class Failure : ConnectResponse() {

@@ -1,6 +1,5 @@
 package ticketToRide.playerState
 
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import ticketToRide.*
 

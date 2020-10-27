@@ -11,8 +11,8 @@ data class GameFlowValue(val state: GameState, val responses: List<SendResponse>
 class Game private constructor(
     val id: GameId,
     initialCarsCount: Int,
-    calculateScoresInProcess: Boolean,
-    private val map: GameMap,
+    val calculateScoresInProcess: Boolean,
+    val map: GameMap,
     private val redis: RedisStorage?
 ) {
 
@@ -123,7 +123,7 @@ class Game private constructor(
                             state.connectPlayer(req.conn.name, req.playerColor, map)
 
                         is RequestQueueItem.Reconnect ->
-                            state.reconnectPlayer(req.conn.name, map)
+                            state.reconnectPlayer(req.conn.name)
 
                         is RequestQueueItem.PlayerAction ->
                             state.processRequest(req.request, map, req.conn.name)
@@ -182,10 +182,10 @@ class Game private constructor(
         }
     }
 
-    private suspend fun sendToAllObservers(resp: GameStateForObservers) = with(observers.iterator()) {
+    private suspend fun sendToAllObservers(resp: GameStateForObserver) = with(observers.iterator()) {
         forEach {
             try {
-                it.send(resp, GameStateForObservers.serializer())
+                it.send(resp, GameStateForObserver.serializer())
             } catch (e: CancellationException) {
                 remove()
             }

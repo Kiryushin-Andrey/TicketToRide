@@ -22,7 +22,7 @@ private val defaultMap = (kotlinext.js.require("default.map").default as String)
 class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
-    private var peekPlayersConnection: ServerConnection<GameStateForObservers>? = null
+    private var peekPlayersConnection: ServerConnection<GameStateForObserver>? = null
 
     interface State : RState {
         var playerName: String
@@ -32,6 +32,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var showSettings: Boolean
         var carsNumber: Int
         var calculateScoresInProcess: Boolean
+        var joinAsObserver: Boolean
         var customMap: CustomGameMap?
         var gameMapParseErrors: CustomGameMapParseErrors?
     }
@@ -42,6 +43,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         var onLocaleChanged: (Locale) -> Unit
         var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
         var onJoinGame: (PlayerName, PlayerColor) -> Unit
+        var onJoinAsObserver: () -> Unit
         var onReconnect: (PlayerName) -> Unit
     }
 
@@ -84,8 +86,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 fullWidth = true
             }
             mDialogContent {
-                playerName()
-                playerColor()
+                if (!state.joinAsObserver) {
+                    playerName()
+                    playerColor()
+                }
+                if (!props.startingNewGame) {
+                    joinAsObserver()
+                }
                 if (state.showSettings) {
                     settings()
                 }
@@ -96,11 +103,13 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 }
             }
             mDialogActions {
-                mTooltip(str.settings) {
-                    mIconButton("settings") {
-                        css { marginRight = 15.px }
-                        attrs {
-                            onClick = { setState { showSettings = !showSettings } }
+                if (props.startingNewGame) {
+                    mTooltip(str.settings) {
+                        mIconButton("settings") {
+                            css { marginRight = 15.px }
+                            attrs {
+                                onClick = { setState { showSettings = !showSettings } }
+                            }
                         }
                     }
                 }
@@ -250,7 +259,20 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         }
     }
 
+    private fun RBuilder.joinAsObserver() {
+        mCheckboxWithLabel(str.joinAsObserver, state.joinAsObserver, MOptionColor.primary) {
+            attrs {
+                onChange = { _, value -> setState { joinAsObserver = value } }
+            }
+        }
+    }
+
     private fun proceed() {
+        if (state.joinAsObserver) {
+            props.onJoinAsObserver();
+            return
+        }
+
         if (state.playerName.isBlank()) {
             setState { errorText = str.enterYourName }
             return
@@ -290,7 +312,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     }
 
     private fun observeGamePlayers(gameId: GameId) {
-        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObservers.serializer()) {
+        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
             if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
                 responses().collect {
                     setState {
@@ -346,6 +368,11 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         val calculateScoresInProcess by loc(
             Locale.En to "Calculate scores during the game",
             Locale.Ru to "Подсчет очков в процессе игры"
+        )
+
+        val joinAsObserver by loc(
+            Locale.En to "I'm an observer",
+            Locale.Ru to "Наблюдать за игрой"
         )
 
         val notificationNote by loc(

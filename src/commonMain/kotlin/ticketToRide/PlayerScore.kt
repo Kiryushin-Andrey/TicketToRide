@@ -25,10 +25,10 @@ class PlayerScore(
     private fun getLongestPathPoints(longestPathOfAll: Int) =
         if (longestPathOfAll > 0 && longestRoute == longestPathOfAll) map.pointsForLongestRoute else 0
 
-    fun getTotalPoints(longestPathOfAll: Int) =
-        fulfilledTicketsPoints - unfulfilledTicketPoints + segmentsPoints + stationPoints + getLongestPathPoints(
-            longestPathOfAll
-        )
+    fun getTotalPoints(longestPathOfAll: Int, gameInProgress: Boolean): Int {
+        val result = fulfilledTicketsPoints + segmentsPoints + stationPoints + getLongestPathPoints(longestPathOfAll)
+        return if (gameInProgress) result else result - unfulfilledTicketPoints;
+    }
 
 
     val longestRoute: Int

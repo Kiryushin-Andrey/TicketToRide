@@ -4,27 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-class GameStateForObservers(
-    val gameId: GameId,
-    val players: List<PlayerView> = emptyList(),
-    val openCards: List<Card> = emptyList(),
-    val turn: Int,
-    val lastRound: Boolean,
-    val gameEnded: Boolean,
-    val action: PlayerAction? = null
-)
-
-@Serializable
 sealed class Response {
-
-    @Serializable
-    @SerialName("state+map")
-    class GameStateWithMap(
-        val gameId: GameId,
-        val state: GameStateView,
-        val map: GameMap,
-        val calculateScoresInProcess: Boolean
-    ) : Response()
 
     @Serializable
     @SerialName("state")

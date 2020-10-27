@@ -2,6 +2,7 @@ package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
+import kotlinx.html.DIV
 import react.*
 import styled.*
 import ticketToRide.*
@@ -17,42 +18,35 @@ import ticketToRide.components.map.gameMap
 import ticketToRide.components.tickets.myTickets
 import ticketToRide.playerState.*
 
-interface GameScreenProps : ComponentBaseProps {
-    var gameMap: GameMap
-    var calculateScores: Boolean
-    var chatMessages: List<Response.ChatMessage>
-    var onSendMessage: (String) -> Unit
-}
+class GameScreen : ComponentBase<GameScreen.Props, GameScreen.State>() {
 
-interface GameScreenState : RState {
-    var citiesToHighlight: Set<CityName>
-    var searchText: String
-}
+    interface Props : ComponentBaseProps {
+        var gameMap: GameMap
+        var calculateScores: Boolean
+        var chatMessages: List<Response.ChatMessage>
+        var onSendMessage: (String) -> Unit
+    }
 
-class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
-    override fun GameScreenState.init() {
+    interface State : RState {
+        var citiesToHighlight: Set<CityName>
+        var searchText: String
+    }
+
+    override fun State.init() {
         citiesToHighlight = emptySet()
         searchText = ""
     }
 
     override fun RBuilder.render() {
-        val rows = listOf(GridAutoRows(40.px), GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
         val areas = listOf(
             "left header right",
             "left map right",
             "send map search",
             "cards cards cards"
         )
+
         styledDiv {
-            css {
-                height = 100.pct
-                width = 100.pct
-                display = Display.grid
-                gridTemplateColumns =
-                    GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
-                gridTemplateRows = GridTemplateRows(*rows.toTypedArray())
-                gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
-            }
+            gridLayout(areas)
 
             when {
                 myTurn -> headerMessage(str.yourTurn, Color.lightGreen)
@@ -153,22 +147,6 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
         }
     }
 
-    private fun RBuilder.headerMessage(text: String, color: Color) {
-        styledDiv {
-            css {
-                put("grid-area", "header")
-                width = 100.pct
-                backgroundColor = color
-            }
-            mTypography(text, MTypographyVariant.h5) {
-                css {
-                    fontStyle = FontStyle.italic
-                    textAlign = TextAlign.center
-                }
-            }
-        }
-    }
-
     private fun getCitiesBySearchText() = state.searchText.let { input ->
         if (input.isNotBlank())
             props.gameMap.cities.filter { it.name.value.startsWith(input) }.map { it.name }
@@ -176,7 +154,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
             emptyList()
     }
 
-    private object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
+    object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
         val verticalPanel by css {
             display = Display.flex
             flexDirection = FlexDirection.column
@@ -189,7 +167,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
         }
     }
 
-    private inner class Strings : LocalizedStrings({ props.locale }) {
+    class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
 
         val yourTurn by loc(
             Locale.En to "Your turn",
@@ -207,7 +185,39 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
         )
     }
 
-    private val str = Strings()
+    private val str = Strings { props.locale }
+
+    companion object {
+
+        fun RBuilder.headerMessage(text: String, color: Color) {
+            styledDiv {
+                css {
+                    put("grid-area", "header")
+                    width = 100.pct
+                    backgroundColor = color
+                }
+                mTypography(text, MTypographyVariant.h5) {
+                    css {
+                        fontStyle = FontStyle.italic
+                        textAlign = TextAlign.center
+                    }
+                }
+            }
+        }
+
+        fun StyledDOMBuilder<DIV>.gridLayout(areas: List<String>) {
+            val rows = listOf(GridAutoRows(40.px), GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
+            css {
+                height = 100.pct
+                width = 100.pct
+                display = Display.grid
+                gridTemplateColumns =
+                    GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
+                gridTemplateRows = GridTemplateRows(*rows.toTypedArray())
+                gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
+            }
+        }
+    }
 }
 
 fun RBuilder.horizontalDivider() {
@@ -218,10 +228,8 @@ fun RBuilder.horizontalDivider() {
     }
 }
 
-fun RBuilder.gameScreen(builder: GameScreenProps.() -> Unit) {
+fun RBuilder.gameScreen(builder: GameScreen.Props.() -> Unit) {
     child(GameScreen::class) {
-        attrs {
-            builder()
-        }
+        attrs(builder)
     }
 }

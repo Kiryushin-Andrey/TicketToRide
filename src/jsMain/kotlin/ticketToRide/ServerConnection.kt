@@ -23,12 +23,16 @@ enum class ConnectionState {
     CannotConnect
 }
 
+interface IServerConnection {
+    suspend fun reconnect(request: ConnectRequest): ConnectResponse
+}
+
 class ServerConnection<T>(
     parentScope: CoroutineScope,
     private val url: String,
     private val serializer: DeserializationStrategy<T>,
     establishConnection: suspend ServerConnection<T>.() -> Unit
-) {
+) : IServerConnection {
     companion object {
         const val MaxRetriesCount = 5
     }
@@ -71,7 +75,7 @@ class ServerConnection<T>(
         scope.launch { establishConnection() }
     }
 
-    suspend fun reconnect(request: ConnectRequest): ConnectResponse {
+    override suspend fun reconnect(request: ConnectRequest): ConnectResponse {
         assertState(ConnectionState.Reconnecting, ConnectionState.CannotConnect)
         _state.value = ConnectionState.Reconnecting
         wsDeferred = CompletableDeferred()

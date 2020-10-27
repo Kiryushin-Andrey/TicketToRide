@@ -18,6 +18,7 @@ class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
         var imageUrl: String
         var assignedKey: String?
         var color: Color?
+        var observing: Boolean
         var enabled: Boolean
         var checked: Boolean
         var tooltip: String?
@@ -32,10 +33,12 @@ class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
         mPaper {
             attrs {
                 elevation = if (props.enabled && state.hovered) 8 else 4
-                with(asDynamic()) {
-                    onMouseOver = { setState { hovered = true } }
-                    onMouseOut = { setState { hovered = false } }
-                    onClick = if (props.enabled) props.onClick else null
+                if (!props.observing) {
+                    with(asDynamic()) {
+                        onMouseOver = { setState { hovered = true } }
+                        onMouseOut = { setState { hovered = false } }
+                        onClick = if (props.enabled) props.onClick else null
+                    }
                 }
             }
             css {
@@ -45,7 +48,9 @@ class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
                 borderColor = Color.black
                 borderStyle = BorderStyle.solid
                 borderWidth = 1.px
-                cursor = if (props.enabled) Cursor.pointer else Cursor.notAllowed
+                if (!props.observing) {
+                    cursor = if (props.enabled) Cursor.pointer else Cursor.notAllowed
+                }
                 if (props.color != null) {
                     backgroundColor = props.color!!
                 }
@@ -64,8 +69,10 @@ class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
                 }
             }
 
-            checkedMark()
-            assignedKeyHint()
+            if (!props.observing) {
+                checkedMark()
+                assignedKeyHint()
+            }
         }
     }
 
@@ -131,9 +138,38 @@ private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
     )
 }
 
-private fun RBuilder.card(builder: CardComponent.Props.() -> Unit) = child(
-    CardComponent::class) {
-    attrs { builder() }
+private fun RBuilder.card(card: Card?, locale: Locale, builder: CardComponent.Props.() -> Unit) =
+    child(CardComponent::class) {
+        attrs {
+            this.locale = locale
+            this.imageUrl = "/cards/" + when (card) {
+                null -> "faceDown.png"
+                is Card.Loco -> "loco.jpg"
+                is Card.Car -> when (card.color) {
+                    ticketToRide.CardColor.RED -> "red.jpg"
+                    ticketToRide.CardColor.GREEN -> "green.jpg"
+                    ticketToRide.CardColor.BLUE -> "blue.jpg"
+                    ticketToRide.CardColor.BLACK -> "black.jpg"
+                    ticketToRide.CardColor.WHITE -> "white.jpg"
+                    ticketToRide.CardColor.YELLOW -> "yellow.jpg"
+                    ticketToRide.CardColor.ORANGE -> "orange.jpg"
+                    ticketToRide.CardColor.MAGENTO -> "magento.jpg"
+                }
+            }
+            this.color = when (card) {
+                null -> blackAlpha(0.1)
+                is Card.Loco -> Color.white
+                is Card.Car -> Color(card.color.rgb).withAlpha(0.5)
+            }
+            this.tooltip = card?.getName(locale)
+            builder()
+        }
+    }
+
+fun RBuilder.openCardForObserver(card: Card, locale: Locale): ReactElement {
+    return card(card, locale) {
+        observing = true
+    }
 }
 
 fun RBuilder.openCard(
@@ -145,51 +181,37 @@ fun RBuilder.openCard(
     disabledTooltip: String?,
     clickHandler: () -> Unit
 ): ReactElement {
-    return card {
-        this.locale = locale
+    return card(card, locale) {
         this.assignedKey = (cardIx + 1).toString()
         tooltip = disabledTooltip ?: card.getName(locale)
         enabled = canPickCards && (card is Card.Car || chosenCardIx == null)
         checked = cardIx == chosenCardIx
-        imageUrl = "/cards/" + when (card) {
-            is Card.Loco -> "loco.jpg"
-            is Card.Car -> when (card.color) {
-                ticketToRide.CardColor.RED -> "red.jpg"
-                ticketToRide.CardColor.GREEN -> "green.jpg"
-                ticketToRide.CardColor.BLUE -> "blue.jpg"
-                ticketToRide.CardColor.BLACK -> "black.jpg"
-                ticketToRide.CardColor.WHITE -> "white.jpg"
-                ticketToRide.CardColor.YELLOW -> "yellow.jpg"
-                ticketToRide.CardColor.ORANGE -> "orange.jpg"
-                ticketToRide.CardColor.MAGENTO -> "magento.jpg"
-            }
-        }
-        if (card is Card.Car) {
-            color = Color(card.color.rgb).withAlpha(0.5)
-        }
         onClick = clickHandler
     }
 }
 
+fun RBuilder.closedCardForObserver(locale: Locale) =
+    card(null, locale) {
+        observing = true
+    }
+
 fun RBuilder.closedCard(locale: Locale, disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
-    card {
-        this.locale = locale
+    card(null, locale) {
         assignedKey = "0"
-        imageUrl = "/cards/faceDown.png"
-        color = blackAlpha(0.1)
         tooltip = disabledTooltip
             ?: Strings { locale }.run { if (hasChosenCard) takeOneClosedCard else takeTwoClosedCards }
         this.enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
 
-fun RBuilder.ticketsCard(locale: Locale, disabledTooltip: String?, clickHandler: () -> Unit) {
-    card {
-        this.locale = locale
-        imageUrl = "/cards/routeFaceDown.png"
-        color = blackAlpha(0.1)
-        tooltip = disabledTooltip ?: Strings { locale }.takeTickets
-        enabled = (disabledTooltip == null)
-        onClick = clickHandler
+fun RBuilder.ticketsCard(locale: Locale, disabledTooltip: String?, clickHandler: () -> Unit) =
+    child(CardComponent::class) {
+        attrs {
+            this.locale = locale
+            imageUrl = "/cards/routeFaceDown.png"
+            color = blackAlpha(0.1)
+            tooltip = disabledTooltip ?: Strings { locale }.takeTickets
+            enabled = (disabledTooltip == null)
+            onClick = clickHandler
+        }
     }
-}
