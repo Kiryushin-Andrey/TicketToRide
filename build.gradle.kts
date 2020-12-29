@@ -51,6 +51,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-common:$serialization_version")
                 implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.2")
             }
         }
@@ -61,6 +62,7 @@ kotlin {
                 implementation("org.jetbrains:kotlin-css-jvm:1.0.0-pre.94-kotlin-1.3.70")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serialization_version")
                 implementation("io.ktor:ktor-server-core:$ktor_version")
                 implementation("io.ktor:ktor-server-netty:$ktor_version")
                 implementation("io.ktor:ktor-serialization:$ktor_version")
@@ -92,6 +94,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinx_html_version")
                 implementation("org.jetbrains:kotlin-styled:1.0.0-pre.94-kotlin-1.3.70")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-js:$serialization_version")
                 implementation("com.ccfraser.muirwik:muirwik-components:0.4.1")
                 implementation(npm("@material-ui/core", "4.9.8"))
                 implementation(npm("styled-components", "5.0.1"))

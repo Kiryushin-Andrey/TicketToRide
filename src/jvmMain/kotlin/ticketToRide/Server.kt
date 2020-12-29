@@ -7,19 +7,14 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.serialization.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
 val games = mutableMapOf<GameId, Game>()
 
 private val rootScope = CoroutineScope(Dispatchers.Default + Job())
-private val processName = ManagementFactory.getRuntimeMXBean().name
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
@@ -34,13 +29,8 @@ fun Application.module() {
         )
     }
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
-    val debug = environment.config.propertyOrNull("debug") != null
-
-    if (debug) {
-        install(DefaultHeaders) {
-            header(HttpHeaders.Server, processName)
-        }
-    }
+    val useJson = environment.config.propertyOrNull("use-json") != null
+    val formatter = if (useJson) JsonFormatter() else ProtobufFormatter()
 
     install(Compression) {
         gzip {
@@ -93,7 +83,7 @@ fun Application.module() {
             }
         }
     }
-    webSocketGameTransport("game/{id}/ws", rootScope, redis)
+    webSocketGameTransport("game/{id}/ws", rootScope, formatter, redis)
 }
 
 fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)

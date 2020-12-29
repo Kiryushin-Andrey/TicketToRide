@@ -10,7 +10,6 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import org.w3c.dom.ARRAYBUFFER
 import org.w3c.dom.BinaryType
-import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
 import kotlin.browser.window
@@ -30,7 +29,7 @@ interface IServerConnection {
 class ServerConnection<T>(
     parentScope: CoroutineScope,
     private val url: String,
-    private val serializer: DeserializationStrategy<T>,
+    private val responseDeserializer: DeserializationStrategy<T>,
     establishConnection: suspend ServerConnection<T>.() -> Unit
 ) : IServerConnection {
     companion object {
@@ -46,8 +45,8 @@ class ServerConnection<T>(
 
     var onDisconnected: (String?) -> Unit = {}
 
-    private var wsDeferred = CompletableDeferred<WebSocket?>()
-    private fun getWebSocketOrNull() = wsDeferred.takeIf { it.isCompleted }?.getCompleted()
+    private var wsDeferred = CompletableDeferred<Pair<WebSocket, Formatter>?>()
+    private fun getWebSocketOrNull() = wsDeferred.takeIf { it.isCompleted }?.getCompleted()?.first
     private val closeWebSocket: (Event) -> Unit = {
         getWebSocketOrNull()?.apply {
             onclose = null
@@ -82,12 +81,14 @@ class ServerConnection<T>(
         return connect(request)
     }
 
-    fun <T> runRequestSendingLoop(requests: ReceiveChannel<T>, serializer: SerializationStrategy<T>) {
+    fun <T> runRequestSendingLoop(requests: ReceiveChannel<T>, requestSerializer: SerializationStrategy<T>) {
         assertState(ConnectionState.Connected)
         sendRequestsJob?.cancel()
         sendRequestsJob = scope.launch {
             for (req in requests) {
-                wsDeferred.await()?.send(req, serializer)
+                wsDeferred.await()?.let { (ws, formatter) ->
+                    formatter.send(ws, req, requestSerializer)
+                }
             }
         }
     }
@@ -96,7 +97,7 @@ class ServerConnection<T>(
 
     fun close() {
         window.removeEventListener("onbeforeunload", closeWebSocket)
-        window.clearInterval(pingTimerHandle)
+//        window.clearInterval(pingTimerHandle)
         scope.cancel()
         getWebSocketOrNull()?.apply {
             onopen = null
@@ -108,12 +109,17 @@ class ServerConnection<T>(
 
     suspend fun connect(connectRequest: ConnectRequest): ConnectResponse {
         fun createWebSocket(retriesCount: Int = 0) {
-            val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
-            WebSocket("$protocol//" + window.location.host + url).apply {
-                prepare()
+            val scheme = if (window.location.protocol == "https:") "wss:" else "ws:"
+            val subProtocols = WireFormat.values().map { it.name }.toTypedArray()
+            WebSocket("$scheme//" + window.location.host + url, subProtocols).apply {
+                binaryType = BinaryType.ARRAYBUFFER
+
                 onopen = {
-                    wsDeferred.complete(this)
+                    val formatter = formatterByType.get(WireFormat.valueOf(protocol))
+                            ?: throw Exception("Unsupported wire format sent by server - $protocol")
+                    wsDeferred.complete(this to formatter)
                 }
+
                 onclose = {
                     onopen = null
                     onmessage = null
@@ -131,11 +137,11 @@ class ServerConnection<T>(
 
         assertState(ConnectionState.NotConnected, ConnectionState.Reconnecting)
         createWebSocket()
-        val ws = wsDeferred.await() ?: return ConnectResponse.Failure.CannotConnect
+        val (ws, formatter) = wsDeferred.await() ?: return ConnectResponse.Failure.CannotConnect
         val response = CompletableDeferred<ConnectResponse>()
         ws.onmessage = { msg ->
             kotlin.runCatching {
-                val message = deserialize(msg, ConnectResponse.serializer())
+                val message = formatter.deserialize(msg, ConnectResponse.serializer())
                 when (message) {
                     is ConnectResponse.Success -> {
                         ws.onopen = null
@@ -149,14 +155,14 @@ class ServerConnection<T>(
                 response.complete(message)
             }.onFailure { response.completeExceptionally(it) }
         }
-        ws.send(connectRequest, ConnectRequest.serializer())
+        formatter.send(ws, connectRequest, ConnectRequest.serializer())
         return response.await().also { resp ->
             _state.value = when (resp) {
                 is ConnectResponse.Success -> {
                     ws.onmessage = { msg ->
                         if (msg.data as? String != Response.Pong)
                             scope.launch {
-                                _responses.send(deserialize(msg, serializer))
+                                _responses.send(formatter.deserialize(msg, responseDeserializer))
                             }
                     }
                     ws.onclose = { e ->
@@ -182,21 +188,5 @@ class ServerConnection<T>(
     private fun assertState(vararg required: ConnectionState) {
         if (!required.contains(connectionState.value))
             throw Error("This operation was called in $connectionState state but is valid only in one of the following states: ${required.joinToString()}")
-    }
-
-    // Serialization protocol
-
-    private fun WebSocket.prepare() {
-        binaryType = BinaryType.ARRAYBUFFER
-    }
-
-    private fun <T> WebSocket.send(value: T, serializer: SerializationStrategy<T>) =
-        send(json.stringify(serializer, value))
-
-    private fun <T> deserialize(msg: MessageEvent, serializer: DeserializationStrategy<T>): T {
-        if (msg.data as? String == null)
-            throw Error("Unexpected response from server: ${msg.data}")
-
-        return json.parse(serializer, msg.data as String)
     }
 }

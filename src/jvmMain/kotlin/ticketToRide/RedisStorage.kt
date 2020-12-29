@@ -1,34 +1,43 @@
 package ticketToRide
 
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.protobuf.ProtoBuf
 import redisClient.Redis
 import java.net.Socket
 
 class RedisStorage(val host: String, val port: Int, val password: String?)
 
-private val redisJson = json
+private val protobuf = ProtoBuf(false)
 private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 
+private fun <T> dump(serializationStrategy: SerializationStrategy<T>, value: T) =
+    protobuf.dump(serializationStrategy, value)
+
+private fun <T> parse(serializationStrategy: DeserializationStrategy<T>, value: ByteArray) =
+    protobuf.load(serializationStrategy, value)
+
 fun RedisStorage.saveMap(id: GameId, map: GameMap) {
     exec { conn ->
-        val mapJson = redisJson.stringify(GameMap.serializer(), map)
-        conn.call<Any?>("SET", mapKey(id), mapJson, "EX", expireTimeSec)
+        val mapBytes = dump(GameMap.serializer(), map)
+        conn.call<Any?>("SET", mapKey(id), mapBytes, "EX", expireTimeSec)
     }
 }
 
 fun RedisStorage.saveGame(state: GameState) {
     exec { conn ->
-        val gameStateJson = redisJson.stringify(GameState.serializer(), state)
-        conn.call<Any?>("SET", state.id.value, gameStateJson, "EX", expireTimeSec)
+        val gameStateBytes = dump(GameState.serializer(), state)
+        conn.call<Any?>("SET", state.id.value, gameStateBytes, "EX", expireTimeSec)
         conn.call<Any?>("EXPIRE", mapKey(state.id), expireTimeSec)
     }
 }
 
 fun RedisStorage.loadGame(id: GameId) = exec { conn ->
     conn.call<ByteArray>("GET", id.value)?.let {
-        val state = redisJson.parse(GameState.serializer(), String(it))
+        val state = parse(GameState.serializer(), it)
         conn.call<ByteArray>("GET", mapKey(id))?.let {
-            val map = redisJson.parse(GameMap.serializer(), String(it))
+            val map = parse(GameMap.serializer(), it)
             state to map
         }
     }
