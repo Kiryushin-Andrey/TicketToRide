@@ -11,7 +11,7 @@ import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.*
-import kotlin.browser.window
+import kotlinx.browser.window
 
 class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentComponent.State>() {
 

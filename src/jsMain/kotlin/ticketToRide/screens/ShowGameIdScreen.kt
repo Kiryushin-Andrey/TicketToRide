@@ -3,12 +3,12 @@ package ticketToRide.screens
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.*
 import com.ccfraser.muirwik.components.dialog.*
+import kotlinx.browser.window
 import react.*
 import react.dom.a
 import react.dom.p
 import styled.*
 import ticketToRide.*
-import kotlin.browser.window
 
 interface ShowGameIdScreenProps : RProps {
     var gameId: GameId
@@ -19,7 +19,7 @@ interface ShowGameIdScreenProps : RProps {
 class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
     override fun RBuilder.render() {
         val gameUrl = window.location.href
-        window.navigator.clipboard?.writeText(gameUrl)
+        window.navigator.clipboard.writeText(gameUrl)
         mDialog {
             css {
                 +WelcomeScreen.ComponentStyles.welcomeDialog

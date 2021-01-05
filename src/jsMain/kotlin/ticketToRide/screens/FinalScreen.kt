@@ -34,8 +34,8 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
     }
 
     override fun RBuilder.render() {
-        val longestPathOfAll = props.players.map { it.longestRoute }.max()!!
-        val winner = props.players.maxBy { it.getTotalPoints(longestPathOfAll, false) }!!
+        val longestPathOfAll = props.players.map { it.longestRoute }.maxOrNull()!!
+        val winner = props.players.maxByOrNull { it.getTotalPoints(longestPathOfAll, false) }!!
         val areas =
             if (props.observing) listOf("left header", "left map")
             else listOf("left header right", "left map right")
@@ -139,7 +139,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
 
                 mExpansionPanelSummary {
                     attrs {
-                        expandIcon = buildElement { mIcon("expand_more") }!!
+                        expandIcon = buildElement { mIcon("expand_more") }
                         withClasses(
                             "root" to ComponentStyles.getClassName { it::playerPanelRoot },
                             "content" to ComponentStyles.getClassName { it::playerSummaryContent },

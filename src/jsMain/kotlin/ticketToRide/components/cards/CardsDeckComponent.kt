@@ -15,7 +15,7 @@ import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.*
-import kotlin.browser.document
+import kotlinx.browser.document
 
 class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
 

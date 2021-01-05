@@ -50,6 +50,6 @@ class PlayerScore(
         unfulfilledTickets = tickets - fulfilledTickets
         longestRoute = subgraphs
             .map { it.getMaxEulerianSubgraph().getTotalWeight() }
-            .max() ?: 0
+            .maxOrNull() ?: 0
     }
 }

@@ -12,7 +12,7 @@ import org.w3c.dom.ARRAYBUFFER
 import org.w3c.dom.BinaryType
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
-import kotlin.browser.window
+import kotlinx.browser.window
 
 enum class ConnectionState {
     NotConnected,

@@ -6,35 +6,33 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     application
-    id("org.jetbrains.kotlin.multiplatform") version "1.3.71"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.3.71"
-    id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("com.codingfeline.buildkonfig") version "0.5.1"
+    kotlin("multiplatform") version "1.4.21"
+    kotlin("plugin.serialization") version "1.4.21"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.codingfeline.buildkonfig") version "0.7.0"
 }
 
 repositories {
     jcenter()
-    maven("https://dl.bintray.com/kotlin/ktor")
-    maven("https://dl.bintray.com/kotlin/kotlin-eap")
     maven("https://kotlin.bintray.com/kotlin-js-wrappers/")
-    maven("https://oss.sonatype.org/content/repositories/snapshots/")
     mavenCentral()
 }
 
 application {
+    // TODO use mainClass after https://github.com/johnrengelman/shadow/issues/609 gets fixed
     mainClassName = "ticketToRide.ServerKt"
 }
 
-val ktor_version = "1.3.2"
-val kotlinx_html_version = "0.7.1"
-val serialization_version = "0.20.0"
-val kotest_version = "4.1.0.268-SNAPSHOT"
+val ktor_version = "1.5.0"
+val serialization_version = "1.0.1"
+val kotest_version = "4.3.2"
+val kotlin_wrappers_version = "1.0.0-pre.134-kotlin-1.4.21"
 
 kotlin {
     jvm {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = "11"
             }
         }
     }
@@ -49,20 +47,16 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-common:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serialization_version")
                 implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.2")
             }
         }
         val jvmMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains:kotlin-css:1.0.0-pre.94-kotlin-1.3.70")
-                implementation("org.jetbrains:kotlin-css-jvm:1.0.0-pre.94-kotlin-1.3.70")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serialization_version")
+                implementation("org.jetbrains:kotlin-css:$kotlin_wrappers_version")
+                implementation("org.jetbrains:kotlin-css-jvm:$kotlin_wrappers_version")
                 implementation("io.ktor:ktor-server-core:$ktor_version")
                 implementation("io.ktor:ktor-server-netty:$ktor_version")
                 implementation("io.ktor:ktor-serialization:$ktor_version")
@@ -73,56 +67,47 @@ kotlin {
             }
             languageSettings.apply {
                 useExperimentalAnnotation("kotlinx.coroutines.FlowPreview")
-                useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
             }
         }
         val jvmTest by getting {
             dependencies {
-                implementation("io.kotest:kotest-runner-console-jvm:$kotest_version")
+                implementation("io.kotest:kotest-runner-junit5:$kotest_version")
                 implementation("io.kotest:kotest-assertions-core-jvm:$kotest_version")
-                implementation("io.kotest:kotest-property-jvm:4.0.5")
+                implementation("io.kotest:kotest-property:$kotest_version")
             }
         }
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-js"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.7")
                 implementation(npm("react", "16.13.0"))
                 implementation(npm("react-dom", "16.13.0"))
                 implementation(npm("@types/googlemaps", "3.39.6"))
                 implementation(npm("@types/google-map-react", "1.1.8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinx_html_version")
-                implementation("org.jetbrains:kotlin-styled:1.0.0-pre.94-kotlin-1.3.70")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf-js:$serialization_version")
-                implementation("com.ccfraser.muirwik:muirwik-components:0.4.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
+                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.134-kotlin-1.4.21")
+                implementation("com.ccfraser.muirwik:muirwik-components:0.6.3")
                 implementation(npm("@material-ui/core", "4.9.8"))
-                implementation(npm("styled-components", "5.0.1"))
+                implementation(npm("styled-components", "5.2.0"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
                 implementation(npm("google-map-react", "1.1.7"))
                 compileOnly(npm("raw-loader", "4.0.1"))
-            }
-        }
-        val jsTest by getting {
-            dependencies {
-                implementation("io.kotest:kotest-core-js:$kotest_version")
-                implementation("io.kotest:kotest-assertions-core-js:$kotest_version")
-                implementation("io.kotest:kotest-property-js:$kotest_version")
             }
         }
     }
 
     kotlin.sourceSets.all {
         languageSettings.apply {
-            useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
             useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
-            useExperimentalAnnotation("kotlinx.serialization.UnstableDefault")
+            useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
 }
 
 tasks {
+    withType<Test> {
+        useJUnitPlatform()
+    }
+
     configure<BuildKonfigExtension> {
         fun getGitHash(): String {
             val versionFromEnv = System.getenv("SOURCE_VERSION")
@@ -148,7 +133,7 @@ tasks {
 
     named<ShadowJar>("shadowJar") {
         manifest {
-            attributes("Main-Class" to application.mainClassName)
+            attributes("Main-Class" to application.mainClass.get())
         }
         archiveFileName.set("ticket-to-ride.fat.jar")
         val jvmCompilation = kotlin.jvm().compilations["main"]

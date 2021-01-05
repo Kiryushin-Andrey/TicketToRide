@@ -15,22 +15,22 @@ class JsonFormatter : Formatter {
     override val type = WireFormat.JSON
 
     override suspend fun <T> send(webSocketSession: WebSocketSession, msg: T, serializer: SerializationStrategy<T>) =
-        webSocketSession.send(json.stringify(serializer, msg))
+        webSocketSession.send(json.encodeToString(serializer, msg))
 
     override fun <T> deserialize(msg: Frame, deserializer: DeserializationStrategy<T>): T {
         val reqStr = (msg as Frame.Text).readText()
-        return json.parse(deserializer, reqStr)
+        return json.decodeFromString(deserializer, reqStr)
     }
 }
 
 class ProtobufFormatter : Formatter {
-    private val protobuf = ProtoBuf(false)
+    private val protobuf = ProtoBuf { encodeDefaults = false }
 
     override val type = WireFormat.PROTOBUF
 
     override suspend fun <T> send(webSocketSession: WebSocketSession, msg: T, serializer: SerializationStrategy<T>) =
-        webSocketSession.send(protobuf.dump(serializer, msg))
+        webSocketSession.send(protobuf.encodeToByteArray(serializer, msg))
 
     override fun <T> deserialize(msg: Frame, deserializer: DeserializationStrategy<T>): T =
-        protobuf.load(deserializer, (msg as Frame.Binary).data)
+        protobuf.decodeFromByteArray(deserializer, (msg as Frame.Binary).data)
 }

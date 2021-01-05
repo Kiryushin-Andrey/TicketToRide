@@ -6,8 +6,8 @@ import io.kotest.core.spec.style.*
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.*
 import io.kotest.matchers.*
+import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.maps.*
-import io.kotest.matchers.sequences.*
 import io.kotest.property.*
 import io.kotest.property.arbitrary.*
 import kotlinx.collections.immutable.*
@@ -71,7 +71,9 @@ class GraphProperties : FreeSpec({
         "connects nodes" {
             checkAll(Arb.graphWithPairOfVertices) { (graph, nodes) ->
                 val path = Distances(graph).getPath(nodes.first, nodes.second)
-                path.zipWithNext().forAll { (prev, next) -> prev.to == next.from }
+                path.zipWithNext().forAll { (prev, next) ->
+                    prev.to shouldBeExactly next.from
+                }
             }
         }
 
@@ -167,53 +169,48 @@ class GraphProperties : FreeSpec({
 })
 
 val Arb.Companion.connectedGraph: Arb<Graph<Int>>
-    get() = arb { rs ->
-        generateSequence {
-            val size = Arb.int(6..30).next(rs)
-            (0 until size)
-                .associateWith { persistentMapOf<Int, Int>().builder() }
-                .also { graph ->
-                    for (from in (1 until size)) {
-                        val degree = Arb.int(1..maxOf(1, from / 2)).next(rs)
-                        val edges = Arb.int(0 until from).take(degree).distinct()
-                        for (to in edges) {
-                            val weight = Arb.int(1..100).next(rs)
-                            graph.getValue(from)[to] = weight
-                            graph.getValue(to)[from] = weight
-                        }
+    get() = arbitrary { rs ->
+        val size = Arb.int(6..30).next(rs)
+        (0 until size)
+            .associateWith { persistentMapOf<Int, Int>().builder() }
+            .also { graph ->
+                for (from in (1 until size)) {
+                    val degree = Arb.int(1..maxOf(1, from / 2)).next(rs)
+                    val edges = Arb.int(0 until from).take(degree).distinct()
+                    for (to in edges) {
+                        val weight = Arb.int(1..100).next(rs)
+                        graph.getValue(from)[to] = weight
+                        graph.getValue(to)[from] = weight
                     }
                 }
-                .mapValues { (_, v) -> v.build() }
-                .toPersistentMap()
-        }
+            }
+            .mapValues { (_, v) -> v.build() }
+            .toPersistentMap()
     }
 
 val Arb.Companion.disconnectedGraph: Arb<Graph<Int>>
-    get() = arb { rs ->
-        generateSequence {
-            val graphs = Arb.connectedGraph.take(Arb.int(2..6).next(rs), rs).toList()
-            graphs.drop(1).fold(graphs[0].toMutableMap()) { result, next ->
-                val size = result.size
-                for ((from, edges) in next) {
-                    result[from + size] = edges.entries.associate { (t, w) -> (t + size) to w }.toPersistentMap()
-                }
-                result
-            }.toPersistentMap()
-        }
+    get() = arbitrary { rs ->
+        val graphs = Arb.connectedGraph.take(Arb.int(2..6).next(rs), rs).toList()
+        graphs.drop(1).fold(graphs[0].toMutableMap()) { result, next ->
+            val size = result.size
+            for ((from, edges) in next) {
+                result[from + size] = edges.entries.associate { (t, w) -> (t + size) to w }.toPersistentMap()
+            }
+            result
+        }.toPersistentMap()
     }
 
 val Arb.Companion.graphWithPairOfVertices
-    get() = arb { rs ->
-        connectedGraph.values(rs).map {
-            val from = Arb.int(0 until it.value.size).next(rs)
-            val to = Arb.int(0 until it.value.size).filter { it != from }.next(rs)
-            it.value to (from to to)
-        }
+    get() = arbitrary { rs ->
+        val graph = connectedGraph.sample(rs)
+        val from = Arb.int(0 until graph.value.size).next(rs)
+        val to = Arb.int(0 until graph.value.size).filter { it != from }.next(rs)
+        graph.value to (from to to)
     }
 
 val Arb.Companion.graphWithSubgraph: Arb<Pair<Graph<Int>, Graph<Int>>>
-    get() = arb { rs ->
-        connectedGraph.values(rs).map { graph ->
+    get() = arbitrary { rs ->
+        connectedGraph.sample(rs).let { graph ->
             graph.value to graph.value.mutate { g ->
                 val subgraphSize = Arb.int(4 until graph.value.size).next(rs)
                 g.keys.removeIf { it >= subgraphSize }

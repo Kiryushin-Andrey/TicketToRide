@@ -47,7 +47,7 @@ fun getFulfilledTickets(
             it.fold(graph.builder()) { g, s -> g.apply { addEdge(s.from.value, s.to.value, s.length) } }.build()
         }
         .map { getFulfilledTickets(it.splitIntoConnectedSubgraphs().toList()) }
-        .maxBy { it.sumBy { it.points } }
+        .maxByOrNull { it.sumBy { it.points } }
         ?: getFulfilledTickets(subgraphs)
 }
 

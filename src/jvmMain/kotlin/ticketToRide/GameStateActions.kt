@@ -198,7 +198,7 @@ private fun GameState.recalculatePlayerScores(map: GameMap): GameState {
             map
         )
     }
-    val longestRoute = scores.map { it.longestRoute }.max()!!
+    val longestRoute = scores.map { it.longestRoute }.maxOrNull()!!
     return copy(players = players.zip(scores) { player, score ->
         player.copy(points = score.getTotalPoints(longestRoute, true))
     })

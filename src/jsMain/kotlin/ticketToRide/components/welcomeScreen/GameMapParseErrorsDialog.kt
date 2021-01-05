@@ -26,7 +26,7 @@ class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RSta
                 open = true
                 fullScreen = true
             }
-            mAppBar(MColor.secondary, MAppBarPosition.sticky) {
+            mAppBar(MAppBarColor.secondary, MAppBarPosition.sticky) {
                 mToolbar {
                     mTypography(str.header(props.filename), MTypographyVariant.h6) {
                         css { flexGrow = 1.0 }
@@ -44,7 +44,7 @@ class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RSta
 
                         mExpansionPanelSummary {
                             attrs {
-                                expandIcon = buildElement { mIcon("expand_more") }!!
+                                expandIcon = buildElement { mIcon("expand_more") }
                                 css {
                                     backgroundColor = Color.lightGoldenrodYellow
                                 }

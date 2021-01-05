@@ -16,27 +16,27 @@ interface Formatter {
 
 class JsonFormatter : Formatter {
     override fun <T> send(webSocket: WebSocket, value: T, serializer: SerializationStrategy<T>) {
-        webSocket.send(json.stringify(serializer, value))
+        webSocket.send(json.encodeToString(serializer, value))
     }
 
     override fun <T> deserialize(msg: MessageEvent, serializer: DeserializationStrategy<T>): T {
         if (msg.data as? String == null)
             throw Error("Unexpected response from server: ${msg.data}")
 
-        return json.parse(serializer, msg.data as String)
+        return json.decodeFromString(serializer, msg.data as String)
     }
 }
 
 class ProtobufFormatter : Formatter {
-    private val protobuf = ProtoBuf(false)
+    private val protobuf = ProtoBuf { encodeDefaults = false }
 
     override fun <T> send(webSocket: WebSocket, value: T, serializer: SerializationStrategy<T>) {
-        webSocket.send(Uint8Array(protobuf.dump(serializer, value).toTypedArray()))
+        webSocket.send(Uint8Array(protobuf.encodeToByteArray(serializer, value).toTypedArray()))
     }
 
     override fun <T> deserialize(msg: MessageEvent, serializer: DeserializationStrategy<T>): T {
         val bytes = Int8Array(msg.data as ArrayBuffer).unsafeCast<ByteArray>()
-        return protobuf.load(serializer, bytes)
+        return protobuf.decodeFromByteArray(serializer, bytes)
     }
 }
 

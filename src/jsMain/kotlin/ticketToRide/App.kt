@@ -3,6 +3,7 @@ package ticketToRide
 import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.mIconButton
 import kotlinext.js.jsObject
+import kotlinx.browser.window
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
@@ -15,7 +16,6 @@ import ticketToRide.ConnectResponse.Success
 import ticketToRide.ConnectionState.*
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
-import kotlin.browser.window
 
 interface AppState : RState {
     var gameId: GameId?

@@ -131,7 +131,7 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
                         variant = MButtonVariant.contained
                         size = MButtonSize.small
                         component = "span"
-                        startIcon = buildElement { mIcon("cloud_upload") }!!
+                        startIcon = buildElement { mIcon("cloud_upload") }
                     }
                 }
             }

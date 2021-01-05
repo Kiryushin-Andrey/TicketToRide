@@ -8,15 +8,15 @@ import java.net.Socket
 
 class RedisStorage(val host: String, val port: Int, val password: String?)
 
-private val protobuf = ProtoBuf(false)
+private val protobuf = ProtoBuf { encodeDefaults = false }
 private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 
 private fun <T> dump(serializationStrategy: SerializationStrategy<T>, value: T) =
-    protobuf.dump(serializationStrategy, value)
+    protobuf.encodeToByteArray(serializationStrategy, value)
 
 private fun <T> parse(serializationStrategy: DeserializationStrategy<T>, value: ByteArray) =
-    protobuf.load(serializationStrategy, value)
+    protobuf.decodeFromByteArray(serializationStrategy, value)
 
 fun RedisStorage.saveMap(id: GameId, map: GameMap) {
     exec { conn ->
