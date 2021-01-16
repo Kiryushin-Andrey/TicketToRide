@@ -7,3 +7,11 @@
 job("Hello World!") {
     container("hello-world")
 }
+
+job("And another one") {
+    container("ubuntu") {
+    	shellScript {
+            content = "echo Hi"
+    	}
+    }
+}
