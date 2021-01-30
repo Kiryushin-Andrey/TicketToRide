@@ -1,101 +1,150 @@
 package ticketToRide.components.map
 
-import google.maps.*
-import kotlinext.js.jsObject
-import org.w3c.dom.Element
+import kotlinx.css.Color
+import kotlinx.html.js.onClickFunction
+import pigeonMaps.PigeonProps
 import react.*
+import react.dom.svg
+import svg.*
 import ticketToRide.*
-import kotlin.math.ceil
+import kotlin.math.PI
+import kotlin.math.acos
+import kotlin.math.pow
+import kotlin.math.sqrt
 
-class MapSegmentComponent : RComponent<MapSegmentComponent.Props, RState>() {
+interface MapSegmentProps : PigeonProps {
+    var mapZoom: Int
+    var from: City
+    var to: City
+    var color: CardColor?
+    var points: Int
+    var occupiedBy: PlayerId?
+    var onClick: () -> Unit
+}
 
-    interface Props : RProps {
-        var map: Map<Element>
-        var mapZoom: Int
-        var from: City
-        var to: City
-        var color: CardColor?
-        var points: Int
-        var occupiedBy: PlayerId?
-    }
+private fun distance(from: PigeonMapCoords, to: PigeonMapCoords) =
+    sqrt((from.x - to.x).pow(2) + (from.y - to.y).pow(2))
 
-    private lateinit var line: Polyline
+private fun MapSegmentProps.getPixels(): Pair<PigeonMapCoords, PigeonMapCoords> {
+    val from = latLngToPixel(from.latLng.toPigeonMapCoords())
+    val to = latLngToPixel(to.latLng.toPigeonMapCoords())
+    return if (from.x < to.x) from to to else to to from
+}
 
-    override fun componentWillUpdate(nextProps: Props, nextState: RState) {
-        line.setMap(null)
-    }
+private val mapSegment = functionalComponent<MapSegmentProps> { props ->
+    val (from, to) = props.getPixels()
+    val distance = distance(from, to)
+    val angle = acos((to.x - from.x) / distance) * (180 / PI) * (if (from.y < to.y) 1 else -1);
+    val lineHeight = if (props.mapZoom > 4) 10 else 6
 
-    override fun componentWillUnmount() {
-        line.setMap(null)
-    }
-
-    override fun RBuilder.render() {
-        val occupiedBy = props.occupiedBy
-        val (from, to) =
-            if (props.from.latLng.lng < props.to.latLng.lng) (props.from to props.to)
-            else (props.to to props.from)
-        line = Polyline(jsObject {
-            map = props.map
-            geodesic = true
-            path = arrayOf(from.latLng, to.latLng)
-            strokeColor = occupiedBy?.color?.rgb ?: props.color?.rgb ?: "#AAAAAA"
-            strokeWeight = if (occupiedBy != null) 8 else 3
-            icons =
-                if (occupiedBy == null)
-                    arrayOf(segmentSplitIcon(props.color?.rgb, props.points, false))
-                else
-                    occupiedSegmentIcons(occupiedBy.color, props.points, props.mapZoom)
-        })
-    }
-
-    private fun occupiedSegmentIcons(color: PlayerColor, points: Int, mapZoom: Int): Array<IconSequence> {
-        val iconsList = mutableListOf(
-            segmentSplitIcon(color.rgb, points, true),
-            occupiedIcon(points, color.rgb)
-        )
-        if (mapZoom > 4) iconsList += carIcon(color.rgb)
-        return iconsList.toTypedArray()
-    }
-
-    private fun segmentSplitIcon(colorRgb: String?, points: Int, occupied: Boolean) = jsObject<IconSequence> {
-        icon = jsObject {
-            path = if (occupied) "M 1,1 -1,-1 M 1,-1 -1,1" else "M 1,0 -1,0"
-            strokeOpacity = 1
-            strokeColor = if (occupied || colorRgb == "#000000") "#FFFFFF" else "#000000"
-            scale = 3
-        }
-        offset = "0px"
-        repeat = "${ceil(100f / points)}%"
-    }
-
-    private fun occupiedIcon(segmentsCount: Int, color: String) = jsObject<IconSequence> {
-        icon = jsObject {
-            path = SymbolPath.CIRCLE
-            strokeOpacity = 1
-            strokeColor = color
-            strokeWeight = 2
-            scale = 5
-        }
-        offset = "${ceil(100f / segmentsCount)}%"
-        repeat = "${ceil(100f / segmentsCount)}%"
-    }
-
-    private fun carIcon(color: String) = jsObject<IconSequence> {
-        icon = jsObject {
-            path =
-                "m 5.5,19.5 c 0,1.1 0.9,2 2,2 h 7 c 0.729,0 1.38669,-0.403362 1.71875,-1.03125 0.09197,0.01309 0.185809,0.03125 0.28125,0.03125 1.1,0 2,-0.9 2,-2 0,-1.1 -0.9,-2 -2,-2 1.1,0 2,-0.9 2,-2 0,-1.1 -0.9,-2 -2,-2 v -2 c 1.1,0 2,-0.9 2,-2 0,-1.1 -0.9,-2 -2,-2 1.1,0 2,-0.9 2,-2 0,-1.1 -0.9,-2 -2,-2 -0.09544,0 -0.189277,0.018157 -0.28125,0.03125 C 15.886691,1.903362 15.229,1.5 14.5,1.5 h -7 c -1.1,0 -2,0.9 -2,2 z m 2,-0.5 v -3 c 0,-0.3 0.2,-0.5 0.5,-0.5 h 3 c 0.3,0 0.5,0.2 0.5,0.5 v 3 c 0,0.3 -0.2,0.5 -0.5,0.5 H 8 C 7.7,19.5 7.5,19.3 7.5,19 Z m 0,-6 V 10 C 7.5,9.7 7.7,9.5 8,9.5 h 3 c 0.3,0 0.5,0.2 0.5,0.5 v 3 c 0,0.3 -0.2,0.5 -0.5,0.5 H 8 C 7.7,13.5 7.5,13.3 7.5,13 Z m 0,-6 V 4 C 7.5,3.7 7.7,3.5 8,3.5 h 3 c 0.3,0 0.5,0.2 0.5,0.5 v 3 c 0,0.3 -0.2,0.5 -0.5,0.5 H 8 C 7.7,7.5 7.5,7.3 7.5,7 Z M 16,18.5 C 16,18.2 16.2,18 16.5,18 16.8,18 17,18.2 17,18.5 17,18.8 16.8,19 16.5,19 16.2,19 16,18.8 16,18.5 Z m 0,-4 C 16,14.2 16.2,14 16.5,14 16.8,14 17,14.2 17,14.5 17,14.8 16.8,15 16.5,15 16.2,15 16,14.8 16,14.5 Z m 0,-6 C 16,8.2 16.2,8 16.5,8 16.8,8 17,8.2 17,8.5 17,8.8 16.8,9 16.5,9 16.2,9 16,8.8 16,8.5 Z m 0,-4 C 16,4.2 16.2,4 16.5,4 16.8,4 17,4.2 17,4.5 17,4.8 16.8,5 16.5,5 16.2,5 16,4.8 16,4.5 Z"
-            strokeOpacity = 1
-            strokeColor = color
-            strokeWeight = 1
-            scale = 1
-        }
-        offset = "-30px"
-        repeat = "30px"
+    props.occupiedBy?.let { occupiedBy ->
+        occupiedSegment(occupiedBy, from, distance, angle, lineHeight)
+    } ?: run {
+        freeSegment(props, from, distance, angle, lineHeight)
     }
 }
 
-fun RBuilder.mapSegment(builder: MapSegmentComponent.Props.() -> Unit) {
-    child(MapSegmentComponent::class) {
-        attrs(builder)
+private fun RBuilder.freeSegment(
+    props: MapSegmentProps,
+    from: PigeonMapCoords,
+    distance: Double,
+    angle: Double,
+    lineHeight: Int
+) {
+    val gap = if (props.mapZoom > 4) 8 else 4
+    for (i in 0 until props.points) {
+        rect {
+            x = ((i * distance / props.points) + from.x).toInt()
+            y = (from.y - lineHeight / 2).toInt()
+            height = lineHeight
+            width = (distance / props.points).toInt() - gap
+            fill = props.color?.rgb ?: "#AAAAAA"
+            stroke = Color.black.value
+            strokeWidth = 1
+            transform = "rotate ($angle ${from.x} ${from.y})"
+            onClickFunction = { props.onClick() }
+        }
+    }
+}
+
+private fun RBuilder.occupiedSegment(
+    occupiedBy: PlayerId,
+    from: PigeonMapCoords,
+    distance: Double,
+    angle: Double,
+    lineHeight: Int,
+): ReactElement {
+    // rails
+    fun horizontal(delta: Int) = line {
+        x1 = from.x.toInt()
+        x2 = (from.x + distance).toInt()
+        y1 = from.y.toInt() - delta
+        y2 = from.y.toInt() - delta
+        stroke = occupiedBy.color.rgb
+        strokeWidth = 2
+        transform = "rotate ($angle ${from.x} ${from.y})"
+    }
+    horizontal(-2)
+    horizontal(2)
+
+    // sleepers
+    return rect {
+        x = from.x.toInt()
+        y = (from.y - lineHeight / 2).toInt()
+        height = lineHeight
+        width = distance.toInt()
+        fill = "url(#sleepers)"
+        transform = "rotate ($angle ${from.x} ${from.y})"
+    }
+}
+
+private fun RBuilder.mapSegment(segment: Segment, from: City, to: City, builder: MapSegmentProps.() -> Unit) {
+    child(mapSegment) {
+        attrs {
+            key = "${segment.from.value}-${segment.to.value}"
+            this.from = from
+            this.to = to
+            color = segment.color
+            points = segment.length
+            builder()
+        }
+    }
+}
+
+interface RouteSegmentsProps : PigeonProps {
+    var gameMap: GameMap
+    var mapZoom: Int
+    var fillSegmentProps: (MapSegmentProps, City, City) -> Unit
+}
+
+val routeSegmentsComponent = functionalComponent<RouteSegmentsProps> { props ->
+    svg {
+        attrs["width"] = "100%"
+        attrs["height"] = "100%"
+
+        defs {
+            pattern {
+                attrs {
+                    id = "sleepers"
+                    x = 0
+                    y = 0
+                    width = 10
+                    height = 10
+                    patternUnits = PatternUnits.userSpaceOnUse
+                }
+                line { x1 = 2; x2 = 2; y1 = 0; y2 = 10; stroke = Color.black.value; strokeWidth = 1 }
+            }
+        }
+
+        val cityByName = props.gameMap.cities.associateBy { it.name }
+        props.gameMap.segments.forEach {
+            val fromCity = cityByName[it.from] ?: error("City ${it.from.value} not present in game map")
+            val toCity = cityByName[it.to] ?: error("City ${it.to.value} not present in game map")
+            mapSegment(it, fromCity, toCity) {
+                mapZoom = props.mapZoom
+                latLngToPixel = props.latLngToPixel
+                props.fillSegmentProps(this, fromCity, toCity)
+            }
+        }
     }
 }

@@ -80,6 +80,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     height = 100.pct
                 }
                 finalMap {
+                    locale = props.locale
                     gameMap = props.gameMap
                     players = props.players
                     playerToHighlight = state.playerToHighlight

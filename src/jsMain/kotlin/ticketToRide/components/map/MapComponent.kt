@@ -17,9 +17,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 
     private fun act(block: PlayerState.() -> PlayerState) = props.onAction(playerState.block())
 
-    override fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
-        super.cityMarkerProps(this, city)
-
+    override fun MapCityMarkerProps.fill(city: City) {
         connected = props.connected
         selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
         hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
@@ -27,9 +25,9 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
         onClick = { act { onCityClick(city.name) } }
     }
 
-    override fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, segment: Segment) = with(segmentProps) {
-        super.segmentProps(this, from, to, segment)
+    override fun MapSegmentProps.fill(from: City, to: City) {
         occupiedBy = players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
+        onClick = { act { onSegmentClick(from.name, to.name) } }
     }
 }
 

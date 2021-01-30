@@ -7,7 +7,7 @@ import java.util.*
 
 val appStartTimestamp = Calendar.getInstance().toInstant().toString()
 
-fun HTML.indexHtml(googleApiKey: String, isLoopbackAddress: Boolean) {
+fun HTML.indexHtml(isLoopbackAddress: Boolean) {
     val queryString =
         if (isLoopbackAddress) "ver=${BuildKonfig.version}&ts=${appStartTimestamp}"
         else "ver=${BuildKonfig.version}"
@@ -35,7 +35,6 @@ fun HTML.indexHtml(googleApiKey: String, isLoopbackAddress: Boolean) {
             id = "app"
             +"Loading..."
         }
-        script(src = "//maps.googleapis.com/maps/api/js?key=${googleApiKey}") {}
         script(src = "/ticket-to-ride.js?$queryString") {}
     }
 }

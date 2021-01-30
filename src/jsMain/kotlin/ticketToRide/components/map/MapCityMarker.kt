@@ -3,93 +3,100 @@ package ticketToRide.components.map
 import kotlinx.css.*
 import kotlinx.css.properties.*
 import kotlinx.html.js.onClickFunction
+import kotlinx.html.js.onMouseOutFunction
+import kotlinx.html.js.onMouseOverFunction
+import pigeonMaps.PigeonProps
 import react.*
 import styled.StyleSheet
 import styled.css
+import styled.inlineStyles
 import styled.styledDiv
+import ticketToRide.CityName
 import ticketToRide.PlayerId
 
-class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
+interface MapCityMarkerProps: PigeonProps {
+    var name: CityName
+    var displayAllCityNames: Boolean
+    var selected: Boolean
+    var station: PlayerId?
+    var hasOccupiedSegment: Boolean
+    var isTicketTarget: Boolean
+    var connected: Boolean
+    var onMouseOver: ((CityName) -> Unit)?
+    var onMouseOut: ((CityName) -> Unit)?
+    var onClick: ((CityName) -> Unit)?
+}
 
-    interface Props: RProps {
-        var lat: Number
-        var lng: Number
-
-        var name: String
-        var displayAllCityNames: Boolean
-        var selected: Boolean
-        var station: PlayerId?
-        var hasOccupiedSegment: Boolean
-        var isTicketTarget: Boolean
-        var connected: Boolean
-        var onClick: (() -> Unit)?
-    }
-
-    override fun RBuilder.render() {
+private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
+    styledDiv {
+        inlineStyles {
+            position = Position.absolute
+            transform {
+                translate((props.left ?: 0).px, (props.top ?: 0).px)
+            }
+            if (props.connected)
+                cursor = Cursor.pointer
+            if (props.selected) {
+                transform { scale(1.2) }
+                zIndex = 150
+            }
+        }
+        attrs {
+            onClickFunction = { props.onClick?.let { it(props.name) } }
+            onMouseOverFunction = { props.onMouseOver?.let { it(props.name) } }
+            onMouseOutFunction = { props.onMouseOut?.let { it(props.name) } }
+        }
         styledDiv {
             css {
-                position = Position.absolute
-                if (props.connected)
-                    cursor = Cursor.pointer
-                if (props.selected) {
-                    transform { scale(1.2) }
-                    zIndex = 150
+                +ComponentStyle.markerIcon
+                val img = props.station?.let { "station-${it.color.name.toLowerCase()}" } ?: when {
+                    props.selected -> "city-marker-red"
+                    props.hasOccupiedSegment -> "city-marker-green"
+                    props.isTicketTarget -> "city-marker-yellow"
+                    else -> "city-marker-blue"
+                }
+                backgroundImage = Image("url(/icons/${img}.svg)")
+                if (props.station != null) {
+                    put("transform-origin", "center")
+                    transform {
+                        translate((-50).pct, (-50).pct)
+                        scale(1.5)
+                    }
+                } else {
+                    transform {
+                        translate((-50).pct, (-50).pct)
+                    }
                 }
             }
-            attrs {
-                onClickFunction = { props.onClick?.let { it() } }
-            }
+        }
+        if (props.selected || props.displayAllCityNames) {
+            // popup bubble style taken from https://developers.google.com/maps/documentation/javascript/examples/overlay-popup
             styledDiv {
                 css {
-                    +ComponentStyle.markerIcon
-                    val img = props.station?.let { "station-${it.color.name.toLowerCase()}" } ?: when {
-                        props.selected -> "city-marker-red"
-                        props.hasOccupiedSegment -> "city-marker-green"
-                        props.isTicketTarget -> "city-marker-yellow"
-                        else -> "city-marker-blue"
-                    }
-                    backgroundImage = Image("url(/icons/${img}.svg)")
-                    if (props.station != null) {
-                        put("transform-origin", "center")
-                        transform {
-                            translate((-50).pct, (-50).pct)
-                            scale(1.5)
-                        }
-                    } else {
-                        transform {
-                            translate((-50).pct, (-50).pct)
-                        }
-                    }
+                    +ComponentStyle.popupContainer
                 }
-            }
-            if (props.selected || props.displayAllCityNames) {
-                // popup bubble style taken from https://developers.google.com/maps/documentation/javascript/examples/overlay-popup
                 styledDiv {
                     css {
-                        +ComponentStyle.popupContainer
+                        +ComponentStyle.popupBubbleAnchor
+                        bottom = if (props.station != null) 20.px else 16.px
+                        after {
+                            borderTopColor = if (props.selected) Color.lightPink else Color.white
+                        }
                     }
                     styledDiv {
                         css {
-                            +ComponentStyle.popupBubbleAnchor
-                            bottom = if (props.station != null) 20.px else 16.px
-                            after {
-                                borderTopColor = if (props.selected) Color.lightPink else Color.white
-                            }
+                            +ComponentStyle.popupBubble
+                            backgroundColor = if (props.selected) Color.lightPink else Color.white
                         }
-                        styledDiv {
-                            css {
-                                +ComponentStyle.popupBubble
-                                backgroundColor = if (props.selected) Color.lightPink else Color.white
-                            }
-                            +props.name
-                        }
+                        +props.name.value
                     }
                 }
             }
         }
     }
+}
 
-    private object ComponentStyle : StyleSheet("mapMarker", isStatic = true) {
+private object ComponentStyle : StyleSheet("mapMarker", isStatic = true) {
         val markerIcon by css {
             position = Position.absolute
             width = 20.px
@@ -148,10 +155,9 @@ class MapCityMarker : RComponent<MapCityMarker.Props, RState>() {
             boxShadow(Color.grey, 0.px, 2.px, 10.px, 1.px)
         }
     }
-}
 
-fun RBuilder.marker(block: MapCityMarker.Props.() -> Unit): ReactElement {
-    return child(MapCityMarker::class) {
+fun RBuilder.mapCityMarker(block: MapCityMarkerProps.() -> Unit): ReactElement {
+    return child(mapCityMarker) {
         attrs(block)
     }
 }

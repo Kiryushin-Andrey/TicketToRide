@@ -19,7 +19,6 @@ private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
-    val googleApiKey = environment.config.property("google-api-key").getString()
     val host = environment.config.property("ktor.deployment.host").getString()
     val redis = environment.config.propertyOrNull("redis.host")?.let {
         RedisStorage(
@@ -64,10 +63,10 @@ fun Application.module() {
         static("images") { resources("images") }
 
         get("/") {
-            call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
+            call.respondHtml { indexHtml(isLoopbackAddress) }
         }
         get("/game/{id}") {
-            call.respondHtml { indexHtml(googleApiKey, isLoopbackAddress) }
+            call.respondHtml { indexHtml(isLoopbackAddress) }
         }
 
         route("/internal") {

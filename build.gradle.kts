@@ -14,8 +14,8 @@ plugins {
 
 repositories {
     jcenter()
-    maven("https://kotlin.bintray.com/kotlin-js-wrappers/")
     mavenCentral()
+    maven("https://kotlin.bintray.com/kotlin-js-wrappers/")
 }
 
 application {
@@ -85,13 +85,9 @@ kotlin {
                 implementation(npm("@material-ui/core", "4.9.8"))
                 implementation(npm("styled-components", "5.2.0"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
-                implementation(npm("google-map-react", "1.1.7"))
+                implementation(npm("pigeon-maps", "0.17.0"))
+                implementation(npm("fscreen", "1.2.0"))
                 compileOnly(npm("raw-loader", "4.0.1"))
-
-                // aren't needed neither at compile nor at run time
-                // just to keep track of versions used to generate Kotlin wrappers with Dukat
-                implementation(npm("@types/googlemaps", "3.39.6"))
-                implementation(npm("@types/google-map-react", "1.1.8"))
 
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
                 implementation("org.jetbrains:kotlin-styled:5.2.0-pre.134-kotlin-1.4.21")

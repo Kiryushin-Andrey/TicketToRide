@@ -1,15 +1,23 @@
 package ticketToRide.components.map
 
-import google.map.react.Coords
-import google.map.react.GoogleMapReact
-import google.map.react.Props
-import kotlinext.js.jsObject
-import org.w3c.dom.*
+import fscreen.fScreen
+import kotlinx.css.Color
+import kotlinx.css.color
+import kotlinx.css.properties.TextDecoration
+import kotlinx.css.px
+import kotlinx.css.textDecoration
+import org.w3c.dom.Element
+import pigeonMaps.MapProps
 import react.*
+import react.dom.a
+import react.dom.findDOMNode
+import react.dom.span
+import styled.css
+import styled.styledA
 import ticketToRide.*
-import kotlin.js.Promise
 
 interface MapComponentBaseProps : RProps {
+    var locale: Locale
     var gameMap: GameMap
     var citiesToHighlight: Set<CityName>
     var citiesWithStations: Map<CityName, PlayerId>
@@ -18,72 +26,190 @@ interface MapComponentBaseProps : RProps {
 }
 
 interface MapComponentBaseState : RState {
-    var map: google.maps.Map<Element>?
     var mapZoom: Int
+    var mapTilesProvider: MapTilesProvider
+    var displayAllCityNames: Boolean
 }
 
-open class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
+abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         where P : MapComponentBaseProps, S : MapComponentBaseState {
 
+    override fun S.init(props: P) {
+        mapZoom = props.gameMap.mapZoom
+        mapTilesProvider = MapTilesProvider.Watermark
+        displayAllCityNames = props.gameMap.mapZoom > 4
+    }
+
     override fun RBuilder.render() {
-        googleMap {
+        var mapElement: Element? = null
+        pigeonMap(state.mapTilesProvider) {
+            ref {
+                mapElement = findDOMNode(it)
+            }
             attrs {
-                center = props.gameMap.mapCenter.toGoogleMapCoords()
-                zoom = props.gameMap.mapZoom
-                googleMapLoader = { Promise.resolve(js("google.maps") as Any) }
-                onGoogleApiLoaded = { maps -> setState { map = maps.map; mapZoom = props.gameMap.mapZoom } }
-                yesIWantToUseGoogleMapApiInternals = true
-                onChildMouseEnter = { key, _ -> setState { props.onCityMouseOver(CityName(key)) } }
-                onChildMouseLeave = { key, _ -> setState { props.onCityMouseOut(CityName(key)) } }
-                onZoomAnimationEnd = { zoom -> setState { mapZoom = zoom } }
+                defaultCenter = props.gameMap.mapCenter.toPigeonMapCoords()
+                defaultZoom = props.gameMap.mapZoom
+                zoom = state.mapZoom
+                onAnimationStart = {
+                    console.log(state.mapZoom)
+                    if (state.displayAllCityNames && state.mapZoom <= 4) setState { displayAllCityNames = false }
+                }
+                onAnimationStop = {
+                    console.log(state.mapZoom)
+                    if (!state.displayAllCityNames && state.mapZoom > 4) setState { displayAllCityNames = true }
+                }
+                onBoundsChanged = {
+                    setState {
+                        mapZoom = it.zoom as Int
+                        displayAllCityNames = mapZoom > 4
+                    }
+                }
             }
 
-            props.gameMap.cities.forEach { marker { cityMarkerProps(this, it) } }
-        }
+            cityMarkers()
+            routeSegments()
 
-        routeSegments()
+            zoomInButton()
+            zoomOutButton()
+            switchToFullScreenButton { mapElement }
+            switchMapTilesButton()
+        }
     }
 
-    protected open fun cityMarkerProps(markerProps: MapCityMarker.Props, city: City) = with(markerProps) {
-        key = city.name.value
-        name = city.name.value
-        lat = city.latLng.lat
-        lng = city.latLng.lng
-        displayAllCityNames = state.mapZoom > 4
-        station = props.citiesWithStations[city.name]
-        selected = props.citiesToHighlight.contains(city.name)
-    }
-
-    protected open fun segmentProps(segmentProps: MapSegmentComponent.Props, from: City, to: City, segment: Segment) =
-        with(segmentProps) {
-            this.from = from
-            this.to = to
-            color = segment.color
-            points = segment.length
+    private fun RBuilder.cityMarkers() {
+        props.gameMap.cities.forEach { city ->
+            mapCityMarker {
+                key = city.name.value
+                name = city.name
+                anchor = city.latLng.toPigeonMapCoords()
+                displayAllCityNames = state.displayAllCityNames
+                station = props.citiesWithStations[city.name]
+                selected = props.citiesToHighlight.contains(city.name)
+                onMouseOver = props.onCityMouseOver
+                onMouseOut = props.onCityMouseOut
+                fill(city)
+            }
         }
+    }
 
     private fun RBuilder.routeSegments() {
-        state.map?.let { map ->
-            val cityByName = props.gameMap.cities.associateBy { it.name }
-            props.gameMap.segments.forEach {
-                val fromCity = cityByName[it.from] ?: error("City ${it.from.value} not present in game map")
-                val toCity = cityByName[it.to] ?: error("City ${it.to.value} not present in game map")
-                mapSegment {
-                    this.map = map
-                    mapZoom = state.mapZoom
-                    segmentProps(this, fromCity, toCity, it)
+        child(routeSegmentsComponent) {
+            attrs {
+                gameMap = props.gameMap
+                mapZoom = state.mapZoom
+                fillSegmentProps = { props, from, to -> props.fill(from, to) }
+            }
+        }
+    }
+
+    private fun RBuilder.zoomInButton() {
+        mapControlButton {
+            tooltip = str.zoomIn
+            icon = "add"
+            topPosition = 10.px
+            onClick = { setState { mapZoom += 1 } }
+        }
+    }
+
+    private fun RBuilder.zoomOutButton() {
+        mapControlButton {
+            tooltip = str.zoomOut
+            icon = "remove"
+            topPosition = 40.px
+            onClick = { setState { mapZoom -= 1 } }
+        }
+    }
+
+    private fun RBuilder.switchToFullScreenButton(getMapElement: () -> Element?) {
+        mapControlButton {
+            tooltip = str.fullscreen
+            icon = "crop_free"
+            topPosition = 70.px
+            onClick = {
+                if (fScreen.fullscreenElement != null) fScreen.exitFullscreen()
+                else getMapElement()?.let { fScreen.requestFullscreen(it) }
+            }
+        }
+    }
+
+    private fun RBuilder.switchMapTilesButton() {
+        mapControlButton {
+            tooltip = str.toggleMapTiles
+            icon = "map"
+            topPosition = 100.px
+            onClick = {
+                setState {
+                    mapTilesProvider =
+                        if (mapTilesProvider == MapTilesProvider.Terrain) MapTilesProvider.Watermark
+                        else MapTilesProvider.Terrain
                 }
             }
         }
     }
+
+    protected abstract fun MapCityMarkerProps.fill(city: City)
+
+    protected abstract fun MapSegmentProps.fill(from: City, to: City)
+
+    private inner class Strings : LocalizedStrings({ props.locale }) {
+
+        val zoomIn by loc(
+            Locale.En to "Zoom in",
+            Locale.Ru to "Увеличить"
+        )
+
+        val zoomOut by loc(
+            Locale.En to "Zoom out",
+            Locale.Ru to "Уменьшить"
+        )
+
+        val fullscreen by loc(
+            Locale.En to "Toggle fullscreen",
+            Locale.Ru to "Полный экран"
+        )
+
+        val toggleMapTiles by loc(
+            Locale.En to "Toggle map view",
+            Locale.Ru to "Вид карты"
+        )
+    }
+
+    private val str = Strings()
 }
 
-
-fun RBuilder.googleMap(block: RElementBuilder<Props>.() -> Unit): ReactElement {
-    return child(GoogleMapReact::class, block)
+private fun RBuilder.pigeonMap(
+    tilesProvider: MapTilesProvider,
+    block: RElementBuilder<MapProps>.() -> Unit
+): ReactElement {
+    return child(pigeonMaps.Map::class) {
+        attrs {
+            block()
+            provider = tilesProvider.provider
+            attribution = attribution(tilesProvider)
+        }
+    }
 }
 
-fun LatLong.toGoogleMapCoords() = jsObject<Coords> {
-    lat = this@toGoogleMapCoords.lat
-    lng = this@toGoogleMapCoords.lng
+private fun RBuilder.link(text: String, href: String) {
+    styledA {
+        css {
+            color = Color("#0078A8")
+            textDecoration = TextDecoration.none
+        }
+        attrs {
+            this.href = href
+            target = "_blank"
+            rel = "noreferrer noopener"
+        }
+        +text
+    }
+}
+
+private fun RBuilder.attribution(tilesProvider: MapTilesProvider) = span {
+    +"Map tiles by "; link("Stamen Design", "http://stamen.com/")
+    +", under "; link("CC BY 3.0", "http://creativecommons.org/licenses/by/3.0")
+    +". Data by "; link("OpenStreetMap", "http://openstreetmap.org/")
+    +", under "
+    if (tilesProvider == MapTilesProvider.Terrain) link("ODbL", "http://www.openstreetmap.org/copyright")
+    else link("CC BY SA", "http://creativecommons.org/licenses/by-sa/3.0")
 }

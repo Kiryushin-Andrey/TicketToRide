@@ -161,6 +161,13 @@ sealed class PlayerState {
         else ->
             this
     }
+
+    fun onSegmentClick(from: CityName, to: CityName) = when (this) {
+        is MyTurn ->
+            gameMap.getSegmentBetween(from, to)?.let { BuildingSegment(PickedCity(this, from), it) } ?: this
+        else ->
+            this
+    }
 }
 
 val PlayerState.citiesToHighlight

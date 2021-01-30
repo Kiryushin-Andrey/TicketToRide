@@ -12,6 +12,7 @@ import kotlinx.html.InputType
 import org.w3c.dom.HTMLInputElement
 import org.w3c.notifications.*
 import react.*
+import styled.StyleSheet
 import styled.css
 import styled.styledDiv
 import ticketToRide.*
@@ -326,7 +327,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
         }
     }
 
-    object ComponentStyles : ExpansionPanelStyleSheet("Welcome") {
+    object ComponentStyles : StyleSheet("Welcome", isStatic = true) {
         val welcomeDialog by css {
             width = 100.pct
             margin = "0"

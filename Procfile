@@ -1,1 +1,1 @@
-web: java -DGOOGLE_API_KEY=$GOOGLE_API_KEY -DHOST=0.0.0.0 $JAVA_OPTS -jar build/libs/ticket-to-ride.fat.jar -port=$PORT
+web: java -DHOST=0.0.0.0 $JAVA_OPTS -jar build/libs/ticket-to-ride.fat.jar -port=$PORT

@@ -3,7 +3,7 @@ This is a web version of the [Ticket to Ride](https://www.daysofwonder.com/ticke
 * Kotlin multiplatform - JVM + JS
 * State machines and functional programming style for the game logic
 * React for the frontend
-* Google Maps for the underlying game map
+* [Stamen Maps](http://maps.stamen.com/) with SVG routes for the underlying game map
 * Websockets for the bidirectional communication between server and clients
 * Some simple graph algorithms for final score calculation covered with property-based testing
 
