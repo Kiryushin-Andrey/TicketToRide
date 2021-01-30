@@ -1,15 +1,20 @@
 package ticketToRide.components.welcomeScreen
 
+import com.ccfraser.muirwik.components.*
+import com.ccfraser.muirwik.components.accordion.mAccordion
+import com.ccfraser.muirwik.components.accordion.mAccordionDetails
+import com.ccfraser.muirwik.components.accordion.mAccordionSummary
 import com.ccfraser.muirwik.components.button.mIconButton
 import com.ccfraser.muirwik.components.dialog.mDialog
-import com.ccfraser.muirwik.components.expansionpanel.*
 import com.ccfraser.muirwik.components.list.mList
-import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.list.mListItem
 import kotlinx.css.*
 import react.*
 import styled.css
-import ticketToRide.*
+import ticketToRide.GameMapParseError
+import ticketToRide.GameMapPropertyNames
+import ticketToRide.Locale
+import ticketToRide.LocalizedStrings
 
 class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RState>() {
 
@@ -40,9 +45,9 @@ class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RSta
             }
             mList {
                 props.errors.groupBy { it::class }.forEach { (_, errors) ->
-                    mExpansionPanel {
+                    mAccordion {
 
-                        mExpansionPanelSummary {
+                        mAccordionSummary {
                             attrs {
                                 expandIcon = buildElement { mIcon("expand_more") }
                                 css {
@@ -52,7 +57,7 @@ class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RSta
                             mTypography(str.errorDescription(errors.first()), MTypographyVariant.h6)
                         }
 
-                        mExpansionPanelDetails {
+                        mAccordionDetails {
                             attrs {
                                 css { display = Display.block }
                             }

@@ -1,18 +1,22 @@
 package ticketToRide.screens
 
-import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.expansionpanel.*
+import com.ccfraser.muirwik.components.MTypographyVariant
+import com.ccfraser.muirwik.components.accordion.mAccordion
+import com.ccfraser.muirwik.components.accordion.mAccordionDetails
+import com.ccfraser.muirwik.components.accordion.mAccordionSummary
+import com.ccfraser.muirwik.components.mIcon
+import com.ccfraser.muirwik.components.mPaper
+import com.ccfraser.muirwik.components.mTypography
 import kotlinx.css.*
-import kotlinx.css.Color
 import react.*
 import styled.*
 import ticketToRide.*
-import ticketToRide.components.*
 import ticketToRide.components.chat.chatMessages
 import ticketToRide.components.chat.chatSendMessageTextBox
 import ticketToRide.components.map.finalMap
 import ticketToRide.components.tickets.pointsLabel
 import ticketToRide.components.tickets.ticket
+import ticketToRide.components.withClasses
 
 interface FinalScreenProps : RProps {
     var locale: Locale
@@ -126,7 +130,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                 elevation = if (state.playerToHighlight == player.name) 6 else 2
             }
 
-            mExpansionPanel {
+            mAccordion {
                 css { backgroundColor = Color(player.color.rgb).withAlpha(0.4) }
                 attrs {
                     defaultExpanded = expanded
@@ -137,7 +141,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     onMouseLeave = { setState { playerToHighlight = null } }
                 }
 
-                mExpansionPanelSummary {
+                mAccordionSummary {
                     attrs {
                         expandIcon = buildElement { mIcon("expand_more") }
                         withClasses(
@@ -149,7 +153,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
                     playerBlockHeader(player, player.getTotalPoints(longestPathOfAll, false))
                 }
 
-                mExpansionPanelDetails {
+                mAccordionDetails {
                     attrs {
                         className = ComponentStyles.getClassName { it::playerDetailsRoot }
                     }

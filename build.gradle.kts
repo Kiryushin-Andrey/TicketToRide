@@ -27,12 +27,13 @@ val ktor_version = "1.5.0"
 val serialization_version = "1.0.1"
 val kotest_version = "4.3.2"
 val kotlin_wrappers_version = "1.0.0-pre.134-kotlin-1.4.21"
+val react_version = "16.13.0"
 
 kotlin {
     jvm {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "1.8"
             }
         }
     }
@@ -78,18 +79,23 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                implementation(npm("react", "16.13.0"))
-                implementation(npm("react-dom", "16.13.0"))
-                implementation(npm("@types/googlemaps", "3.39.6"))
-                implementation(npm("@types/google-map-react", "1.1.8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
-                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.134-kotlin-1.4.21")
-                implementation("com.ccfraser.muirwik:muirwik-components:0.6.3")
+                implementation(npm("react", react_version))
+                implementation(npm("react-dom", react_version))
+                implementation(npm("react-is", react_version))
                 implementation(npm("@material-ui/core", "4.9.8"))
                 implementation(npm("styled-components", "5.2.0"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
                 implementation(npm("google-map-react", "1.1.7"))
                 compileOnly(npm("raw-loader", "4.0.1"))
+
+                // aren't needed neither at compile nor at run time
+                // just to keep track of versions used to generate Kotlin wrappers with Dukat
+                implementation(npm("@types/googlemaps", "3.39.6"))
+                implementation(npm("@types/google-map-react", "1.1.8"))
+
+                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
+                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.134-kotlin-1.4.21")
+                implementation("com.ccfraser.muirwik:muirwik-components:0.6.3")
             }
         }
     }
@@ -139,40 +145,17 @@ tasks {
         val jvmCompilation = kotlin.jvm().compilations["main"]
         configurations = mutableListOf(jvmCompilation.compileDependencyFiles as Configuration)
         from(jvmCompilation.output)
-        dependsOn(prodJs)
-        from(prodJs.get().outputFile)
-    }
-
-    val prodJar = create<Jar>("productionJar") {
-        archiveFileName.set("ticket-to-ride.prod.jar")
-        dependsOn(prodJs)
-        from(prodJs.get().outputFile)
+        from(prodJs)
     }
 
     val devJar = create<Jar>("developmentJar") {
-        archiveFileName.set("ticket-to-ride.dev.jar")
-        dependsOn(devJs)
-        from(devJs.get().outputFile)
-    }
-
-    configure(listOf(prodJar, devJar)) {
         from(kotlin.jvm().compilations["main"].output)
-        manifest {
-            attributes("Main-Class" to "ticketToRide.ServerKt")
-        }
-    }
-
-    create<JavaExec>("runProd") {
-        group = "application"
-        main = "ticketToRide.ServerKt"
-        dependsOn(prodJar)
-        classpath(configurations["jvmRuntimeClasspath"], prodJar)
+        from(devJs)
     }
 
     create<JavaExec>("runDev") {
         group = "application"
-        main = "ticketToRide.ServerKt"
-        dependsOn(devJar)
+        main = application.mainClass.get()
         classpath(configurations["jvmRuntimeClasspath"], devJar)
     }
 }
