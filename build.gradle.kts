@@ -1,5 +1,7 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.bmuschko.gradle.docker.tasks.image.*
+import com.bmuschko.gradle.docker.tasks.container.*
 import com.codingfeline.buildkonfig.gradle.*
 import com.codingfeline.buildkonfig.compiler.*
 import java.io.ByteArrayOutputStream
@@ -10,6 +12,7 @@ plugins {
     kotlin("plugin.serialization") version "1.4.21"
     id("com.github.johnrengelman.shadow") version "6.1.0"
     id("com.codingfeline.buildkonfig") version "0.7.0"
+    id("com.bmuschko.docker-remote-api") version "6.7.0"
 }
 
 repositories {
@@ -28,6 +31,7 @@ val serialization_version = "1.0.1"
 val kotest_version = "4.3.2"
 val kotlin_wrappers_version = "1.0.0-pre.134-kotlin-1.4.21"
 val react_version = "16.13.0"
+val dockerImageForHeroku = "registry.heroku.com/ticketgame/web"
 
 kotlin {
     jvm {
@@ -133,7 +137,7 @@ tasks {
     val devJs = named<KotlinWebpack>("jsBrowserDevelopmentWebpack")
     val prodJs = named<KotlinWebpack>("jsBrowserProductionWebpack")
 
-    named<ShadowJar>("shadowJar") {
+    val shadowJar = named<ShadowJar>("shadowJar") {
         manifest {
             attributes("Main-Class" to application.mainClass.get())
         }
@@ -153,5 +157,48 @@ tasks {
         group = "application"
         main = application.mainClass.get()
         classpath(configurations["jvmRuntimeClasspath"], devJar)
+    }
+
+    val createDockerfile = create<Dockerfile>("dockerFile") {
+        group = "docker"
+        from("openjdk:8-alpine")
+        copyFile(shadowJar.map {
+            val jarPath = it.outputs.files.singleFile.relativeTo(buildDir).invariantSeparatorsPath
+            Dockerfile.CopyFile(jarPath, "/")
+        })
+        workingDir("/")
+        exposePort(8080)
+        entryPoint(shadowJar.map { listOf("java", "-jar", it.outputs.files.singleFile.name) })
+    }
+
+    val buildDockerImage = create<DockerBuildImage>("dockerBuildImage") {
+        group = "docker"
+        dependsOn(shadowJar)
+        images.add(dockerImageForHeroku)
+        inputDir.set(buildDir)
+        dockerFile.set(createDockerfile.destFile)
+    }
+
+    val createDockerContainer = create<DockerCreateContainer>("dockerCreateContainer") {
+        group = "docker"
+        dependsOn(buildDockerImage)
+        this.imageId.set(dockerImageForHeroku)
+        hostConfig.portBindings.add("8080:8080")
+        hostConfig.autoRemove.set(true)
+    }
+
+    create<DockerStartContainer>("dockerStartContainer") {
+        group = "docker"
+        dependsOn(createDockerContainer)
+        containerId.set(createDockerContainer.containerId)
+    }
+
+    create<DockerPushImage>("dockerPushToHeroku") {
+        group = "docker"
+        dependsOn(buildDockerImage)
+        images.add(dockerImageForHeroku)
+        registryCredentials {
+            url.set("registry.heroku.com")
+        }
     }
 }
