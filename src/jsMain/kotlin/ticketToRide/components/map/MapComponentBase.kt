@@ -9,7 +9,6 @@ import kotlinx.css.textDecoration
 import org.w3c.dom.Element
 import pigeonMaps.MapProps
 import react.*
-import react.dom.a
 import react.dom.findDOMNode
 import react.dom.span
 import styled.css
@@ -205,7 +204,9 @@ private fun RBuilder.link(text: String, href: String) {
     }
 }
 
-private fun RBuilder.attribution(tilesProvider: MapTilesProvider) = span {
+// attribution element shouldn't fall into map component's children
+// otherwise it will get map specific properties like latLngToPixel that don't make sense for it
+private fun attribution(tilesProvider: MapTilesProvider) = RBuilder().span {
     +"Map tiles by "; link("Stamen Design", "http://stamen.com/")
     +", under "; link("CC BY 3.0", "http://creativecommons.org/licenses/by/3.0")
     +". Data by "; link("OpenStreetMap", "http://openstreetmap.org/")
