@@ -10,3 +10,5 @@ interface ClientConnection {
 interface PlayerConnection : ClientConnection {
     val name: PlayerName
 }
+
+interface ObserverConnection : ClientConnection

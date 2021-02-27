@@ -12,7 +12,8 @@ import org.w3c.notifications.Notification
 import react.*
 import styled.css
 import ticketToRide.ConnectResponse.Failure
-import ticketToRide.ConnectResponse.Success
+import ticketToRide.ConnectResponse.PlayerConnected
+import ticketToRide.ConnectResponse.ObserverConnected
 import ticketToRide.ConnectionState.*
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
@@ -207,7 +208,7 @@ class App : RComponent<RProps, AppState>() {
         ServerConnection(rootScope, GameId.random().webSocketUrl, Response.serializer()) {
             val request = ConnectRequest.Start(playerName, playerColor, map, carsCount, calculateScoresInProcess)
             when (val connectResponse = connect(request)) {
-                is Success -> runAsPlayer(playerName, connectResponse)
+                is PlayerConnected -> runAsPlayer(playerName, connectResponse)
                 is Failure -> {
                     close()
                     if (connectResponse is Failure.GameIdTaken && retriesCount < ServerConnection.MaxRetriesCount)
@@ -223,7 +224,7 @@ class App : RComponent<RProps, AppState>() {
         state.gameId?.let { gameId ->
             ServerConnection(rootScope, gameId.webSocketUrl, Response.serializer()) {
                 when (val connectResponse = connect(request)) {
-                    is Success -> runAsPlayer(playerName, connectResponse)
+                    is PlayerConnected -> runAsPlayer(playerName, connectResponse)
                     is Failure -> {
                         close()
                         cannotJoinGame(connectResponse)
@@ -237,7 +238,7 @@ class App : RComponent<RProps, AppState>() {
         state.gameId?.let { gameId ->
             ServerConnection(rootScope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
                 when (val connectResponse = connect(ConnectRequest.Observe)) {
-                    is Success -> runAsObserver(connectResponse)
+                    is ObserverConnected -> runAsObserver(connectResponse)
                     is Failure -> {
                         close()
                         cannotJoinGame(connectResponse)
@@ -247,26 +248,27 @@ class App : RComponent<RProps, AppState>() {
         } ?: throw Error("Cannot join game without game id")
     }
 
-    private suspend fun ServerConnection<Response>.runAsPlayer(playerName: PlayerName, connectResponse: Success) {
+    private suspend fun ServerConnection<Response>.runAsPlayer(playerName: PlayerName, connectResponse: PlayerConnected) {
         onDisconnected = { reason -> handleLostConnection(playerName, reason) }
         window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
         runRequestSendingLoop(requests, Request.serializer())
-        runGame(connectResponse) { processResponse(it) }
+        connectResponse.apply { runGame(id, map, Response.GameState(state), ::processResponse) }
     }
 
-    private suspend fun ServerConnection<GameStateForObserver>.runAsObserver(connectResponse: Success) {
+    private suspend fun ServerConnection<GameStateForObserver>.runAsObserver(connectResponse: ObserverConnected) {
         onDisconnected = { reason -> handleLostConnection(reason) }
-        runGame(connectResponse) { processResponse(it) }
+        connectResponse.apply { runGame(id, map, state, ::processGameStateForObserver) }
     }
 
-    private suspend fun <T> ServerConnection<T>.runGame(connectResponse: Success, processResponse: (T) -> Unit) {
+    private suspend fun <T> ServerConnection<T>.runGame(id: GameId, map: GameMap, initialState: T, processResponse: (T) -> Unit) {
         connection = this
         setState {
-            gameId = connectResponse.id
-            map = connectResponse.map
+            gameId = id
+            this.map = map
             calculateScoresInProcess = calculateScoresInProcess
             showErrorMessage = false
         }
+        processResponse(initialState)
         coroutineScope {
             launch { connectionState.collect { onConnectionStateChanged(it) } }
             launch { responses().collect { processResponse(it) } }
@@ -284,57 +286,7 @@ class App : RComponent<RProps, AppState>() {
             chatMessages = chatMessages.apply { add(msg) }
         }
 
-        is Response.GameState -> with(state.screen) {
-            when (this) {
-
-                is Screen.Welcome -> state.gameId?.let { gameId ->
-                    setState {
-                        screen = if (msg.state.players.size == 1) {
-                            val url = "${window.location.origin}/game/${gameId.value}"
-                            window.history.pushState(null, window.document.title, url)
-                            Screen.ShowGameId(gameId, msg.state)
-                        } else {
-                            Screen.GameInProgress(
-                                gameId,
-                                msg.state,
-                                PlayerState.initial(state.map, msg.state, requests)
-                            )
-                        }
-                    }
-                } ?: throw Error("Received game state while game id is not known")
-
-                is Screen.ShowGameId -> setState {
-                    screen = withGameState(msg.state)
-                    msg.action?.let {
-                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
-                    }
-                }
-
-                is Screen.GameInProgress -> {
-                    if (!gameState.myTurn && msg.state.myTurn) {
-                        Notification("Ticket to Ride", jsObject {
-                            body = str.yourTurn
-                            icon = "/favicon.ico"
-                            silent = true
-                            renotify = false
-                            tag = "your-turn"
-                        })
-                    }
-                    val newPlayerState =
-                        if (playerState is PlayerState.ChoosingTickets) playerState
-                        else PlayerState.initial(state.map, msg.state, requests)
-                    setState {
-                        screen = copy(gameState = msg.state, playerState = newPlayerState)
-                        msg.action?.let {
-                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
-                        }
-                    }
-                }
-
-                else -> {
-                }
-            }
-        }
+        is Response.GameState -> processGameState(msg.state, msg.action)
 
         is Response.GameEnd -> setState {
             (state.screen as? Screen.GameInProgress)?.let {
@@ -346,12 +298,66 @@ class App : RComponent<RProps, AppState>() {
         }
     }
 
-    private fun processResponse(msg: GameStateForObserver) = state.gameId?.let { gameId ->
+    private fun processGameState(gameState: GameStateView, gameAction: PlayerAction?) {
+        with(state.screen) {
+            when (this) {
+
+                is Screen.Welcome -> state.gameId?.let { gameId ->
+                    setState {
+                        screen = if (gameState.players.size == 1) {
+                            val url = "${window.location.origin}/game/${gameId.value}"
+                            window.history.pushState(null, window.document.title, url)
+                            Screen.ShowGameId(gameId, gameState)
+                        } else {
+                            Screen.GameInProgress(
+                                gameId,
+                                gameState,
+                                PlayerState.initial(state.map, gameState, requests)
+                            )
+                        }
+                    }
+                } ?: throw Error("Received game state while game id is not known")
+
+                is Screen.ShowGameId -> setState {
+                    screen = withGameState(gameState)
+                    gameAction?.let {
+                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
+                    }
+                }
+
+                is Screen.GameInProgress -> {
+                    if (!gameState.myTurn && gameState.myTurn) {
+                        Notification("Ticket to Ride", jsObject {
+                            body = str.yourTurn
+                            icon = "/favicon.ico"
+                            silent = true
+                            renotify = false
+                            tag = "your-turn"
+                        })
+                    }
+                    val newPlayerState =
+                        if (playerState is PlayerState.ChoosingTickets) playerState
+                        else PlayerState.initial(state.map, gameState, requests)
+                    setState {
+                        screen = copy(gameState = gameState, playerState = newPlayerState)
+                        gameAction?.let {
+                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
+                        }
+                    }
+                }
+
+                else -> {
+                }
+            }
+        }
+    }
+
+    private fun processGameStateForObserver(gameState: GameStateForObserver) = state.gameId?.let { gameId ->
         setState {
             screen =
-                if (msg.gameEnded) Screen.GameOver(gameId, state.map, true, msg.players.zip(msg.tickets))
-                else Screen.ObserveGameInProgress(msg)
-            msg.action?.let {
+                if (gameState.gameEnded) Screen.GameOver(gameId, state.map, true, gameState.players.zip(gameState.tickets))
+                else Screen.ObserveGameInProgress(gameState)
+            gameState.action?.let {
                 chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
             }
         }

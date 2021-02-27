@@ -72,6 +72,7 @@ sealed class PlayerAction {
 }
 
 fun Request.toAction(playerName: PlayerName) = when (this) {
+    is JoinPlayer -> PlayerAction.JoinGame(playerName)
     is LeaveGameRequest -> PlayerAction.LeaveGame(playerName)
     is ConfirmTicketsChoiceRequest -> PlayerAction.ConfirmTicketsChoice(playerName, ticketsToKeep.size)
     is PickCardsRequest.Loco -> PlayerAction.PickCards.Loco(playerName)
@@ -80,4 +81,5 @@ fun Request.toAction(playerName: PlayerName) = when (this) {
     is BuildSegmentRequest -> PlayerAction.BuildSegment(playerName, from, to, cards)
     is BuildStationRequest -> PlayerAction.BuildStation(playerName, target)
     is ChatMessage -> null
+    is Callback -> null
 }

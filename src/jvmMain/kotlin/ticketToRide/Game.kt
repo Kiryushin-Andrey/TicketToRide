@@ -9,9 +9,7 @@ data class GameFlowValue(val state: GameState, val responses: List<SendResponse>
 
 @FlowPreview
 class Game private constructor(
-    val id: GameId,
-    initialCarsCount: Int,
-    val calculateScoresInProcess: Boolean,
+    initialState: GameState,
     val map: GameMap,
     private val redis: RedisStorage?
 ) {
@@ -20,83 +18,92 @@ class Game private constructor(
 
         fun start(
             scope: CoroutineScope,
-            id: GameId,
-            initialCarsCount: Int,
-            calculateScoresInProcess: Boolean,
-            map: GameMap,
-            redis: RedisStorage?
-        ): Game {
-            val game = Game(id, initialCarsCount, calculateScoresInProcess, map, redis)
-            scope.launch { game.runRequestProcessingLoop() }
-            return game
-        }
-
-        fun restore(
-            scope: CoroutineScope,
             state: GameState,
             map: GameMap,
             redis: RedisStorage?
         ): Game {
-            val game = Game(state.id, state.initialCarsCount, state.calculateScoresInProcess, map, redis)
-            game.state = state.restored()
+            val game = Game(state, map, redis)
             scope.launch { game.runRequestProcessingLoop() }
             return game
         }
     }
 
-    private val logger = KotlinLogging.logger(id.toString())
+    val id = initialState.id
+    val currentState get() = stateFlow.value
+    val currentStateForObservers get() = currentState.forObservers(null)
+    val hasNoParticipants get() = players.isEmpty() && observers.isEmpty()
 
-    private val requestsQueue = Channel<RequestQueueItem>(Channel.BUFFERED)
-
+    private val requestsQueue = Channel<Pair<PlayerConnection, Request>>(Channel.BUFFERED)
     private val players = mutableMapOf<PlayerName, PlayerConnection>()
     private val observers = mutableListOf<ClientConnection>()
-
-    var state = GameState.initial(id, initialCarsCount, calculateScoresInProcess, map)
-        private set
+    private val logger = KotlinLogging.logger(id.toString())
+    private val stateFlow = MutableStateFlow(initialState)
 
     suspend fun joinPlayer(conn: PlayerConnection, color: PlayerColor): ConnectionOutcome {
-        if (state.players.any { it.name == conn.name }) {
-            logger.info { "${conn.name} tried to join more than once" }
+        val playerName = conn.name
+        if (currentState.players.any { it.name == playerName }) {
+            logger.info { "$playerName tried to join more than once" }
             return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerNameTaken)
         }
 
-        if (state.players.any { it.color == color })
+        if (currentState.players.any { it.color == color })
             return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerColorTaken)
 
-        logger.info { "${conn.name} joined" }
-        players[conn.name] = conn
-        requestsQueue.send(RequestQueueItem.Connect(color, conn))
-        return ConnectionOutcome.Success(this, conn)
+        // wait for the join request to be processed by the game before returning control
+        // and sending back connection handshake response to the client
+        // this is necessary to send back the actual state of the game as part of handshake response
+        val playerJoined = Job()
+        requestsQueue.send(conn to JoinPlayer(color))
+        requestsQueue.send(conn to Callback(playerJoined))
+
+        // it is important to add new connection to players map after processing the join player request
+        // otherwise we might try to send notifications to the new player before adding him to the game state
+        playerJoined.join()
+        players[playerName] = conn
+        logger.info { "$playerName joined" }
+
+        val response = ConnectResponse.PlayerConnected(id, map, currentState.toPlayerView(playerName))
+        return ConnectionOutcome.PlayerConnected(this, conn, response)
     }
 
     suspend fun reconnectPlayer(conn: PlayerConnection): ConnectionOutcome {
-        val name = conn.name
-        if (!state.players.any { it.name == name })
+        val playerName = conn.name
+        if (!currentState.players.any { it.name == playerName })
             return ConnectionOutcome.Failure(ConnectResponse.Failure.NoSuchPlayer)
 
-        players[name]?.let {
+        players[playerName]?.let {
             if (it.isConnected()) {
-                logger.info { "Player ${name.value} tried to reconnect but was not disconnected" }
+                logger.info { "$playerName tried to reconnect but was not disconnected" }
                 return ConnectionOutcome.Failure(ConnectResponse.Failure.PlayerNameTaken)
             }
         }
 
-        logger.info { "Player ${name.value} reconnected" }
-        players[name] = conn
-        requestsQueue.send(RequestQueueItem.Reconnect(conn))
-        return ConnectionOutcome.Success(this, conn)
+        logger.info { "$playerName reconnected" }
+        players[playerName] = conn
+
+        val action = PlayerAction.JoinGame(playerName)
+        sendToAllPlayersExcept(playerName) { addressee -> stateToResponse(currentState, addressee, action) }
+        sendToAllObservers(currentState.forObservers(action))
+
+        val response = ConnectResponse.PlayerConnected(id, map, currentState.toPlayerView(playerName))
+        return ConnectionOutcome.PlayerConnected(this, conn, response)
     }
 
     fun joinObserver(conn: ClientConnection) {
         observers += conn
     }
 
-    val hasNoParticipants = players.isEmpty() && observers.isEmpty()
-
     suspend fun process(req: Request, conn: PlayerConnection) {
-        requestsQueue.send(RequestQueueItem.PlayerAction(req, conn))
-        if (req is LeaveGameRequest)
-            players -= conn.name
+        requestsQueue.send(conn to req)
+    }
+
+    fun leave(conn: ClientConnection) {
+        when (conn) {
+            is PlayerConnection ->
+                players -= conn.name
+            else ->
+                observers -= conn
+        }
     }
 
     private fun processRequestHandleError(
@@ -116,24 +123,36 @@ class Game private constructor(
     private suspend fun runRequestProcessingLoop() = supervisorScope {
         logger.info { "Request loop for game $id  started" }
         requestsQueue.consumeAsFlow()
-            .scan(GameFlowValue(state, emptyList())) { (state, _), req ->
+            .scan(GameFlowValue(currentState, emptyList())) { (state, _), (conn, request) ->
                 runCatching {
-                    when (req) {
-                        is RequestQueueItem.Connect ->
-                            state.connectPlayer(req.conn.name, req.playerColor, map)
-
-                        is RequestQueueItem.Reconnect ->
-                            state.reconnectPlayer(req.conn.name)
-
-                        is RequestQueueItem.PlayerAction ->
-                            state.processRequest(req.request, map, req.conn.name)
+                    val fromPlayerName = conn.name
+                    if (request is Callback) {
+                        request.job.complete()
+                        return@runCatching GameFlowValue(state, emptyList())
                     }
+                    val newState = state.processRequest(request, map, fromPlayerName, ::isAway)
+                    val messages = when {
+                        request is ChatMessage ->
+                            listOf(SendResponse.ForAll { Response.ChatMessage(fromPlayerName, request.message) })
+                        newState == state ->
+                            listOf(
+                                SendResponse.ForPlayer(fromPlayerName, stateToResponse(newState, fromPlayerName, null))
+                            )
+                        else -> {
+                            val action = request.toAction(fromPlayerName)
+                            listOf(
+                                SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
+                                SendResponse.ForObservers(newState.forObservers(action))
+                            )
+                        }
+                    }
+                    GameFlowValue(newState, messages)
                 }.getOrElse { e ->
-                    processRequestHandleError(state, req, req.conn.name, e)
+                    processRequestHandleError(state, request, conn.name, e)
                 }
             }
             .flatMapConcat { (state, messages) ->
-                this@Game.state = state
+                stateFlow.value = state
                 redis?.apply { launch { saveGame(state) } }
                 messages.asFlow()
             }
@@ -150,15 +169,41 @@ class Game private constructor(
             .collect()
     }
 
-    private suspend fun leave(conn: ClientConnection) {
-        when (conn) {
-            is PlayerConnection -> {
-                players -= conn.name
-                process(LeaveGameRequest, conn)
-            }
-            else ->
-                observers -= conn
-        }
+    private fun isAway(playerName: PlayerName) = !players.containsKey(playerName)
+
+    private fun GameState.toPlayerView(myName: PlayerName): GameStateView {
+        val me = players.single { it.name == myName }
+        return GameStateView(
+            players.map { it.toPlayerView(calculateScoresInProcess, isAway(it.name)) },
+            openCards,
+            turn,
+            endsOnPlayer != null,
+            myName,
+            me.cards,
+            me.ticketsOnHand,
+            me.ticketsForChoice
+        )
+    }
+
+    private fun GameState.forObservers(action: PlayerAction?) = GameStateForObserver(
+        id,
+        players.map { it.toPlayerView(true, isAway(it.name)) },
+        if (endsOnPlayer == turn) players.map { it.ticketsOnHand } else emptyList(),
+        openCards,
+        turn,
+        endsOnPlayer != null,
+        endsOnPlayer == turn,
+        action
+    )
+
+    private fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {
+        if (turn != endsOnPlayer)
+            Response.GameState(state.toPlayerView(playerName), action)
+        else
+            Response.GameEnd(
+                players.map { it.toPlayerView(false, isAway(it.name)) to it.ticketsOnHand },
+                action
+            )
     }
 
     private suspend fun send(playerName: PlayerName, resp: Response) {
@@ -167,6 +212,7 @@ class Game private constructor(
                 player.send(resp, Response.serializer())
             } catch (e: CancellationException) {
                 leave(player)
+                process(LeaveGameRequest, player)
             }
         }
     }
@@ -182,6 +228,20 @@ class Game private constructor(
         }
     }
 
+    private suspend fun sendToAllPlayersExcept(playerName: PlayerName, resp: (PlayerName) -> Response) =
+        with(players.iterator()) {
+            forEach {
+                if (it.key != playerName) {
+                    try {
+                        it.value.send(resp(it.value.name), Response.serializer())
+                    } catch (e: CancellationException) {
+                        remove()
+                        process(LeaveGameRequest, it.value)
+                    }
+                }
+            }
+        }
+
     private suspend fun sendToAllObservers(resp: GameStateForObserver) = with(observers.iterator()) {
         forEach {
             try {
@@ -190,11 +250,5 @@ class Game private constructor(
                 remove()
             }
         }
-    }
-
-    private sealed class RequestQueueItem(val conn: PlayerConnection) {
-        class Connect(val playerColor: PlayerColor, conn: PlayerConnection) : RequestQueueItem(conn)
-        class Reconnect(conn: PlayerConnection) : RequestQueueItem(conn)
-        class PlayerAction(val request: Request, conn: PlayerConnection) : RequestQueueItem(conn)
     }
 }

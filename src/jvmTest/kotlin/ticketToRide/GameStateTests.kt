@@ -11,13 +11,13 @@ class GameStateTests : StringSpec({
 
     "advance to next turn from first player" {
         createGameState(5).apply {
-            advanceTurnFrom(players[turn].name, map).turn shouldBe 1
+            advanceTurnFrom(players[turn].name, map) { false }.turn shouldBe 1
         }
     }
 
     "advance to next turn from last player" {
         createGameState(5).copy(turn = 4).apply {
-            advanceTurnFrom(players[turn].name, map).turn shouldBe 0
+            advanceTurnFrom(players[turn].name, map) { false }.turn shouldBe 0
         }
     }
 
@@ -25,7 +25,7 @@ class GameStateTests : StringSpec({
         createGameState(5).run {
             updatePlayer(1) {
                 copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(map, 3, false), 1, false))
-            }.advanceTurn(map)
+            }.advanceTurn(map) { false }
         }.apply {
             turn shouldBe 2
             players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
@@ -36,7 +36,7 @@ class GameStateTests : StringSpec({
         createGameState(5).run {
             updatePlayer(1) {
                 copy(ticketsForChoice = PendingTicketsChoice(getRandomTickets(map, 3, false), 1, true))
-            }.advanceTurn(map)
+            }.advanceTurn(map) { false }
         }.apply {
             turn shouldBe 1
             players[1].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
@@ -45,7 +45,7 @@ class GameStateTests : StringSpec({
 
     "player should choose from tickets before next move if takes tickets in turn" {
         val state = createGameState(5)
-        val (nextState, _) = state.processRequest(PickTicketsRequest, map, state.players[0].name)
+        val nextState = state.processRequest(PickTicketsRequest, map, state.players[0].name) { false }
 
         nextState.turn shouldBe 1
         nextState.players[0].ticketsForChoice!!.shouldChooseOnNextTurn shouldBe true
@@ -53,7 +53,7 @@ class GameStateTests : StringSpec({
 
     "player doesn't have to choose from tickets before next move if takes tickets not in turn" {
         val state = createGameState(5).copy(turn = 3)
-        val (nextState, _) = state.processRequest(PickTicketsRequest, map, state.players[1].name)
+        val nextState = state.processRequest(PickTicketsRequest, map, state.players[1].name) { false }
 
         nextState.turn shouldBe 3
         nextState.players[0].ticketsForChoice shouldBe null

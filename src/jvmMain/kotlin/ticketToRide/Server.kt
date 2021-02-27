@@ -71,12 +71,12 @@ fun Application.module() {
 
         route("/internal") {
             get("/games") {
-                call.respond(games.entries.associate { it.key.value to it.value.state.players.map { it.name } })
+                call.respond(games.entries.associate { it.key.value to it.value.currentState.players.map { it.name } })
             }
             get("/game/{id}") {
                 call.parameters["id"]?.let { id ->
                     games[GameId(id)]?.let { game ->
-                        call.respond(game.state)
+                        call.respond(game.currentState)
                     }
                 }
             }
@@ -94,7 +94,7 @@ suspend fun loadGame(
 ): ConnectionOutcome {
     val game = games.getOrElse(id) {
         redis?.loadGame(id)?.let { (state, map) ->
-            Game.restore(rootScope, state, map, redis).also { game ->
+            Game.start(rootScope, state, map, redis).also { game ->
                 games[id] = game
             }
         }

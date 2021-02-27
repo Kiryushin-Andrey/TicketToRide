@@ -15,10 +15,9 @@ data class Player(
     val occupiedSegments: List<Segment> = emptyList(),
     val placedStations: List<CityName> = emptyList(),
     val ticketsForChoice: PendingTicketsChoice? = null,
-    val ticketsOnHand: List<Ticket> = emptyList(),
-    val away: Boolean = false
+    val ticketsOnHand: List<Ticket> = emptyList()
 ) : PlayerId {
-    fun toPlayerView(withScore: Boolean) =
+    fun toPlayerView(withScore: Boolean, away: Boolean) =
         PlayerView(
             name,
             color,
@@ -72,37 +71,9 @@ data class GameState(
             .let { if (it.size == count) it else getRandomTickets(map, count, long) }
     }
 
-    fun toPlayerView(myName: PlayerName): GameStateView {
-        val me = players.single { it.name == myName }
-        return GameStateView(
-            players.map { it.toPlayerView(calculateScoresInProcess) },
-            openCards,
-            turn,
-            endsOnPlayer != null,
-            myName,
-            me.cards,
-            me.ticketsOnHand,
-            me.ticketsForChoice
-        )
-    }
-
-    fun forObservers(action: PlayerAction?) = GameStateForObserver(
-        id,
-        players.map { it.toPlayerView(true) },
-        if (endsOnPlayer == turn) players.map { it.ticketsOnHand } else emptyList(),
-        openCards,
-        turn,
-        endsOnPlayer != null,
-        endsOnPlayer == turn,
-        action
-    )
-
     fun updatePlayer(name: PlayerName, block: Player.() -> Player) =
         copy(players = players.map { if (it.name == name) it.block() else it })
 
     fun updatePlayer(ix: Int, block: Player.() -> Player) =
         copy(players = players.mapIndexed { i, player -> if (i == ix) player.block() else player })
-
-    fun restored() =
-        copy(players = players.map { it.copy(away = true) })
 }

@@ -143,7 +143,7 @@ class ServerConnection<T>(
             kotlin.runCatching {
                 val message = formatter.deserialize(msg, ConnectResponse.serializer())
                 when (message) {
-                    is ConnectResponse.Success -> {
+                    is ConnectResponse.PlayerConnected -> {
                         ws.onopen = null
                     }
                     is ConnectResponse.Failure -> {
@@ -158,7 +158,11 @@ class ServerConnection<T>(
         formatter.send(ws, connectRequest, ConnectRequest.serializer())
         return response.await().also { resp ->
             _state.value = when (resp) {
-                is ConnectResponse.Success -> {
+                is ConnectResponse.Failure.CannotConnect ->
+                    ConnectionState.CannotConnect
+                is ConnectResponse.Failure ->
+                    ConnectionState.CannotJoinGame
+                else -> {
                     ws.onmessage = { msg ->
                         if (msg.data as? String != Response.Pong)
                             scope.launch {
@@ -177,10 +181,6 @@ class ServerConnection<T>(
                     }
                     ConnectionState.Connected
                 }
-                is ConnectResponse.Failure.CannotConnect ->
-                    ConnectionState.CannotConnect
-                is ConnectResponse.Failure ->
-                    ConnectionState.CannotJoinGame
             }
         }
     }

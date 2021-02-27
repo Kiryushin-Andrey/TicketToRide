@@ -1,9 +1,18 @@
 package ticketToRide
 
-import kotlinx.serialization.*
+import kotlinx.coroutines.CompletableJob
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Request
+
+// initiated from server to wait for request in queue to be processed before moving on
+// with the connection handshake process
+class Callback(val job: CompletableJob) : Request()
+
+// initiated from server as part of connection handshake process
+class JoinPlayer(val color: PlayerColor) : Request()
 
 @Serializable
 @SerialName("message")

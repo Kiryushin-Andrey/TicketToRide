@@ -314,15 +314,19 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
 
     private fun observeGamePlayers(gameId: GameId) {
         peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
-            if (connect(ConnectRequest.Observe) is ConnectResponse.Success) {
-                responses().collect {
-                    setState {
-                        otherPlayers = it.players
-                        if (otherPlayers.map { it.color }.contains(playerColor)) {
-                            playerColor = availableColors.firstOrNull()
-                        }
-                    }
-                }
+            val response = connect(ConnectRequest.Observe)
+            if (response is ConnectResponse.ObserverConnected) {
+                processGameState(response.state)
+                responses().collect(::processGameState)
+            }
+        }
+    }
+
+    private fun processGameState(gameState: GameStateForObserver) {
+        setState {
+            otherPlayers = gameState.players
+            if (otherPlayers.map { it.color }.contains(playerColor)) {
+                playerColor = availableColors.firstOrNull()
             }
         }
     }

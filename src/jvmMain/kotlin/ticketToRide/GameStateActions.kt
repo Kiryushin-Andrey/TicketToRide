@@ -1,101 +1,49 @@
 package ticketToRide
 
-sealed class SendResponse {
-    class ForAll(val resp: (to: PlayerName) -> Response) : SendResponse()
-    class ForObservers(val resp: GameStateForObserver) : SendResponse()
-    class ForPlayer(val to: PlayerName, val resp: Response) : SendResponse()
-}
-
-fun GameState.connectPlayer(name: PlayerName, color: PlayerColor, map: GameMap) =
-    joinPlayer(name, color, map).run {
-        val action = PlayerAction.JoinGame(name)
-        GameFlowValue(this, listOf(
-            SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) },
-            SendResponse.ForObservers(this.forObservers(action))
-        ))
-    }
-
-fun GameState.reconnectPlayer(name: PlayerName): GameFlowValue {
-    val action = PlayerAction.JoinGame(name)
-    return GameFlowValue(
-        updatePlayer(name) { copy(away = false) },
-        listOf(SendResponse.ForAll { playerName -> stateToResponse(this, playerName, action) })
-    )
-}
+import kotlinx.coroutines.CompletableDeferred
 
 fun GameState.processRequest(
     req: Request,
     map: GameMap,
-    fromPlayerName: PlayerName
-): GameFlowValue {
-    if (turn == endsOnPlayer)
-        return GameFlowValue(
-            this,
-            listOf(
-                SendResponse.ForAll { Response.GameEnd(players.map { it.toPlayerView(false) to it.ticketsOnHand }) })
-        )
+    fromPlayerName: PlayerName,
+    isAway: (PlayerName) -> Boolean
+) = when (req) {
 
-    val newState = when (req) {
+    is JoinPlayer ->
+        joinPlayer(fromPlayerName, req.color, map)
 
-        is LeaveGameRequest ->
-            updatePlayer(fromPlayerName) { copy(away = true) }.advanceTurnFrom(fromPlayerName, map)
+    LeaveGameRequest ->
+        advanceTurnFrom(fromPlayerName, map, isAway)
 
-        is ConfirmTicketsChoiceRequest ->
-            updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }.recalculatePlayerScores(map)
+    is ConfirmTicketsChoiceRequest ->
+        updatePlayer(fromPlayerName) { confirmTicketsChoice(req.ticketsToKeep) }.recalculatePlayerScores(map)
 
-        is PickTicketsRequest ->
-            pickTickets(fromPlayerName, map).advanceTurnFrom(fromPlayerName, map)
+    PickTicketsRequest ->
+        pickTickets(fromPlayerName, map).advanceTurnFrom(fromPlayerName, map, isAway)
 
-        is PickCardsRequest ->
-            inTurnOnly(fromPlayerName) {
-                pickCards(fromPlayerName, req, map).advanceTurn(map)
-            }
-
-        is BuildSegmentRequest ->
-            inTurnOnly(fromPlayerName) {
-                val segment = map.getSegmentBetween(req.from, req.to)
-                    ?: throw InvalidActionError("There is no segment ${req.from.value} - ${req.to.value} on the map")
-                buildSegment(fromPlayerName, segment, req.cards).recalculatePlayerScores(map).advanceTurn(map)
-            }
-
-        is BuildStationRequest ->
-            inTurnOnly(fromPlayerName) {
-                buildStation(fromPlayerName, req.target, req.cards).recalculatePlayerScores(map).advanceTurn(map)
-            }
-
-        is ChatMessage -> this
-    }
-
-    val messages = when {
-        req is ChatMessage ->
-            listOf(SendResponse.ForAll { Response.ChatMessage(fromPlayerName, req.message) })
-        newState == this ->
-            emptyList()
-        else -> {
-            val action = req.toAction(fromPlayerName)
-            listOf(
-                SendResponse.ForAll { to -> stateToResponse(newState, to, action) },
-                SendResponse.ForObservers(newState.forObservers(action))
-            )
+    is PickCardsRequest ->
+        inTurnOnly(fromPlayerName) {
+            pickCards(fromPlayerName, req, map).advanceTurn(map, isAway)
         }
-    }
-    return GameFlowValue(newState, messages)
+
+    is BuildSegmentRequest ->
+        inTurnOnly(fromPlayerName) {
+            val segment = map.getSegmentBetween(req.from, req.to)
+                    ?: throw InvalidActionError("There is no segment ${req.from.value} - ${req.to.value} on the map")
+            buildSegment(fromPlayerName, segment, req.cards).recalculatePlayerScores(map).advanceTurn(map, isAway)
+        }
+
+    is BuildStationRequest ->
+        inTurnOnly(fromPlayerName) {
+            buildStation(fromPlayerName, req.target, req.cards).recalculatePlayerScores(map).advanceTurn(map, isAway)
+        }
+
+    is ChatMessage -> this
+    is Callback -> this
 }
 
-fun stateToResponse(state: GameState, playerName: PlayerName, action: PlayerAction?) = with(state) {
-    if (turn != endsOnPlayer)
-        Response.GameState(state.toPlayerView(playerName), action)
-    else
-        Response.GameEnd(
-            players.map { it.toPlayerView(false) to it.ticketsOnHand },
-            action
-        )
-}
-
-private fun GameState.joinPlayer(name: PlayerName, color: PlayerColor, map: GameMap): GameState {
-    if (players.any { it.name == name }) {
-        return updatePlayer(name) { if (this.away) copy(away = false) else throw InvalidActionError("Name is taken") }
-    }
+fun GameState.joinPlayer(name: PlayerName, color: PlayerColor, map: GameMap): GameState {
+    if (players.any { it.name == name }) throw InvalidActionError("Name is taken")
 
     if (players.map { it.color }.contains(color)) throw InvalidActionError("Color is taken")
 
@@ -121,9 +69,10 @@ private fun GameState.joinPlayer(name: PlayerName, color: PlayerColor, map: Game
 private fun GameState.inTurnOnly(name: PlayerName, block: GameState.() -> GameState) =
     if (players[turn].name == name) block() else throw InvalidActionError("Not your turn")
 
-fun GameState.advanceTurn(map: GameMap) = advanceTurnFrom(players[turn].name, map)
+fun GameState.advanceTurn(map: GameMap, isAway: (PlayerName) -> Boolean) =
+    advanceTurnFrom(players[turn].name, map, isAway)
 
-fun GameState.advanceTurnFrom(name: PlayerName, map: GameMap): GameState {
+fun GameState.advanceTurnFrom(name: PlayerName, map: GameMap, isAway: (PlayerName) -> Boolean): GameState {
     if (players[turn].name != name) {
         return this
     }
@@ -133,14 +82,16 @@ fun GameState.advanceTurnFrom(name: PlayerName, map: GameMap): GameState {
     }
 
     val gameEndsOnPlayer = endsOnPlayer ?: if (players[turn].carsLeft < 3) turn else null
-    val nextTurn = generateSequence(turn) { prev -> (prev + 1) % players.size }.drop(1)
-        .dropWhile { players[it].away && it != turn }.first()
+    val nextTurn = generateSequence(turn) { prev -> (prev + 1) % players.size }
+        .drop(1)
+        .dropWhile { isAway(players[it].name) && it != turn }
+        .first()
     val skipsMove = with(players[nextTurn]) { ticketsForChoice?.shouldChooseOnNextTurn == false }
     val nextState = copy(turn = nextTurn, endsOnPlayer = gameEndsOnPlayer)
         .updatePlayer(nextTurn) {
             copy(ticketsForChoice = ticketsForChoice?.copy(shouldChooseOnNextTurn = true))
         }
-    return if (skipsMove) nextState.advanceTurnFrom(players[nextTurn].name, map) else nextState
+    return if (skipsMove) nextState.advanceTurnFrom(players[nextTurn].name, map, isAway) else nextState
 }
 
 private fun GameState.pickCards(name: PlayerName, req: PickCardsRequest, map: GameMap): GameState {
