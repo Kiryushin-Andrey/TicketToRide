@@ -3,6 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 import com.codingfeline.buildkonfig.compiler.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -129,6 +130,12 @@ buildkonfig {
 }
 
 tasks {
+    withType<KotlinCompile> {
+        kotlinOptions {
+            useIR = true
+        }
+    }
+
     withType<Test> {
         useJUnitPlatform()
     }
