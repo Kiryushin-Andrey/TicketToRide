@@ -1,8 +1,11 @@
 package ticketToRide.screens
 
 import com.ccfraser.muirwik.components.*
+import kotlinx.browser.document
 import kotlinx.css.*
 import kotlinx.html.DIV
+import org.w3c.dom.events.Event
+import org.w3c.dom.events.KeyboardEvent
 import react.*
 import styled.*
 import ticketToRide.*
@@ -17,6 +20,7 @@ import ticketToRide.components.chat.chatSendMessageTextBox
 import ticketToRide.components.map.gameMap
 import ticketToRide.components.tickets.myTickets
 import ticketToRide.playerState.*
+import ticketToRide.playerState.PlayerState.MyTurn.*
 
 class GameScreen : ComponentBase<GameScreen.Props, GameScreen.State>() {
 
@@ -186,6 +190,24 @@ class GameScreen : ComponentBase<GameScreen.Props, GameScreen.State>() {
     }
 
     private val str = Strings { props.locale }
+
+
+    override fun componentDidMount() {
+        document.addEventListener("keydown", onKeyPress)
+    }
+
+    override fun componentWillUnmount() {
+        document.removeEventListener("keydown", onKeyPress)
+    }
+
+    private val onKeyPress = { e: Event ->
+        if ((e as KeyboardEvent).key == "Escape") {
+            (playerState as? PlayerState.MyTurn)?.apply {
+                act { Blank(gameMap, gameState, requests) }
+            }
+        }
+    }
+
 
     companion object {
 

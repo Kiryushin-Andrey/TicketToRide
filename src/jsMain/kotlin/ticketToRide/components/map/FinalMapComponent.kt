@@ -15,7 +15,7 @@ class FinalMapComponent(props: Props) :
         selected = selected || (station != null && station?.name == props.playerToHighlight)
     }
 
-    override fun MapSegmentProps.fill(from: City, to: City) {
+    override fun MapSegmentProps.fill(segment: Segment) {
         occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
         if (props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight) {
             occupiedBy = null

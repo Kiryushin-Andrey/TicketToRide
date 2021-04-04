@@ -50,11 +50,9 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
                 defaultZoom = props.gameMap.mapZoom
                 zoom = state.mapZoom
                 onAnimationStart = {
-                    console.log(state.mapZoom)
                     if (state.displayAllCityNames && state.mapZoom <= 4) setState { displayAllCityNames = false }
                 }
                 onAnimationStop = {
-                    console.log(state.mapZoom)
                     if (!state.displayAllCityNames && state.mapZoom > 4) setState { displayAllCityNames = true }
                 }
                 onBoundsChanged = {
@@ -63,6 +61,8 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
                         displayAllCityNames = mapZoom > 4
                     }
                 }
+
+                fill()
             }
 
             cityMarkers()
@@ -96,7 +96,7 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
             attrs {
                 gameMap = props.gameMap
                 mapZoom = state.mapZoom
-                fillSegmentProps = { props, from, to -> props.fill(from, to) }
+                fillSegmentProps = { props, segment -> props.fill(segment) }
             }
         }
     }
@@ -146,9 +146,11 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         }
     }
 
+    protected open fun MapProps.fill() {}
+
     protected abstract fun MapCityMarkerProps.fill(city: City)
 
-    protected abstract fun MapSegmentProps.fill(from: City, to: City)
+    protected abstract fun MapSegmentProps.fill(segment: Segment)
 
     private inner class Strings : LocalizedStrings({ props.locale }) {
 

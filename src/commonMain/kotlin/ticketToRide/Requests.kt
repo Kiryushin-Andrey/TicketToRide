@@ -83,7 +83,7 @@ object PickTicketsRequest : Request()
 
 @Serializable
 @SerialName("build")
-class BuildSegmentRequest(val from: CityName, val to: CityName, val cards: List<Card>) : Request()
+class BuildSegmentRequest(val segment: Segment, val cards: List<Card>) : Request()
 
 @Serializable
 @SerialName("station")

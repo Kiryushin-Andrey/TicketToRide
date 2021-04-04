@@ -1,7 +1,5 @@
 package ticketToRide
 
-import kotlinx.coroutines.CompletableDeferred
-
 fun GameState.processRequest(
     req: Request,
     map: GameMap,
@@ -28,9 +26,9 @@ fun GameState.processRequest(
 
     is BuildSegmentRequest ->
         inTurnOnly(fromPlayerName) {
-            val segment = map.getSegmentBetween(req.from, req.to)
-                    ?: throw InvalidActionError("There is no segment ${req.from.value} - ${req.to.value} on the map")
-            buildSegment(fromPlayerName, segment, req.cards).recalculatePlayerScores(map).advanceTurn(map, isAway)
+            if (!map.segmentExists(req.segment))
+                throw InvalidActionError("There is no segment ${req.segment.from.value} - ${req.segment.to.value} of ${req.segment.color} on the map")
+            buildSegment(fromPlayerName, req.segment, req.cards).recalculatePlayerScores(map).advanceTurn(map, isAway)
         }
 
     is BuildStationRequest ->

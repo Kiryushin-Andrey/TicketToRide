@@ -1,9 +1,12 @@
 package ticketToRide.components.map
 
+import pigeonMaps.MapProps
 import react.RBuilder
-import ticketToRide.*
+import ticketToRide.City
+import ticketToRide.Segment
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.playerState.*
+import ticketToRide.playerState.PlayerState.MyTurn.*
 
 interface MapComponentProps : MapComponentBaseProps,
     ComponentBaseProps
@@ -17,17 +20,28 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 
     private fun act(block: PlayerState.() -> PlayerState) = props.onAction(playerState.block())
 
+    override fun MapProps.fill() {
+        onClick = {
+            (playerState as? PlayerState.MyTurn)?.let {
+                if (playerState is PickedCity || playerState is BuildingSegment || playerState is BuildingStation) {
+                    act { PlayerState.MyTurn.Blank(it) }
+                }
+            }
+        }
+    }
+
     override fun MapCityMarkerProps.fill(city: City) {
-        connected = props.connected
+        myTurn = gameState.myTurn
         selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
         hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
         isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.name || it.to == city.name }
         onClick = { act { onCityClick(city.name) } }
     }
 
-    override fun MapSegmentProps.fill(from: City, to: City) {
-        occupiedBy = players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
-        onClick = { act { onSegmentClick(from.name, to.name) } }
+    override fun MapSegmentProps.fill(segment: Segment) {
+        myTurn = gameState.myTurn
+        occupiedBy = players.find { it.occupiedSegments.contains(segment) }
+        onClick = { act { onSegmentClick(segment) } }
     }
 }
 

@@ -2,11 +2,7 @@ package ticketToRide.playerState
 
 import kotlinx.coroutines.channels.SendChannel
 import ticketToRide.*
-
-typealias PickedFirstCard = PlayerState.MyTurn.PickedFirstCard
-typealias PickedCity = PlayerState.MyTurn.PickedCity
-typealias BuildingStation = PlayerState.MyTurn.BuildingStation
-typealias BuildingSegment = PlayerState.MyTurn.BuildingSegment
+import ticketToRide.playerState.PlayerState.MyTurn.*
 
 sealed class PlayerState {
 
@@ -85,31 +81,52 @@ sealed class PlayerState {
 
             fun confirm() =
                 (if (optionsForCardsToDrop.size == 1) 0 else chosenCardsToDropIx)?.let {
-                    sendAndResetState(BuildStationRequest(target, optionsForCardsToDrop[it]))
+                    sendAndResetState(BuildStationRequest(target, optionsForCardsToDrop[it].cards))
                 } ?: this
         }
 
-        class BuildingSegment private constructor(prev: MyTurn, val segment: Segment, val chosenCardsToDropIx: Int?) :
-            MyTurn(prev) {
+        class BuildingSegment private constructor(
+            prev: MyTurn,
+            val from: CityName,
+            val to: CityName,
+            val chosenCardsToDropIx: Int?)
+            : MyTurn(prev)
+        {
+            internal constructor(prev: PickedCity, to: CityName) : this(prev, prev.target, to, null)
 
-            internal constructor(prev: PickedCity, segment: Segment) : this(prev, segment, null)
+            internal constructor(prev: PickedCity, segment: Segment) : this(prev, segment.from, segment.to, null)
 
-            internal constructor(prev: ticketToRide.playerState.BuildingSegment, chosenCardsToDropIx: Int) : this(
+            internal constructor(prev: BuildingSegment, chosenCardsToDropIx: Int) : this(
                 prev,
-                prev.segment,
+                prev.from,
+                prev.to,
                 chosenCardsToDropIx
             )
 
+            val length by lazy {
+                availableSegments.map { it.length }.distinct().single()
+            }
+
+            val availableSegments by lazy {
+                gameMap.getSegmentsBetween(from, to)
+                    .filter { segment -> !gameState.players.flatMap { it.occupiedSegments }.contains(segment) }
+            }
+
             val optionsForCardsToDrop by lazy {
-                myCards.getOptionsForCardsToDrop(segment.length, segment.color)
+                availableSegments.flatMap { segment ->
+                    myCards.getOptionsForCardsToDrop(segment.length, segment.color)
+                        .map { segment to it }
+                }
             }
 
             fun chooseCardsToDrop(ix: Int) = BuildingSegment(this, ix)
 
             fun confirm() =
-                (if (optionsForCardsToDrop.size == 1) 0 else chosenCardsToDropIx)?.let {
-                    sendAndResetState(BuildSegmentRequest(segment.from, segment.to, optionsForCardsToDrop[it]))
-                } ?: this
+                (if (optionsForCardsToDrop.size == 1) 0 else chosenCardsToDropIx)
+                    ?.let { optionsForCardsToDrop[it] }
+                    ?.let { (segment, option) ->
+                        sendAndResetState(BuildSegmentRequest(segment, option.cards))
+                    } ?: this
         }
 
         val openCards get() = gameState.openCards
@@ -154,7 +171,8 @@ sealed class PlayerState {
 
     fun onCityClick(cityName: CityName) = when (this) {
         is PickedCity ->
-            gameMap.getSegmentBetween(target, cityName)?.let { BuildingSegment(this, it) }
+            gameMap.getSegmentsBetween(target, cityName).takeUnless { it.isEmpty() }
+                ?.let { BuildingSegment(this, cityName) }
                 ?: PickedCity(this, cityName)
         is MyTurn ->
             PickedCity(this, cityName)
@@ -162,9 +180,9 @@ sealed class PlayerState {
             this
     }
 
-    fun onSegmentClick(from: CityName, to: CityName) = when (this) {
+    fun onSegmentClick(segment: Segment) = when (this) {
         is MyTurn ->
-            gameMap.getSegmentBetween(from, to)?.let { BuildingSegment(PickedCity(this, from), it) } ?: this
+            BuildingSegment(PickedCity(this, segment.from), segment)
         else ->
             this
     }
@@ -174,6 +192,6 @@ val PlayerState.citiesToHighlight
     get() = when (this) {
         is PickedCity -> listOf(target)
         is BuildingStation -> listOf(target)
-        is BuildingSegment -> listOf(segment.from, segment.to)
+        is BuildingSegment -> listOf(from, to)
         else -> emptyList()
     }

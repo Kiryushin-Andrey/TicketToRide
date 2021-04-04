@@ -21,7 +21,7 @@ interface MapCityMarkerProps: PigeonProps {
     var station: PlayerId?
     var hasOccupiedSegment: Boolean
     var isTicketTarget: Boolean
-    var connected: Boolean
+    var myTurn: Boolean
     var onMouseOver: ((CityName) -> Unit)?
     var onMouseOut: ((CityName) -> Unit)?
     var onClick: ((CityName) -> Unit)?
@@ -34,15 +34,19 @@ private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
             transform {
                 translate((props.left ?: 0).px, (props.top ?: 0).px)
             }
-            if (props.connected)
+            if (props.myTurn) {
                 cursor = Cursor.pointer
+            }
             if (props.selected) {
                 transform { scale(1.2) }
                 zIndex = 150
             }
         }
         attrs {
-            onClickFunction = { props.onClick?.let { it(props.name) } }
+            onClickFunction = {
+                it.stopPropagation()
+                props.onClick?.let { it(props.name) }
+            }
             onMouseOverFunction = { props.onMouseOver?.let { it(props.name) } }
             onMouseOutFunction = { props.onMouseOut?.let { it(props.name) } }
         }

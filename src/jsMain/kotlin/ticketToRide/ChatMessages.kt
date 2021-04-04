@@ -26,7 +26,7 @@ fun PlayerAction.chatMessage(locale: Locale) = with(str(locale)) {
                 .joinToString { (card, count) -> "$count ${card.getName(locale)}" }
             ChatMessage(
                 playerName,
-                buildSegment(Triple(from.value, to.value, cardsByCount))
+                buildSegment(Triple(segment.from.value, segment.to.value, cardsByCount))
             )
         }
         is BuildStation -> ChatMessage(playerName, buildStation(target.value))
@@ -37,6 +37,9 @@ fun PickedCard.getName(locale: Locale) = when (this) {
     is PickedCard.Closed -> str(locale).closedCard
     is PickedCard.Open -> card.getName(locale)
 }
+
+fun getSegmentColorName(segmentColor: CardColor?, locale: Locale) =
+    str(locale).segmentColor(segmentColor)
 
 fun Card.getName(locale: Locale) = when (this) {
     is Card.Loco -> str(locale).loco
@@ -78,6 +81,25 @@ private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
                 CardColor.YELLOW -> "желтая"
                 CardColor.ORANGE -> "оранжевая"
                 CardColor.MAGENTO -> "фиолетовая"
+            }
+        }
+    )
+
+    val segmentColor by loc(
+        Locale.En to { color: CardColor? ->
+            color?.let { cardColor(it) } ?: "grey"
+        },
+        Locale.Ru to { color: CardColor? ->
+            when (color) {
+                CardColor.RED -> "красный"
+                CardColor.GREEN -> "зеленый"
+                CardColor.BLUE -> "синий"
+                CardColor.BLACK -> "черный"
+                CardColor.WHITE -> "белый"
+                CardColor.YELLOW -> "желтый"
+                CardColor.ORANGE -> "оранжевый"
+                CardColor.MAGENTO -> "фиолетовый"
+                null -> "серый"
             }
         }
     )

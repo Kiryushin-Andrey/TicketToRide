@@ -4,6 +4,7 @@ import react.RBuilder
 import ticketToRide.City
 import ticketToRide.Locale
 import ticketToRide.PlayerView
+import ticketToRide.Segment
 
 class ObserveMapComponent(props: Props) :
     MapComponentBase<ObserveMapComponent.Props, MapComponentBaseState>(props) {
@@ -14,13 +15,12 @@ class ObserveMapComponent(props: Props) :
     }
 
     override fun MapCityMarkerProps.fill(city: City) {
-        connected = props.connected
         selected = props.citiesToHighlight.contains(city.name)
         hasOccupiedSegment = false
         isTicketTarget = false
     }
 
-    override fun MapSegmentProps.fill(from: City, to: City) {
+    override fun MapSegmentProps.fill(segment: Segment) {
         occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.name, to.name) } }
     }
 }

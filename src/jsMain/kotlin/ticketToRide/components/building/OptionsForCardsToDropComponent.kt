@@ -4,20 +4,19 @@ import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.MButtonVariant
 import com.ccfraser.muirwik.components.button.mButton
 import kotlinx.css.*
-import react.*
-import styled.css
-import styled.styledDiv
-import styled.styledLabel
-import ticketToRide.Card
-import ticketToRide.Locale
-import ticketToRide.LocalizedStrings
+import react.RBuilder
+import react.RComponent
+import react.RProps
+import react.RState
+import styled.*
+import ticketToRide.*
 import ticketToRide.components.cards.myCard
 
 class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent.Props, RState>() {
 
     interface Props : RProps {
         var locale: Locale
-        var options: List<List<Card>>
+        var options: List<OptionForCardsToDrop>
         var chosenCardsToDropIx: Int?
         var confirmBtnTitle: String
         var onChooseCards: (Int) -> Unit
@@ -43,7 +42,7 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent
                             display = Display.inlineFlex
                             justifyContent = JustifyContent.left
                         }
-                        props.options[0].forEach { myCard(it, props.locale) }
+                        props.options[0].cards.forEach { myCard(it, props.locale) }
                     }
                     confirmButton()
                 }
@@ -57,28 +56,41 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent
                         flexDirection = FlexDirection.column
                         flexWrap = FlexWrap.nowrap
                     }
-                    for ((ix, cards) in props.options.withIndex()) {
+
+                    for ((ix, option) in props.options.withIndex()) {
                         styledLabel {
                             mPaper {
                                 attrs {
                                     elevation = 4
                                 }
                                 css {
-                                    display = Display.flex
-                                    flexDirection = FlexDirection.row
-                                    flexWrap = FlexWrap.nowrap
-                                    alignItems = Align.center
                                     borderRadius = 4.px
                                     paddingLeft = 10.px
                                     marginBottom = 8.px
                                 }
-                                mRadio {
-                                    attrs {
-                                        checked = ix == props.chosenCardsToDropIx
-                                        onClick = { props.onChooseCards(ix) }
-                                    }
+
+                                val fitsSeveralSegments = props.options.any { option2 ->
+                                    option.hasSameCardsAs(option2) && option.segmentColor != option2.segmentColor
                                 }
-                                cards.forEach { myCard(it, props.locale) }
+                                if (fitsSeveralSegments) {
+                                    css {
+                                        display = Display.flex
+                                        flexWrap = FlexWrap.nowrap
+                                        flexDirection = FlexDirection.column
+                                        alignItems = Align.flexStart
+                                        backgroundColor = Color(toSegmentRgb(option.segmentColor)).withAlpha(0.4)
+                                    }
+                                    cardsToDrop(option, ix)
+                                    mTypography(
+                                            str.forSegmentColor(getSegmentColorName(option.segmentColor, props.locale)),
+                                            variant = MTypographyVariant.body1) {
+                                        css {
+                                            paddingLeft = 40.px
+                                        }
+                                    }
+                                } else {
+                                    cardsToDrop(option, ix)
+                                }
                             }
                         }
                     }
@@ -100,10 +112,33 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent
         }
     }
 
+    private fun StyledElementBuilder<*>.cardsToDrop(option: OptionForCardsToDrop, ix: Int) {
+        styledDiv {
+            css {
+                display = Display.flex
+                flexWrap = FlexWrap.nowrap
+                flexDirection = FlexDirection.row
+                alignItems = Align.center
+            }
+
+            mRadio {
+                attrs {
+                    checked = ix == props.chosenCardsToDropIx
+                    onClick = { props.onChooseCards(ix) }
+                }
+            }
+            option.cards.forEach { myCard(it, props.locale) }
+        }
+    }
+
     private inner class Strings : LocalizedStrings({ props.locale }) {
         val notEnoughCardsOnHand by loc(
-            Locale.En to "Not enough cards on hand \uD83D\uDE1E",
-            Locale.Ru to "Не хватает карт \uD83D\uDE1E"
+                Locale.En to "Not enough cards on hand \uD83D\uDE1E",
+                Locale.Ru to "Не хватает карт \uD83D\uDE1E"
+        )
+        val forSegmentColor by locWithParam<String>(
+                Locale.En to { segmentColor -> "for $segmentColor segment" },
+                Locale.Ru to { segmentColor -> "на $segmentColor путь" }
         )
     }
 

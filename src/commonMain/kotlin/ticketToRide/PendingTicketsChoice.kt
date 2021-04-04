@@ -9,10 +9,4 @@ data class PendingTicketsChoice(
     val shouldChooseOnNextTurn: Boolean
 )
 
-fun PendingTicketsChoice?.toState() = when {
-    this == null -> PendingTicketsChoiceState.None
-    this.shouldChooseOnNextTurn -> PendingTicketsChoiceState.Choosing
-    else -> PendingTicketsChoiceState.TookInAdvance
-}
-
 enum class PendingTicketsChoiceState { None, TookInAdvance, Choosing }

@@ -10,3 +10,5 @@ enum class CardColor(val rgb: String) {
     ORANGE("#FF8800"),
     MAGENTO("#FF00FF");
 }
+
+fun toSegmentRgb(segmentColor: CardColor?) = segmentColor?.rgb ?: "#AAAAAA"

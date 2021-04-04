@@ -19,7 +19,11 @@ interface ShowGameIdScreenProps : RProps {
 class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
     override fun RBuilder.render() {
         val gameUrl = window.location.href
-        window.navigator.clipboard.writeText(gameUrl)
+
+        // navigator.clipboard can actually be undefined
+        @Suppress("UNNECESSARY_SAFE_CALL")
+        window.navigator.clipboard?.writeText(gameUrl)
+
         mDialog {
             css {
                 +WelcomeScreen.ComponentStyles.welcomeDialog

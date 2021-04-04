@@ -18,19 +18,23 @@ data class Player(
     val ticketsOnHand: List<Ticket> = emptyList()
 ) : PlayerId {
     fun toPlayerView(withScore: Boolean, away: Boolean) =
-        PlayerView(
-            name,
-            color,
-            if (withScore) points else null,
-            carsLeft,
-            stationsLeft,
-            cards.size,
-            ticketsOnHand.size,
-            away,
-            occupiedSegments,
-            placedStations,
-            ticketsForChoice.toState()
-        )
+            PlayerView(
+                    name,
+                    color,
+                    if (withScore) points else null,
+                    carsLeft,
+                    stationsLeft,
+                    cards.size,
+                    ticketsOnHand.size,
+                    away,
+                    occupiedSegments,
+                    placedStations,
+                    when {
+                        ticketsForChoice == null -> PendingTicketsChoiceState.None
+                        ticketsForChoice.shouldChooseOnNextTurn -> PendingTicketsChoiceState.Choosing
+                        else -> PendingTicketsChoiceState.TookInAdvance
+                    }
+            )
 }
 
 @Serializable

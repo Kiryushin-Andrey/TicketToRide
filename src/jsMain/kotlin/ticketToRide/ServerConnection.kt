@@ -71,7 +71,9 @@ class ServerConnection<T>(
             undefined
         }
 
-        scope.launch { establishConnection() }
+        scope.launch {
+            establishConnection()
+        }
     }
 
     override suspend fun reconnect(request: ConnectRequest): ConnectResponse {

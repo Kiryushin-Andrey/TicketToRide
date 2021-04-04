@@ -10,7 +10,7 @@ import ticketToRide.LocalizedStrings
 import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
-import ticketToRide.playerState.*
+import ticketToRide.playerState.PlayerState.MyTurn.*
 import kotlinx.browser.window
 
 class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentComponent.State>() {
@@ -50,13 +50,13 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegme
                 }
                 styledDiv {
                     with(props.playerState as BuildingSegment) {
-                        mTypography(segment.from.value, MTypographyVariant.h6) {
+                        mTypography(from.value, MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px
                             }
                         }
-                        mTypography(segment.to.value, MTypographyVariant.h6) {
+                        mTypography(to.value, MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px
@@ -71,20 +71,16 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegme
     }
 
     private fun RBuilder.chooseCardsToDrop(playerState: BuildingSegment) {
-        val segment = playerState.segment
-        val occupiedBy = props.gameState.players.find { it.occupiedSegments.contains(segment) }
         when {
-            occupiedBy == me ->
-                mTypography(str.segmentAlreadyTakenByYou, MTypographyVariant.body1) {
+            playerState.availableSegments.isEmpty() -> {
+                val occupiedByMe = me.occupiedSegments.any { it.connects(playerState.from, playerState.to) }
+                val message = if (occupiedByMe) str.segmentAlreadyTakenByYou else str.segmentAlreadyTakenByAnotherPlayer
+                mTypography(message, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
+            }
 
-            occupiedBy != null ->
-                mTypography(str.segmentAlreadyTakenByAnotherPlayer, MTypographyVariant.body1) {
-                    css { marginTop = 10.px }
-                }
-
-            me.carsLeft < segment.length ->
+            me.carsLeft < playerState.length ->
                 mTypography(str.notEnoughCars, MTypographyVariant.body1) {
                     css { marginTop = 10.px }
                 }
@@ -92,12 +88,12 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegme
             else ->
                 optionsForCardsToDrop(props.locale) {
                     confirmBtnTitle = str.buildSegment
-                    options = playerState.optionsForCardsToDrop
+                    options = playerState.optionsForCardsToDrop.map { it.second }
                     chosenCardsToDropIx = playerState.chosenCardsToDropIx
                     onChooseCards = { ix -> act { playerState.chooseCardsToDrop(ix) } }
                     onConfirm = {
                         setState { showArrivalGif = true }
-                        window.setTimeout({ act { playerState.confirm() } }, 4000)
+                        window.setTimeout({ act { playerState.confirm() } }, 3000)
                     }
                 }
         }

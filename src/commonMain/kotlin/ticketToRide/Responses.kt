@@ -61,8 +61,7 @@ sealed class PlayerAction {
     @SerialName("build")
     class BuildSegment(
         val playerName: PlayerName,
-        val from: CityName,
-        val to: CityName,
+        val segment: Segment,
         val cards: List<Card> = emptyList()
     ) : PlayerAction()
 
@@ -78,7 +77,7 @@ fun Request.toAction(playerName: PlayerName) = when (this) {
     is PickCardsRequest.Loco -> PlayerAction.PickCards.Loco(playerName)
     is PickCardsRequest.TwoCards -> PlayerAction.PickCards.TwoCards(playerName, cards)
     is PickTicketsRequest -> PlayerAction.PickTickets(playerName)
-    is BuildSegmentRequest -> PlayerAction.BuildSegment(playerName, from, to, cards)
+    is BuildSegmentRequest -> PlayerAction.BuildSegment(playerName, segment, cards)
     is BuildStationRequest -> PlayerAction.BuildStation(playerName, target)
     is ChatMessage -> null
     is Callback -> null

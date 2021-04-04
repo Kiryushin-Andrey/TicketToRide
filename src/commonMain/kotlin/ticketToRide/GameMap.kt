@@ -2,7 +2,6 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.collections.immutable.*
 
 @Serializable
 data class LatLong(val lat: Double, val lng: Double)
@@ -89,7 +88,7 @@ data class GameMap(
             cities.asSequence()
                 .filter { dest ->
                     source != dest
-                            && getSegmentBetween(source.name, dest.name) == null
+                            && getSegmentsBetween(source.name, dest.name).isEmpty()
                             && ixByCityName(source.name) < ixByCityName(dest.name)
                 }
                 .map { dest ->
@@ -103,6 +102,11 @@ data class GameMap(
     private val segmentsByCities =
         segments.asSequence().flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
 
-    fun getSegmentBetween(from: CityName, to: CityName) =
-        (segmentsByCities[from] ?: throw Error("City ${from.value} not found in map")).find { it.connects(from, to) }
+    @Transient
+    private val segmentsSet = segments.toSet()
+
+    fun getSegmentsBetween(from: CityName, to: CityName) =
+        segmentsByCities[from]?.filter { it.connects(from, to) } ?: emptyList()
+
+    fun segmentExists(segment: Segment) = segmentsSet.contains(segment)
 }

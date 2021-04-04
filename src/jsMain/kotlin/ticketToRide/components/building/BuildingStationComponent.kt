@@ -9,7 +9,7 @@ import ticketToRide.LocalizedStrings
 import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
-import ticketToRide.playerState.BuildingStation
+import ticketToRide.playerState.PlayerState.MyTurn.BuildingStation
 
 class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {

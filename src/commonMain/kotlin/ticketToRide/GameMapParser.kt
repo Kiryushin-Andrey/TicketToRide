@@ -58,47 +58,51 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
             cities = cities + (city.name to city)
         )
 
-        fun withSegment(segment: Segment, line: String, lineNumber: Int) = copy(
-            segments = segments + segment,
-            errors = if (cities.containsKey(segment.to)) errors
-            else (errors + GameMapParseError.City.Unknown(line, lineNumber, segment.to))
+        fun withSegment(to: CityName, count: Int, line: String, lineNumber: Int, createSegment: () -> Segment) = copy(
+                segments = segments + List<Segment>(count) { createSegment() },
+                errors =
+                if (cities.containsKey(to)) errors
+                else (errors + GameMapParseError.City.Unknown(line, lineNumber, to))
         )
 
         fun withError(err: GameMapParseError) = copy(errors = errors + err)
 
-        fun Iterable<Segment>.color() = asSequence().let { segments ->
-            val segmentsByCities =
-                segments.flatMap { sequenceOf(it.from to it, it.to to it) }.groupBy({ it.first }) { it.second }
+        private fun <T : Any> Sequence<Pair<T, Int>>.pickRandom(): T? {
+            fun <T : Any> Sequence<Pair<T, Int>>.pick(n: Int): T? =
+                    firstOrNull()?.let { (v, i) -> if (n >= i) drop(1).pick(n - i) else v }
+            return sumBy { it.second }.takeIf { it > 0 }?.let {
+                pick(Random.nextInt(it - 1))
+            }
+        }
 
+        private fun color(segments: List<Segment>): List<Segment> {
             val totalLength = segments.filter { it.length <= 4 }.sumBy { it.length }
             val countPerColor = ceil(totalLength.toDouble() / CardColor.values().size).toInt()
             val usedByColor = mutableMapOf<CardColor, Int>()
 
-            val colorMap = mutableMapOf<Segment, CardColor?>()
-            for (segment in segments.sortedByDescending { it.length }.dropWhile { it.length > 4 }) {
+            val adjacentColorsByCity = segments
+                    .flatMap { sequenceOf(it.from, it.to) }.distinct()
+                    .associateWith { mutableListOf<CardColor>() }
 
-                val adjacentColors = sequenceOf(segment.from, segment.to)
-                    .flatMap { segmentsByCities[it]?.asSequence() ?: throw Error("City ${it.value} not found in map") }
-                    .mapNotNull { colorMap[it] }
-                    .toSet()
+            return segments.map { segment ->
+                if (segment.length < 5) {
+                    val adjacentColors = sequenceOf(segment.from, segment.to)
+                            .flatMap { adjacentColorsByCity[it]!! }
+                            .toSet()
 
-                fun <T : Any> Sequence<Pair<T, Int>>.pickRandom(): T? {
-                    fun <T : Any> Sequence<Pair<T, Int>>.pick(n: Int): T? =
-                        firstOrNull()?.let { (v, i) -> if (n >= i) drop(1).pick(n - i) else v }
-                    return sumBy { it.second }.takeIf { it > 0 }?.let {
-                        pick(Random.nextInt(it - 1))
-                    }
+                    val next = CardColor.values().asSequence()
+                            .map { it to (countPerColor - usedByColor.getOrElse(it, { 0 })) }
+                            .filter { (color, n) -> !adjacentColors.contains(color) && n >= segment.length }
+                            .pickRandom() ?: CardColor.values().random()
+                    adjacentColorsByCity[segment.from]!!.add(next)
+                    adjacentColorsByCity[segment.to]!!.add(next)
+                    usedByColor[next] = (usedByColor[next] ?: 0) + 1
+
+                    Segment(segment.from, segment.to, next, segment.length)
+                } else {
+                    segment
                 }
-
-                val next = CardColor.values().asSequence()
-                    .map { it to (countPerColor - usedByColor.getOrElse(it, { 0 })) }
-                    .filter { (color, n) -> !adjacentColors.contains(color) && n >= segment.length }
-                    .pickRandom() ?: CardColor.values().random()
-                colorMap[segment] = next
-                usedByColor[next] = (usedByColor[next] ?: 0) + 1
             }
-
-            segments.map { Segment(it.from, it.to, colorMap[it], it.length) }.toList()
         }
 
         fun build(): Try<GameMap, List<GameMapParseError>> =
@@ -106,7 +110,7 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
                 if (errors.isEmpty() && mapCenter != null && mapZoom != null) {
                     val map = GameMap(
                         cities.values.toList(),
-                        segments.color(),
+                        color(segments),
                         mapCenter,
                         mapZoom
                     )
@@ -129,22 +133,27 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
                     line.isEmptyOrComment() ->
                         this
 
-                    // line starting with hyphen - should be route from the previously mentioned city
-                    line.startsWith('-') -> {
+                    // line starting with vertical bar - should be route from the previously mentioned city
+                    line.startsWith('|') -> {
                         if (currentFrom == null)
                             withError(
                                 GameMapParseError.UnexpectedRoute(line, lineNumber)
                             )
                         else {
-                            line.trimStart('-').split(';').map { it.trim() }.let {
-                                val to = CityName(it[0])
-                                val segmentLength = it.getOrNull(1)?.toIntOrNull()
-                                if (it.size != 2 || segmentLength == null)
-                                    withError(
-                                        GameMapParseError.BadRouteFormat(line, lineNumber)
-                                    )
-                                else {
-                                    withSegment(Segment(currentFrom, to, null, segmentLength), line, lineNumber)
+                            line.trimStart('|').split(';').map { it.trim() }.let {
+                                if (it.size != 2) {
+                                    withError(GameMapParseError.BadRouteFormat(line, lineNumber))
+                                } else {
+                                    val to = CityName(it[0])
+                                    val segmentLength = it.getOrNull(1)?.toIntOrNull()
+                                    if (segmentLength == null)
+                                        withError(GameMapParseError.BadRouteFormat(line, lineNumber))
+                                    else {
+                                        val segmentsCount = line.indexOfFirst { it != '|' }
+                                        withSegment(to, segmentsCount, line, lineNumber) {
+                                            Segment(currentFrom, to, null, segmentLength)
+                                        }
+                                    }
                                 }
                             }
                         }
