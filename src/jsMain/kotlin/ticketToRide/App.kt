@@ -33,7 +33,11 @@ interface AppState : RState {
 private const val ErrorMessageTimeoutSecs = 4
 private const val RetryTimeoutSecs = 5
 
-class App : RComponent<RProps, AppState>() {
+class App : RComponent<App.Props, AppState>() {
+
+    interface Props: RProps {
+        var onGameStarted: () -> Unit
+    }
 
     private val rootScope = CoroutineScope(Dispatchers.Default + Job())
     private val requests = Channel<Request>(Channel.CONFLATED)
@@ -96,6 +100,7 @@ class App : RComponent<RProps, AppState>() {
                         locale = state.locale
                         onClosed = {
                             setState {
+                                props.onGameStarted()
                                 screen = Screen.GameInProgress(
                                     it.gameId,
                                     it.gameState,
@@ -309,6 +314,7 @@ class App : RComponent<RProps, AppState>() {
                             window.history.pushState(null, window.document.title, url)
                             Screen.ShowGameId(gameId, gameState)
                         } else {
+                            props.onGameStarted()
                             Screen.GameInProgress(
                                 gameId,
                                 gameState,
@@ -354,6 +360,10 @@ class App : RComponent<RProps, AppState>() {
 
     private fun processGameStateForObserver(gameState: GameStateForObserver) = state.gameId?.let { gameId ->
         setState {
+            if (screen is Screen.Welcome) {
+                props.onGameStarted()
+            }
+
             screen =
                 if (gameState.gameEnded) Screen.GameOver(gameId, state.map, true, gameState.players.zip(gameState.tickets))
                 else Screen.ObserveGameInProgress(gameState)

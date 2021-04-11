@@ -19,6 +19,12 @@ fun HTML.indexHtml(isLoopbackAddress: Boolean) {
                 width = 100.pct
                 height = 100.pct
             }
+            rule(".loading") {
+                background = "no-repeat center url('/images/loader.gif'), url('/images/background.jpg') top left / cover"
+            }
+            rule(".welcome") {
+                background = "url('/images/background.jpg') top left / cover"
+            }
             rule("html, body") {
                 height = 100.pct
                 margin = "0"
@@ -33,7 +39,7 @@ fun HTML.indexHtml(isLoopbackAddress: Boolean) {
     body {
         div {
             id = "app"
-            +"Loading..."
+            classes = setOf("loading")
         }
         script(src = "/ticket-to-ride.js?$queryString") {}
     }

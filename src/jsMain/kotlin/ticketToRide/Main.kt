@@ -1,10 +1,22 @@
 package ticketToRide
 
 import kotlinx.browser.document
+import kotlinx.dom.addClass
+import kotlinx.dom.removeClass
 import react.dom.render
 
 fun main() {
-    render(document.getElementById("app")) {
-        child(App::class) {}
+    val rootDiv = document.getElementById("app")!!
+    rootDiv.removeClass("loading")
+    rootDiv.addClass("welcome")
+
+    render(rootDiv) {
+        child(App::class) {
+            attrs {
+                onGameStarted = {
+                    rootDiv.removeClass("welcome")
+                }
+            }
+        }
     }
 }
