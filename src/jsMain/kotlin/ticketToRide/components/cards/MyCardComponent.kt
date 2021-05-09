@@ -12,12 +12,14 @@ import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.getName
 
-class MyCardComponent : RComponent<MyCardComponent.Props, RState>() {
+external interface MyCardComponentProps : RProps {
+    var card: Card
+    var locale: Locale
+}
 
-    interface Props : RProps {
-        var card: Card
-        var locale: Locale
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class MyCardComponent : RComponent<MyCardComponentProps, RState>() {
 
     override fun RBuilder.render() {
         val card = props.card

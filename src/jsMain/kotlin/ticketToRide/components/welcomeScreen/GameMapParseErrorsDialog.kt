@@ -16,14 +16,16 @@ import ticketToRide.GameMapPropertyNames
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RState>() {
+external interface GameMapParseErrorsDialogProps : RProps {
+    var locale: Locale
+    var filename: String
+    var errors: List<GameMapParseError>
+    var onClose: () -> Unit
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var filename: String
-        var errors: List<GameMapParseError>
-        var onClose: () -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialogProps, RState>() {
 
     override fun RBuilder.render() {
         mDialog {
@@ -185,7 +187,7 @@ class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialog.Props, RSta
     private val str = Strings()
 }
 
-fun RBuilder.gameMapParseErrorsDialog(builder: GameMapParseErrorsDialog.Props.() -> Unit) {
+fun RBuilder.gameMapParseErrorsDialog(builder: GameMapParseErrorsDialogProps.() -> Unit) {
     child(GameMapParseErrorsDialog::class) {
         attrs(builder)
     }

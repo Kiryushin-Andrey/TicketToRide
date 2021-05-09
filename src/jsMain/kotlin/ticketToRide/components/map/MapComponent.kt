@@ -8,9 +8,10 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.*
 
-interface MapComponentProps : MapComponentBaseProps,
-    ComponentBaseProps
+external interface MapComponentProps : MapComponentBaseProps, ComponentBaseProps
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProps, MapComponentBaseState>(props) {
 
     private val gameState get() = props.gameState
@@ -24,7 +25,7 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
         onClick = {
             (playerState as? PlayerState.MyTurn)?.let {
                 if (playerState is PickedCity || playerState is BuildingSegment || playerState is BuildingStation) {
-                    act { PlayerState.MyTurn.Blank(it) }
+                    act { Blank(it) }
                 }
             }
         }

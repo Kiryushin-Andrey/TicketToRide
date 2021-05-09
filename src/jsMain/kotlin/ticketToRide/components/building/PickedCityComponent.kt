@@ -17,6 +17,8 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
         styledDiv {

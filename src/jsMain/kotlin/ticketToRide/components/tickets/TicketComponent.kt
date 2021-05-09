@@ -9,17 +9,19 @@ import ticketToRide.Ticket
 
 class TicketCheckbox(val checked: Boolean, val onChange: () -> Unit)
 
-class TicketComponent : RComponent<TicketComponent.Props, RState>() {
+external interface TicketComponentProps : RProps {
+    var ticket: Ticket
+    var highlighted: Boolean
+    var fulfilled: Boolean
+    var finalScreen: Boolean
+    var checkbox: TicketCheckbox?
+    var onMouseOver: () -> Unit
+    var onMouseOut: () -> Unit
+}
 
-    interface Props : RProps {
-        var ticket: Ticket
-        var highlighted: Boolean
-        var fulfilled: Boolean
-        var finalScreen: Boolean
-        var checkbox: TicketCheckbox?
-        var onMouseOver: () -> Unit
-        var onMouseOut: () -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class TicketComponent : RComponent<TicketComponentProps, RState>() {
 
     override fun RBuilder.render() {
         mPaper {
@@ -75,7 +77,7 @@ class TicketComponent : RComponent<TicketComponent.Props, RState>() {
     }
 }
 
-fun RBuilder.ticket(ticket: Ticket, builder: TicketComponent.Props.() -> Unit): ReactElement {
+fun RBuilder.ticket(ticket: Ticket, builder: TicketComponentProps.() -> Unit): ReactElement {
     return child(TicketComponent::class) {
         attrs {
             this.ticket = ticket

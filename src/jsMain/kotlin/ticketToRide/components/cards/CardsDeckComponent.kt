@@ -18,6 +18,8 @@ import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.PickedFirstCard
 import kotlinx.browser.document
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
 
     override fun componentDidMount() {

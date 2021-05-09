@@ -10,6 +10,7 @@ import io.ktor.routing.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import ticketToRide.serialization.json
 import java.net.InetAddress
 
 val games = mutableMapOf<GameId, Game>()
@@ -28,8 +29,8 @@ fun Application.module() {
         )
     }
     val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
-    val useJson = environment.config.propertyOrNull("use-json") != null
-    val formatter = if (useJson) JsonFormatter() else ProtobufFormatter()
+    val useProtobuf = environment.config.propertyOrNull("use-protobuf") != null
+    val formatter = if (useProtobuf) ProtobufFormatter() else JsonFormatter()
 
     install(Compression) {
         gzip {

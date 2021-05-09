@@ -16,18 +16,20 @@ import ticketToRide.components.searchTextBox
 import ticketToRide.screens.GameScreen.Companion.gridLayout
 import ticketToRide.screens.GameScreen.Companion.headerMessage
 
-class ObserveGameScreen : RComponent<ObserveGameScreen.Props, GameScreen.State>() {
+external interface ObserveGameScreenProps : RProps {
+    var locale: Locale
+    var connected: Boolean
+    var gameMap: GameMap
+    var gameState: GameStateForObserver
+    var calculateScores: Boolean
+    var chatMessages: List<Response.ChatMessage>
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var connected: Boolean
-        var gameMap: GameMap
-        var gameState: GameStateForObserver
-        var calculateScores: Boolean
-        var chatMessages: List<Response.ChatMessage>
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ObserveGameScreen : RComponent<ObserveGameScreenProps, GameScreenState>() {
 
-    override fun GameScreen.State.init() {
+    override fun GameScreenState.init() {
         citiesToHighlight = emptySet()
         searchText = ""
     }
@@ -113,7 +115,7 @@ class ObserveGameScreen : RComponent<ObserveGameScreen.Props, GameScreen.State>(
     private val str = GameScreen.Strings { props.locale }
 }
 
-fun RBuilder.observeGameScreen(builder: ObserveGameScreen.Props.() -> Unit) {
+fun RBuilder.observeGameScreen(builder: ObserveGameScreenProps.() -> Unit) {
     child(ObserveGameScreen::class) {
         attrs(builder)
     }

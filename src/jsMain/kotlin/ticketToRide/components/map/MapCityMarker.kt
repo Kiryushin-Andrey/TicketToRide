@@ -12,10 +12,11 @@ import styled.css
 import styled.inlineStyles
 import styled.styledDiv
 import ticketToRide.CityName
+import ticketToRide.ICityName
 import ticketToRide.PlayerId
 
-interface MapCityMarkerProps: PigeonProps {
-    var name: CityName
+external interface MapCityMarkerProps: PigeonProps {
+    var nameBoxed: ICityName
     var displayAllCityNames: Boolean
     var selected: Boolean
     var station: PlayerId?
@@ -26,6 +27,7 @@ interface MapCityMarkerProps: PigeonProps {
     var onMouseOut: ((CityName) -> Unit)?
     var onClick: ((CityName) -> Unit)?
 }
+val MapCityMarkerProps.name get() = nameBoxed.unboxed
 
 private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
     styledDiv {
@@ -53,7 +55,7 @@ private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
         styledDiv {
             css {
                 +ComponentStyle.markerIcon
-                val img = props.station?.let { "station-${it.color.name.toLowerCase()}" } ?: when {
+                val img = props.station?.let { "station-${it.color.name.lowercase()}" } ?: when {
                     props.selected -> "city-marker-red"
                     props.hasOccupiedSegment -> "city-marker-green"
                     props.isTicketTarget -> "city-marker-yellow"

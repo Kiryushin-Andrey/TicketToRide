@@ -10,12 +10,14 @@ import react.dom.p
 import styled.*
 import ticketToRide.*
 
-interface ShowGameIdScreenProps : RProps {
-    var gameId: GameId
+external interface ShowGameIdScreenProps : RProps {
+    var gameId: IGameId
     var locale: Locale
     var onClosed: () -> Unit
 }
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
     override fun RBuilder.render() {
         val gameUrl = window.location.href

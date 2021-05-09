@@ -1,9 +1,11 @@
 package ticketToRide
 
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 
+@JvmInline
 @Serializable
-data class PlayerName(val value: String) {
+value class PlayerName(override val value: String): IPlayerName {
     override fun toString() = "player $value"
 }
 

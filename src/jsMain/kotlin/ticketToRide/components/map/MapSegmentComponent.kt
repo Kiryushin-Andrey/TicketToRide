@@ -15,7 +15,7 @@ import kotlin.math.acos
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-interface MapSegmentProps : PigeonProps {
+external interface MapSegmentProps : PigeonProps {
     var myTurn: Boolean
     var mapZoom: Int
     var from: City
@@ -158,7 +158,7 @@ private fun RBuilder.mapSegment(
     }
 }
 
-interface RouteSegmentsProps : PigeonProps {
+external interface RouteSegmentsProps : PigeonProps {
     var gameMap: GameMap
     var mapZoom: Int
     var myTurn: Boolean

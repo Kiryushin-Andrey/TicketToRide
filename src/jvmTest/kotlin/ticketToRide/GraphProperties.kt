@@ -90,7 +90,7 @@ class GraphProperties : FreeSpec({
 
         "have a total size equal to the size of original graph" {
             forAll(Arb.disconnectedGraph) {
-                it.size == it.splitIntoConnectedSubgraphs().sumBy { it.size }
+                it.size == it.splitIntoConnectedSubgraphs().sumOf { it.size }
             }
         }
 

@@ -75,7 +75,7 @@ fun GameState.advanceTurnFrom(name: PlayerName, map: GameMap, isAway: (PlayerNam
         return this
     }
 
-    if (players.flatMap { it.occupiedSegments }.sumBy { it.length } == map.totalSegmentsLength) {
+    if (players.flatMap { it.occupiedSegments }.sumOf { it.length } == map.totalSegmentsLength) {
         return copy(endsOnPlayer = turn)
     }
 
@@ -232,7 +232,7 @@ private fun Segment.canBuildWith(cardsToDrop: List<Card>): Boolean {
             }
         }
         2 -> {
-            length == cardsCount.entries.sumBy { (card, count) ->
+            length == cardsCount.entries.sumOf { (card, count) ->
                 when {
                     card is Card.Loco -> count
                     card is Card.Car && (color == null || color == card.color) -> count

@@ -11,15 +11,17 @@ import kotlinx.css.*
 import org.w3c.notifications.Notification
 import react.*
 import styled.css
-import ticketToRide.ConnectResponse.Failure
-import ticketToRide.ConnectResponse.PlayerConnected
-import ticketToRide.ConnectResponse.ObserverConnected
+import ticketToRide.ConnectResponse.*
 import ticketToRide.ConnectionState.*
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
 
-interface AppState : RState {
-    var gameId: GameId?
+external interface AppProps: RProps {
+    var onGameStarted: () -> Unit
+}
+
+external interface AppState: RState {
+    var gameIdBoxed: IGameId?
     var screen: Screen
     var locale: Locale
     var calculateScoresInProcess: Boolean
@@ -29,15 +31,14 @@ interface AppState : RState {
     var showErrorMessage: Boolean
     var map: GameMap
 }
+val AppState.gameId get() = gameIdBoxed?.unboxed
 
 private const val ErrorMessageTimeoutSecs = 4
 private const val RetryTimeoutSecs = 5
 
-class App : RComponent<App.Props, AppState>() {
-
-    interface Props: RProps {
-        var onGameStarted: () -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class App : RComponent<AppProps, AppState>() {
 
     private val rootScope = CoroutineScope(Dispatchers.Default + Job())
     private val requests = Channel<Request>(Channel.CONFLATED)
@@ -48,12 +49,12 @@ class App : RComponent<App.Props, AppState>() {
     }
 
     override fun AppState.init() {
-        gameId =
+        gameIdBoxed =
             if (window.location.pathname.startsWith("/game/")) GameId(window.location.pathname.substringAfterLast('/'))
             else null
 
         locale = Locale.En
-        screen = Screen.Welcome(gameId?.let { listOf<PlayerView>() } ?: listOf())
+        screen = Screen.Welcome
         chatMessages = mutableListOf()
         connectionState = NotConnected
         errorMessage = ""
@@ -79,7 +80,7 @@ class App : RComponent<App.Props, AppState>() {
             when (it) {
                 is Screen.Welcome ->
                     welcomeScreen {
-                        gameId = state.gameId
+                        gameIdBoxed = state.gameIdBoxed
                         locale = state.locale
                         onLocaleChanged = ::onLocaleChanged
                         onStartGame = { map, playerName, playerColor, carsCount, calculateScoresInProcess ->
@@ -120,7 +121,7 @@ class App : RComponent<App.Props, AppState>() {
                         playerState = it.playerState
                         onAction = { newState -> setState { screen = it.copy(playerState = newState) } }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> requests.offer(ChatMessage(message)) }
+                        onSendMessage = { message -> requests.trySend(ChatMessage(message)).isSuccess }
                     }
 
                 is Screen.GameOver -> {
@@ -141,7 +142,7 @@ class App : RComponent<App.Props, AppState>() {
                             )
                         }
                         chatMessages = state.chatMessages
-                        onSendMessage = { message -> requests.offer(ChatMessage(message)) }
+                        onSendMessage = { message -> requests.trySend(ChatMessage(message)).isSuccess }
                     }
                 }
 
@@ -240,7 +241,7 @@ class App : RComponent<App.Props, AppState>() {
     }
 
     private fun joinAsObserver() {
-        state.gameId?.let { gameId ->
+        state.gameIdBoxed?.unboxed?.let { gameId ->
             ServerConnection(rootScope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
                 when (val connectResponse = connect(ConnectRequest.Observe)) {
                     is ObserverConnected -> runAsObserver(connectResponse)
@@ -255,7 +256,7 @@ class App : RComponent<App.Props, AppState>() {
 
     private suspend fun ServerConnection<Response>.runAsPlayer(playerName: PlayerName, connectResponse: PlayerConnected) {
         onDisconnected = { reason -> handleLostConnection(playerName, reason) }
-        window.addEventListener("onbeforeunload", { requests.offer(LeaveGameRequest) })
+        window.addEventListener("onbeforeunload", { requests.trySend(LeaveGameRequest).isSuccess })
         runRequestSendingLoop(requests, Request.serializer())
         connectResponse.apply { runGame(id, map, Response.GameState(state), ::processResponse) }
     }
@@ -268,7 +269,7 @@ class App : RComponent<App.Props, AppState>() {
     private suspend fun <T> ServerConnection<T>.runGame(id: GameId, map: GameMap, initialState: T, processResponse: (T) -> Unit) {
         connection = this
         setState {
-            gameId = id
+            gameIdBoxed = id
             this.map = map
             calculateScoresInProcess = calculateScoresInProcess
             showErrorMessage = false

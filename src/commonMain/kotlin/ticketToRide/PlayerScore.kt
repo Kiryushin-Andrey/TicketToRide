@@ -14,20 +14,20 @@ class PlayerScore(
     segmentsOccupiedByOtherPlayers: List<Segment>,
     private val map: GameMap
 ): PlayerId {
-    private val fulfilledTicketsPoints get() = fulfilledTickets.sumBy { it.points }
-    private val unfulfilledTicketPoints get() = unfulfilledTickets.sumBy { it.points }
+    private val fulfilledTicketsPoints get() = fulfilledTickets.sumOf { it.points }
+    private val unfulfilledTicketPoints get() = unfulfilledTickets.sumOf { it.points }
     val stationsLeft get() = InitialStationsCount - placedStations.size
     val stationPoints = stationsLeft * PointsPerStation
     val segmentsPoints
         get() = occupiedSegments.groupingBy { it.length }.eachCount().entries
-            .sumBy { (length, count) -> map.getPointsForSegments(length) * count }
+            .sumOf { (length, count) -> map.getPointsForSegments(length) * count }
 
     private fun getLongestPathPoints(longestPathOfAll: Int) =
         if (longestPathOfAll > 0 && longestRoute == longestPathOfAll) map.pointsForLongestRoute else 0
 
     fun getTotalPoints(longestPathOfAll: Int, gameInProgress: Boolean): Int {
         val result = fulfilledTicketsPoints + segmentsPoints + stationPoints + getLongestPathPoints(longestPathOfAll)
-        return if (gameInProgress) result else result - unfulfilledTicketPoints;
+        return if (gameInProgress) result else result - unfulfilledTicketPoints
     }
 
 

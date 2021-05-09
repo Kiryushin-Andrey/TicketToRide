@@ -11,12 +11,14 @@ import styled.styledDiv
 import ticketToRide.Card
 import ticketToRide.Locale
 
-class ObserveCardsDeckComponent : RComponent<ObserveCardsDeckComponent.Props, RState>() {
+external interface ObserveCardsDeckComponentProps : RProps {
+    var openCards: List<Card>
+    var locale: Locale
+}
 
-    interface Props : RProps {
-        var openCards: List<Card>
-        var locale: Locale
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ObserveCardsDeckComponent : RComponent<ObserveCardsDeckComponentProps, RState>() {
 
     override fun RBuilder.render() {
         styledDiv {

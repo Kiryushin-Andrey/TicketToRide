@@ -12,7 +12,7 @@ sealed class PlayerState {
                 with(gameState.myPendingTicketsChoice) {
                     ChoosingTickets(requests, tickets.map { TicketChoice(it) }, minCountToKeep)
                 }
-            gameState.myTurn -> MyTurn.Blank(gameMap, gameState, requests)
+            gameState.myTurn -> Blank(gameMap, gameState, requests)
             else -> None
         }
     }
@@ -39,7 +39,7 @@ sealed class PlayerState {
 
         fun confirm() =
             if (isValid) {
-                requests.offer(ConfirmTicketsChoiceRequest(ticketsToKeep))
+                requests.trySend(ConfirmTicketsChoiceRequest(ticketsToKeep)).isSuccess
                 None
             } else this
 
@@ -66,9 +66,14 @@ sealed class PlayerState {
             fun buildStation() = BuildingStation(this)
         }
 
-        class BuildingStation private constructor(prev: MyTurn, val target: CityName, val chosenCardsToDropIx: Int?) : MyTurn(prev) {
+        class BuildingStation private constructor(prev: MyTurn, val target: CityName, val chosenCardsToDropIx: Int?) :
+            MyTurn(prev) {
             internal constructor(prev: PickedCity) : this(prev, prev.target, null)
-            internal constructor(prev: BuildingStation, chosenCardsToDropIx: Int) : this(prev, prev.target, chosenCardsToDropIx)
+            internal constructor(prev: BuildingStation, chosenCardsToDropIx: Int) : this(
+                prev,
+                prev.target,
+                chosenCardsToDropIx
+            )
 
             val optionsForCardsToDrop by lazy {
                 if (gameState.me.stationsLeft > 0)
@@ -89,9 +94,8 @@ sealed class PlayerState {
             prev: MyTurn,
             val from: CityName,
             val to: CityName,
-            val chosenCardsToDropIx: Int?)
-            : MyTurn(prev)
-        {
+            val chosenCardsToDropIx: Int?
+        ) : MyTurn(prev) {
             internal constructor(prev: PickedCity, to: CityName) : this(prev, prev.target, to, null)
 
             internal constructor(prev: PickedCity, segment: Segment) : this(prev, segment.from, segment.to, null)
@@ -134,7 +138,7 @@ sealed class PlayerState {
         val myCards get() = gameState.myCards
 
         internal fun sendAndResetState(req: Request): PlayerState {
-            requests.offer(req)
+            requests.trySend(req).isSuccess
             return None
         }
     }
@@ -145,7 +149,7 @@ sealed class PlayerState {
             if (cardIx != chosenCardIx) {
                 sendAndResetState(PickCardsRequest.TwoCards.bothOpen(chosenCardIx, cardIx, openCards))
             } else
-                MyTurn.Blank(this)
+                Blank(this)
         this is MyTurn ->
             if (openCards[cardIx] is Card.Loco)
                 sendAndResetState(PickCardsRequest.Loco(cardIx))

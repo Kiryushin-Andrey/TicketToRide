@@ -6,13 +6,15 @@ import ticketToRide.Locale
 import ticketToRide.PlayerView
 import ticketToRide.Segment
 
-class ObserveMapComponent(props: Props) :
-    MapComponentBase<ObserveMapComponent.Props, MapComponentBaseState>(props) {
+external interface ObserveMapComponentProps : MapComponentBaseProps {
+    var connected: Boolean
+    var players: List<PlayerView>
+}
 
-    interface Props : MapComponentBaseProps {
-        var connected: Boolean
-        var players: List<PlayerView>
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ObserveMapComponent(props: ObserveMapComponentProps) :
+    MapComponentBase<ObserveMapComponentProps, MapComponentBaseState>(props) {
 
     override fun MapCityMarkerProps.fill(city: City) {
         selected = props.citiesToHighlight.contains(city.name)
@@ -25,7 +27,7 @@ class ObserveMapComponent(props: Props) :
     }
 }
 
-fun RBuilder.observeMap(builder: ObserveMapComponent.Props.() -> Unit) {
+fun RBuilder.observeMap(builder: ObserveMapComponentProps.() -> Unit) {
     child(ObserveMapComponent::class) {
         attrs(builder)
     }

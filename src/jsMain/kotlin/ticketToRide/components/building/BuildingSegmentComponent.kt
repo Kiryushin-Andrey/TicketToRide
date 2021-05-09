@@ -13,13 +13,15 @@ import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState.MyTurn.*
 import kotlinx.browser.window
 
-class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentComponent.State>() {
+external interface BuildingSegmentComponentState : RState {
+    var showArrivalGif: Boolean
+}
 
-    interface State : RState {
-        var showArrivalGif: Boolean
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegmentComponentState>() {
 
-    override fun State.init() {
+    override fun BuildingSegmentComponentState.init() {
         Image().src = "/images/lumiere.gif"
     }
 

@@ -4,7 +4,7 @@ import ticketToRide.playerState.PlayerState
 
 sealed class Screen {
 
-    class Welcome(val otherPlayers: List<PlayerView>) : Screen()
+    object Welcome : Screen()
 
     class ShowGameId(
         override val gameId: GameId,

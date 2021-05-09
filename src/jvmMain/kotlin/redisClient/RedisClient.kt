@@ -1,4 +1,4 @@
-package redisClient;
+package redisClient
 
 import java.io.*
 import java.net.Socket
@@ -35,9 +35,9 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
          * @throws IOException Propagated from the output stream.
          * @link https://redis.io/topics/protocol#resp-bulk-strings
          */
-        fun write(value: ByteArray) {
-            out.write('$'.toInt())
-            out.write(java.lang.Long.toString(value.size.toLong()).toByteArray())
+        private fun write(value: ByteArray) {
+            out.write('$'.code)
+            out.write(value.size.toLong().toString().toByteArray())
             out.write(CRLF)
             out.write(value)
             out.write(CRLF)
@@ -50,8 +50,8 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
          * @throws IOException Propagated from the output stream.
          * @link https://redis.io/topics/protocol#resp-integers
          */
-        fun write(value: Long) {
-            out.write(':'.toInt())
+        private fun write(value: Long) {
+            out.write(':'.code)
             out.write(value.toString().toByteArray())
             out.write(CRLF)
         }
@@ -65,7 +65,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
          * @link https://redis.io/topics/protocol#resp-arrays
          */
         fun write(list: List<*>) {
-            out.write('*'.toInt())
+            out.write('*'.code)
             out.write(list.size.toLong().toString().toByteArray())
             out.write(CRLF)
             for (o in list) {
@@ -89,7 +89,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             /**
              * CRLF is used a lot.
              */
-            private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())
+            private val CRLF = byteArrayOf('\r'.code.toByte(), '\n'.code.toByte())
         }
 
     }
@@ -133,11 +133,11 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             val ret: Any?
             val read = input.read()
             ret = when (read) {
-                '+'.toInt() -> parseSimpleString()
-                '-'.toInt() -> throw ServerError(String(parseSimpleString()))
-                ':'.toInt() -> parseNumber()
-                '$'.toInt() -> parseBulkString()
-                '*'.toInt() -> {
+                '+'.code -> parseSimpleString()
+                '-'.code -> throw ServerError(String(parseSimpleString()))
+                ':'.code -> parseNumber()
+                '$'.code -> parseBulkString()
+                '*'.code -> {
                     val len = parseNumber()
                     if (len == -1L) {
                         null
@@ -177,10 +177,10 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             while (read < expectedLength) {
                 read += input.read(buffer, read, numBytes - read)
             }
-            if (input.read() != '\r'.toInt()) {
+            if (input.read() != '\r'.code) {
                 throw ProtocolException("Expected CR")
             }
-            if (input.read() != '\n'.toInt()) {
+            if (input.read() != '\n'.code) {
                 throw ProtocolException("Expected LF")
             }
             return buffer
@@ -205,18 +205,18 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             var idx = 0
             var ch: Int
             var buffer = ByteArray(size)
-            while (input.read().also { ch = it } != '\r'.toInt()) {
+            while (input.read().also { ch = it } != '\r'.code) {
                 buffer[idx++] = ch.toByte()
                 if (idx == size) {
                     // increase buffer size.
                     size *= 2
-                    buffer = Arrays.copyOf(buffer, size)
+                    buffer = buffer.copyOf(size)
                 }
             }
-            if (input.read() != '\n'.toInt()) {
+            if (input.read() != '\n'.code) {
                 throw ProtocolException("Expected LF")
             }
-            return Arrays.copyOfRange(buffer, 0, idx)
+            return buffer.copyOfRange(0, idx)
         }
 
     }
@@ -224,12 +224,12 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
     /**
      * Used for writing the data to the server.
      */
-    private val writer: Encoder
+    private val writer: Encoder = Encoder(outputStream)
 
     /**
      * Used for reading responses from the server.
      */
-    private val reader: Parser
+    private val reader: Parser = Parser(inputStream)
     /**
      * Construct the connection with the specified Socket as the server connection with specified buffer sizes.
      *
@@ -260,7 +260,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
      * @throws IOException All protocol and io errors are IO exceptions.
     </T> */
     fun <T> call(vararg args: Any?): T? {
-        writer.write(Arrays.asList(*args as Array<*>))
+        writer.write(listOf(*args as Array<*>))
         writer.flush()
         return read()
     }
@@ -272,7 +272,8 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
      * @return Result of redis
      * @throws IOException Propagated
     </T> */
-    fun <T> read(): T? {
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> read(): T? {
         return reader.parse() as T?
     }
 
@@ -295,7 +296,7 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
          * @return The responses
          * @throws IOException Propagated from underlying server.
          */
-        abstract fun read(): kotlin.collections.List<Any?>?
+        abstract fun read(): List<Any?>?
     }
 
     /**
@@ -309,13 +310,13 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
             private var n = 0
 
             override fun call(vararg args: String?): Pipeline {
-                writer.write(Arrays.asList(*args as Array<*>))
+                writer.write(listOf(*args as Array<*>))
                 writer.flush()
                 n++
                 return this
             }
 
-            override fun read(): kotlin.collections.List<Any?> {
+            override fun read(): List<Any?> {
                 val ret: MutableList<Any?> = LinkedList()
                 while (n-- > 0) {
                     ret.add(reader.parse())
@@ -348,14 +349,4 @@ class Redis(inputStream: InputStream, outputStream: OutputStream) {
         }
     }
 
-    /**
-     * Construct with the specified streams to respectively read from and write to.
-     *
-     * @param inputStream  Read from this stream
-     * @param outputStream Write to this stream
-     */
-    init {
-        reader = Parser(inputStream)
-        writer = Encoder(outputStream)
-    }
 }

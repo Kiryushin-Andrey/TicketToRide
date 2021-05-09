@@ -15,14 +15,16 @@ import react.RState
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-class CitySearchTextBox : RComponent<CitySearchTextBox.Props, RState>() {
+external interface CitySearchTextBoxProps : RProps {
+    var text: String
+    var locale: Locale
+    var onTextChanged: (String) -> Unit
+    var onEnter: () -> Unit
+}
 
-    interface Props : RProps {
-        var text: String
-        var locale: Locale
-        var onTextChanged: (String) -> Unit
-        var onEnter: () -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class CitySearchTextBox : RComponent<CitySearchTextBoxProps, RState>() {
 
     override fun RBuilder.render() {
         mTooltip(str.tooltip, TooltipPlacement.topStart) {
@@ -63,7 +65,7 @@ class CitySearchTextBox : RComponent<CitySearchTextBox.Props, RState>() {
     private val str = Strings()
 }
 
-fun RBuilder.searchTextBox(locale: Locale, builder: CitySearchTextBox.Props.() -> Unit) = child(CitySearchTextBox::class) {
+fun RBuilder.searchTextBox(locale: Locale, builder: CitySearchTextBoxProps.() -> Unit) = child(CitySearchTextBox::class) {
     attrs {
         this.locale = locale
         builder()

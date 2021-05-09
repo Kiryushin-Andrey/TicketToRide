@@ -71,6 +71,7 @@ class ServerConnection<T>(
             undefined
         }
 
+        @Suppress("UNUSED_EXPRESSION")
         scope.launch {
             establishConnection()
         }

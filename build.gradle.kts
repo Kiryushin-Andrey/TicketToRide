@@ -3,63 +3,54 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 import com.codingfeline.buildkonfig.compiler.*
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 
 plugins {
     application
-    kotlin("multiplatform") version "1.4.21"
-    kotlin("plugin.serialization") version "1.4.21"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    kotlin("multiplatform") version "1.5.0"
+    kotlin("plugin.serialization") version "1.5.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
     id("com.codingfeline.buildkonfig") version "0.7.0"
     id("com.bmuschko.docker-remote-api") version "6.7.0"
 }
 
 repositories {
-    jcenter()
+    mavenLocal()    // for muirwik compiled locally with IR and Kotlin 1.5
     mavenCentral()
-    maven("https://kotlin.bintray.com/kotlin-js-wrappers/")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers")
 }
 
 application {
-    // TODO use mainClass after https://github.com/johnrengelman/shadow/issues/609 gets fixed
-    mainClassName = "ticketToRide.ServerKt"
+    mainClass.set("ticketToRide.ServerKt")
 }
 
-val ktorVersion = "1.5.0"
-val serializationVersion = "1.0.1"
-val kotestVersion = "4.3.2"
-val kotlinWrappersVersion = "1.0.0-pre.134-kotlin-1.4.21"
+val ktorVersion = "1.5.4"
+val serializationVersion = "1.2.0"
+val kotestVersion = "4.5.0"
+val kotlinWrappersVersion = "1.0.0-pre.154-kotlin-1.5.0"
 val reactVersion = "16.13.0"
 val dockerImageForHeroku = "registry.heroku.com/ticketgame/web"
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
-        }
-    }
-    js {
-        browser {
-            webpackTask {
-                saveEvaluatedConfigFile = true
-            }
-        }
+    jvm()
+    js(IR) {
+        browser()
         useCommonJs()
+        binaries.executable()
     }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serializationVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.4")
             }
         }
         val jvmMain by getting {
             dependencies {
+                implementation(kotlin("reflect", "1.5.0"))
                 implementation("org.jetbrains:kotlin-css:$kotlinWrappersVersion")
                 implementation("org.jetbrains:kotlin-css-jvm:$kotlinWrappersVersion")
                 implementation("io.ktor:ktor-server-core:$ktorVersion")
@@ -86,16 +77,20 @@ kotlin {
                 implementation(npm("react", reactVersion))
                 implementation(npm("react-dom", reactVersion))
                 implementation(npm("react-is", reactVersion))
-                implementation(npm("@material-ui/core", "4.9.8"))
                 implementation(npm("styled-components", "5.2.0"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
                 implementation(npm("pigeon-maps", "0.17.0"))
                 implementation(npm("fscreen", "1.2.0"))
                 compileOnly(npm("raw-loader", "4.0.1"))
 
-                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.2")
-                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.134-kotlin-1.4.21")
-                implementation("com.ccfraser.muirwik:muirwik-components:0.6.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.3")
+                implementation("org.jetbrains:kotlin-styled:5.2.3-pre.154-kotlin-1.5.0")
+
+                // compiled locally from https://github.com/Kiryushin-Andrey/muirwik/tree/IR-Compiler and published to local maven
+                implementation("com.ccfraser.muirwik:muirwik-components:0.6.7-kotlin-IR-1.5")
+            }
+            languageSettings.apply {
+                useExperimentalAnnotation("kotlin.js.ExperimentalJsExport")
             }
         }
     }
@@ -130,14 +125,11 @@ buildkonfig {
 }
 
 tasks {
-    withType<KotlinCompile> {
-        kotlinOptions {
-            useIR = true
-        }
-    }
-
     withType<Test> {
         useJUnitPlatform()
+    }
+    withType<KotlinWebpack> {
+        saveEvaluatedConfigFile = false
     }
 
     val devJs = named<KotlinWebpack>("jsBrowserDevelopmentWebpack")

@@ -11,23 +11,25 @@ import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 import ticketToRide.getName
 
-class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
+external interface CardComponentProps : RProps {
+    var locale: Locale
+    var imageUrl: String
+    var assignedKey: String?
+    var color: Color?
+    var observing: Boolean
+    var enabled: Boolean
+    var checked: Boolean
+    var tooltip: String?
+    var onClick: () -> Unit
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var imageUrl: String
-        var assignedKey: String?
-        var color: Color?
-        var observing: Boolean
-        var enabled: Boolean
-        var checked: Boolean
-        var tooltip: String?
-        var onClick: () -> Unit
-    }
+external interface CardComponentState : RState {
+    var hovered: Boolean
+}
 
-    interface State : RState {
-        var hovered: Boolean
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class CardComponent : RComponent<CardComponentProps, CardComponentState>() {
 
     override fun RBuilder.render() {
         mPaper {
@@ -37,7 +39,7 @@ class CardComponent : RComponent<CardComponent.Props, CardComponent.State>() {
                     with(asDynamic()) {
                         onMouseOver = { setState { hovered = true } }
                         onMouseOut = { setState { hovered = false } }
-                        onClick = if (props.enabled) props.onClick else null
+                        onClick = { if (props.enabled) props.onClick() }
                     }
                 }
             }
@@ -138,7 +140,7 @@ private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
     )
 }
 
-private fun RBuilder.card(card: Card?, locale: Locale, builder: CardComponent.Props.() -> Unit) =
+private fun RBuilder.card(card: Card?, locale: Locale, builder: CardComponentProps.() -> Unit) =
     child(CardComponent::class) {
         attrs {
             this.locale = locale

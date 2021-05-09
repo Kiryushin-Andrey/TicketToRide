@@ -13,13 +13,15 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState
 
-class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
+external interface MyTicketsComponentProps : ComponentBaseProps {
+    var citiesToHighlight: Set<CityName>
+    var onTicketMouseOver: (Ticket) -> Unit
+    var onTicketMouseOut: (Ticket) -> Unit
+}
 
-    interface Props : ComponentBaseProps {
-        var citiesToHighlight: Set<CityName>
-        var onTicketMouseOver: (Ticket) -> Unit
-        var onTicketMouseOut: (Ticket) -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class MyTicketsComponent : ComponentBase<MyTicketsComponentProps, RState>() {
 
     override fun RBuilder.render() {
         if (playerState !is PlayerState.ChoosingTickets) {
@@ -122,5 +124,5 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponent.Props, RState>() {
     private val str = Strings()
 }
 
-fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsComponent.Props.() -> Unit) =
-    componentBase<MyTicketsComponent, MyTicketsComponent.Props>(props, block)
+fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsComponentProps.() -> Unit) =
+    componentBase<MyTicketsComponent, MyTicketsComponentProps>(props, block)

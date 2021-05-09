@@ -11,6 +11,8 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState.MyTurn.BuildingStation
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
         styledDiv {

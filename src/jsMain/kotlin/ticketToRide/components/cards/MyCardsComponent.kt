@@ -13,6 +13,8 @@ import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
     override fun RBuilder.render() {
         mTypography(str.header, variant = MTypographyVariant.h6) {

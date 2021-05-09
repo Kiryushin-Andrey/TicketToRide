@@ -20,35 +20,38 @@ import ticketToRide.components.welcomeScreen.*
 
 private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 
-class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScreen.State>(props) {
+external interface WelcomeScreenProps : RProps {
+    var gameIdBoxed: IGameId?
+    var locale: Locale
+    var onLocaleChanged: (Locale) -> Unit
+    var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
+    var onJoinGame: (PlayerName, PlayerColor) -> Unit
+    var onJoinAsObserver: () -> Unit
+    var onReconnect: (PlayerName) -> Unit
+}
+val WelcomeScreenProps.gameId get() = gameIdBoxed?.unboxed
+
+external interface WelcomeScreenState : RState {
+    var playerName: String
+    var playerColor: PlayerColor?
+    var otherPlayers: List<PlayerView>
+    var errorText: String?
+    var showSettings: Boolean
+    var carsNumber: Int
+    var calculateScoresInProcess: Boolean
+    var joinAsObserver: Boolean
+    var customMap: CustomGameMap?
+    var gameMapParseErrors: CustomGameMapParseErrors?
+}
+
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
     private var peekPlayersConnection: ServerConnection<GameStateForObserver>? = null
 
-    interface State : RState {
-        var playerName: String
-        var playerColor: PlayerColor?
-        var otherPlayers: List<PlayerView>
-        var errorText: String?
-        var showSettings: Boolean
-        var carsNumber: Int
-        var calculateScoresInProcess: Boolean
-        var joinAsObserver: Boolean
-        var customMap: CustomGameMap?
-        var gameMapParseErrors: CustomGameMapParseErrors?
-    }
-
-    interface Props : RProps {
-        var gameId: GameId?
-        var locale: Locale
-        var onLocaleChanged: (Locale) -> Unit
-        var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
-        var onJoinGame: (PlayerName, PlayerColor) -> Unit
-        var onJoinAsObserver: () -> Unit
-        var onReconnect: (PlayerName) -> Unit
-    }
-
-    private val State.availableColors
+    private val WelcomeScreenState.availableColors
         get() =
             otherPlayers.find { it.name.value == playerName }?.let {
                 // if a player is reconnecting back into the game under the same name
@@ -56,9 +59,9 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
                 listOf(it.color)
             } ?: PlayerColor.values().filter { c -> !otherPlayers.map { it.color }.contains(c) }
 
-    private val Props.startingNewGame get() = gameId == null
+    private val WelcomeScreenProps.startingNewGame get() = gameIdBoxed == null
 
-    override fun State.init(props: Props) {
+    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
         playerName = ""
         playerColor = PlayerColor.values().first()
         showSettings = false
@@ -270,7 +273,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
 
     private fun proceed() {
         if (state.joinAsObserver) {
-            props.onJoinAsObserver();
+            props.onJoinAsObserver()
             return
         }
 
@@ -404,7 +407,7 @@ class WelcomeScreen(props: Props) : RComponent<WelcomeScreen.Props, WelcomeScree
     private val str = Strings()
 }
 
-fun RBuilder.welcomeScreen(builder: WelcomeScreen.Props.() -> Unit) {
+fun RBuilder.welcomeScreen(builder: WelcomeScreenProps.() -> Unit) {
     child(WelcomeScreen::class) {
         attrs {
             builder()

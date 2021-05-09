@@ -18,7 +18,7 @@ import ticketToRide.components.tickets.pointsLabel
 import ticketToRide.components.tickets.ticket
 import ticketToRide.components.withClasses
 
-interface FinalScreenProps : RProps {
+external interface FinalScreenProps : RProps {
     var locale: Locale
     var gameMap: GameMap
     var observing: Boolean
@@ -27,12 +27,15 @@ interface FinalScreenProps : RProps {
     var onSendMessage: (String) -> Unit
 }
 
-interface FinalScreenState : RState {
-    var playerToHighlight: PlayerName?
+external interface FinalScreenState : RState {
+    var playerToHighlight: IPlayerName?
     var citiesToHighlight: Set<CityName>
 }
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalScreenState>(props) {
+
     override fun FinalScreenState.init(props: FinalScreenProps) {
         citiesToHighlight = emptySet()
     }

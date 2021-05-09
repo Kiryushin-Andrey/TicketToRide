@@ -70,13 +70,13 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
         private fun <T : Any> Sequence<Pair<T, Int>>.pickRandom(): T? {
             fun <T : Any> Sequence<Pair<T, Int>>.pick(n: Int): T? =
                     firstOrNull()?.let { (v, i) -> if (n >= i) drop(1).pick(n - i) else v }
-            return sumBy { it.second }.takeIf { it > 0 }?.let {
+            return sumOf { it.second }.takeIf { it > 0 }?.let {
                 pick(Random.nextInt(it - 1))
             }
         }
 
         private fun color(segments: List<Segment>): List<Segment> {
-            val totalLength = segments.filter { it.length <= 4 }.sumBy { it.length }
+            val totalLength = segments.filter { it.length <= 4 }.sumOf { it.length }
             val countPerColor = ceil(totalLength.toDouble() / CardColor.values().size).toInt()
             val usedByColor = mutableMapOf<CardColor, Int>()
 
@@ -127,7 +127,7 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
     return file.splitToSequence('\n').map { it.trim() }
         .foldIndexed(ParsingState()) { ix, acc, line ->
             acc.run {
-                val lineNumber = ix + 2;
+                val lineNumber = ix + 2
                 when {
                     // blank line or comment - ignore
                     line.isEmptyOrComment() ->

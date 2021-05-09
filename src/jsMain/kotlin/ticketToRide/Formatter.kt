@@ -2,12 +2,13 @@ package ticketToRide
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
+import ticketToRide.serialization.json
+import ticketToRide.serialization.protobuf
 
 interface Formatter {
     fun <T> send(webSocket: WebSocket, value: T, serializer: SerializationStrategy<T>)
@@ -28,8 +29,6 @@ class JsonFormatter : Formatter {
 }
 
 class ProtobufFormatter : Formatter {
-    private val protobuf = ProtoBuf { encodeDefaults = false }
-
     override fun <T> send(webSocket: WebSocket, value: T, serializer: SerializationStrategy<T>) {
         webSocket.send(Uint8Array(protobuf.encodeToByteArray(serializer, value).toTypedArray()))
     }

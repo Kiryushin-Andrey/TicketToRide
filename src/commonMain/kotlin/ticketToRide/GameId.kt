@@ -1,10 +1,12 @@
 package ticketToRide
 
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 import kotlin.random.Random
 
+@JvmInline
 @Serializable
-data class GameId(val value: String) {
+value class GameId(override val value: String): IGameId {
     override fun toString() = "Game-$value"
 }
 

@@ -6,19 +6,19 @@ import react.*
 import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
-import ticketToRide.PlayerScore
 import ticketToRide.PlayerView
 import ticketToRide.components.tickets.pointsLabel
-import ticketToRide.screens.FinalScreen
 
-class PlayersListComponent : RComponent<PlayersListComponent.Props, RState>() {
+external interface PlayersListComponentProps : RProps {
+    var players: List<PlayerView>
+    var turn: Int
+    var locale: Locale
+    var calculateScores: Boolean
+}
 
-    interface Props : RProps {
-        var players: List<PlayerView>
-        var turn: Int
-        var locale: Locale
-        var calculateScores: Boolean
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class PlayersListComponent : RComponent<PlayersListComponentProps, RState>() {
 
     override fun RBuilder.render() {
         for ((ix, player) in props.players.withIndex()) {

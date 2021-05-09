@@ -3,13 +3,15 @@ package ticketToRide.components.map
 import react.RBuilder
 import ticketToRide.*
 
-class FinalMapComponent(props: Props) :
-    MapComponentBase<FinalMapComponent.Props, MapComponentBaseState>(props) {
+external interface FinalMapComponentProps : MapComponentBaseProps {
+    var players: List<PlayerScore>
+    var playerToHighlight: IPlayerName?
+}
 
-    interface Props : MapComponentBaseProps {
-        var players: List<PlayerScore>
-        var playerToHighlight: PlayerName?
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class FinalMapComponent(props: FinalMapComponentProps) :
+    MapComponentBase<FinalMapComponentProps, MapComponentBaseState>(props) {
 
     override fun MapCityMarkerProps.fill(city: City) {
         selected = selected || (station != null && station?.name == props.playerToHighlight)
@@ -23,7 +25,7 @@ class FinalMapComponent(props: Props) :
     }
 }
 
-fun RBuilder.finalMap(builder: FinalMapComponent.Props.() -> Unit) {
+fun RBuilder.finalMap(builder: FinalMapComponentProps.() -> Unit) {
     child(FinalMapComponent::class) {
         attrs(builder)
     }

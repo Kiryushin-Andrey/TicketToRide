@@ -10,18 +10,20 @@ import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-class ChatSendMessageTextBox : RComponent<ChatSendMessageTextBox.Props, ChatSendMessageTextBox.State>() {
+external interface ChatSendMessageTextBoxProps : RProps {
+    var locale: Locale
+    var onSendMessage: (String) -> Unit
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var onSendMessage: (String) -> Unit
-    }
+external interface ChatSendMessageTextBoxState : RState {
+    var messageText: String
+}
 
-    interface State : RState {
-        var messageText: String
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ChatSendMessageTextBox : RComponent<ChatSendMessageTextBoxProps, ChatSendMessageTextBoxState>() {
 
-    override fun State.init(props: Props) {
+    override fun ChatSendMessageTextBoxState.init(props: ChatSendMessageTextBoxProps) {
         messageText = ""
     }
 

@@ -22,21 +22,23 @@ import ticketToRide.components.tickets.myTickets
 import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.*
 
-class GameScreen : ComponentBase<GameScreen.Props, GameScreen.State>() {
+external interface GameScreenProps : ComponentBaseProps {
+    var gameMap: GameMap
+    var calculateScores: Boolean
+    var chatMessages: List<Response.ChatMessage>
+    var onSendMessage: (String) -> Unit
+}
 
-    interface Props : ComponentBaseProps {
-        var gameMap: GameMap
-        var calculateScores: Boolean
-        var chatMessages: List<Response.ChatMessage>
-        var onSendMessage: (String) -> Unit
-    }
+external interface GameScreenState : RState {
+    var citiesToHighlight: Set<CityName>
+    var searchText: String
+}
 
-    interface State : RState {
-        var citiesToHighlight: Set<CityName>
-        var searchText: String
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
 
-    override fun State.init() {
+    override fun GameScreenState.init() {
         citiesToHighlight = emptySet()
         searchText = ""
     }
@@ -250,7 +252,7 @@ fun RBuilder.horizontalDivider() {
     }
 }
 
-fun RBuilder.gameScreen(builder: GameScreen.Props.() -> Unit) {
+fun RBuilder.gameScreen(builder: GameScreenProps.() -> Unit) {
     child(GameScreen::class) {
         attrs(builder)
     }

@@ -5,11 +5,13 @@ import react.*
 import styled.*
 import ticketToRide.Response
 
-class ChatMessagesComponent : RComponent<ChatMessagesComponent.Props, RState>() {
+external interface ChatMessagesComponentProps : RProps {
+    var messages: List<Response.ChatMessage>
+}
 
-    interface Props : RProps {
-        var messages: List<Response.ChatMessage>
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ChatMessagesComponent : RComponent<ChatMessagesComponentProps, RState>() {
 
     override fun RBuilder.render() {
         styledDiv {

@@ -2,12 +2,14 @@ package ticketToRide
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.jvm.JvmInline
 
 @Serializable
 data class LatLong(val lat: Double, val lng: Double)
 
+@JvmInline
 @Serializable
-data class CityName(val value: String)
+value class CityName(override val value: String): ICityName
 
 @Serializable
 data class City(val name: CityName, val latLng: LatLong)
@@ -49,9 +51,9 @@ data class GameMap(
     fun getPointsForSegments(length: Int) =
         pointsForSegments[length] ?: throw Error("Points for ${length}-length segments not defined")
 
-    val totalSegmentsLength by lazy { segments.sumBy { it.length } }
+    val totalSegmentsLength by lazy { segments.sumOf { it.length } }
 
-    val totalColoredSegmentsLength by lazy { segments.filter { it.color != null }.sumBy { it.length } }
+    val totalColoredSegmentsLength by lazy { segments.filter { it.color != null }.sumOf { it.length } }
 
     val longTickets by lazy {
         allTickets.takeWhile { it.points >= longTicketMinPoints }

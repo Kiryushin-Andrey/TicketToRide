@@ -13,10 +13,10 @@ private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 
 private fun <T> dump(serializationStrategy: SerializationStrategy<T>, value: T) =
-    protobuf.encodeToByteArray(serializationStrategy, value)
+    ticketToRide.serialization.protobuf.encodeToByteArray(serializationStrategy, value)
 
 private fun <T> parse(serializationStrategy: DeserializationStrategy<T>, value: ByteArray) =
-    protobuf.decodeFromByteArray(serializationStrategy, value)
+    ticketToRide.serialization.protobuf.decodeFromByteArray(serializationStrategy, value)
 
 fun RedisStorage.saveMap(id: GameId, map: GameMap) {
     exec { conn ->

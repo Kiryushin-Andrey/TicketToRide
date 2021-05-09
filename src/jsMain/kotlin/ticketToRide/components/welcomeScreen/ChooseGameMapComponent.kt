@@ -16,19 +16,21 @@ import ticketToRide.*
 data class CustomGameMap(val filename: String, val map: GameMap)
 data class CustomGameMapParseErrors(val filename: String, val errors: List<GameMapParseError>)
 
-class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGameMapComponent.State>() {
+external interface ChooseGameMapComponentProps : RProps {
+    var locale: Locale
+    var customMap: CustomGameMap?
+    var onCustomMapChanged: (CustomGameMap?) -> Unit
+    var onShowParseErrors: (CustomGameMapParseErrors) -> Unit
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var customMap: CustomGameMap?
-        var onCustomMapChanged: (CustomGameMap?) -> Unit
-        var onShowParseErrors: (CustomGameMapParseErrors) -> Unit
-    }
+external interface ChooseGameMapComponentState : RState {
+    var fileTooLarge: Boolean
+    var errors: CustomGameMapParseErrors?
+}
 
-    interface State : RState {
-        var fileTooLarge: Boolean
-        var errors: CustomGameMapParseErrors?
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class ChooseGameMapComponent : RComponent<ChooseGameMapComponentProps, ChooseGameMapComponentState>() {
 
     override fun RBuilder.render() {
 
@@ -209,7 +211,7 @@ class ChooseGameMapComponent : RComponent<ChooseGameMapComponent.Props, ChooseGa
     private val maxFileSizeBytes = 1024 * 1024
 }
 
-fun RBuilder.chooseGameMap(locale: Locale, builder: ChooseGameMapComponent.Props.() -> Unit) =
+fun RBuilder.chooseGameMap(locale: Locale, builder: ChooseGameMapComponentProps.() -> Unit) =
     child(ChooseGameMapComponent::class) {
         attrs {
             this.locale = locale

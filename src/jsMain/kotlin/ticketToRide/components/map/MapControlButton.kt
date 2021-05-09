@@ -9,7 +9,7 @@ import pigeonMaps.PigeonProps
 import react.*
 import styled.css
 
-interface MapControlButtonProps: PigeonProps {
+external interface MapControlButtonProps: PigeonProps {
     var tooltip: String
     var icon: String
     var topPosition: LinearDimension

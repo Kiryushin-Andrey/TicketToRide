@@ -12,16 +12,18 @@ import styled.*
 import ticketToRide.*
 import ticketToRide.components.cards.myCard
 
-class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent.Props, RState>() {
+external interface OptionsForCardsToDropComponentProps : RProps {
+    var locale: Locale
+    var options: List<OptionForCardsToDrop>
+    var chosenCardsToDropIx: Int?
+    var confirmBtnTitle: String
+    var onChooseCards: (Int) -> Unit
+    var onConfirm: () -> Unit
+}
 
-    interface Props : RProps {
-        var locale: Locale
-        var options: List<OptionForCardsToDrop>
-        var chosenCardsToDropIx: Int?
-        var confirmBtnTitle: String
-        var onChooseCards: (Int) -> Unit
-        var onConfirm: () -> Unit
-    }
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
+class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponentProps, RState>() {
 
     override fun RBuilder.render() {
         when {
@@ -145,7 +147,7 @@ class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponent
     private val str = Strings()
 }
 
-fun RBuilder.optionsForCardsToDrop(locale: Locale, builder: OptionsForCardsToDropComponent.Props.() -> Unit) {
+fun RBuilder.optionsForCardsToDrop(locale: Locale, builder: OptionsForCardsToDropComponentProps.() -> Unit) {
     child(OptionsForCardsToDropComponent::class) {
         attrs {
             this.locale = locale

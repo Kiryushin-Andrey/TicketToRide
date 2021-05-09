@@ -15,7 +15,7 @@ import styled.css
 import styled.styledA
 import ticketToRide.*
 
-interface MapComponentBaseProps : RProps {
+external interface MapComponentBaseProps : RProps {
     var locale: Locale
     var gameMap: GameMap
     var citiesToHighlight: Set<CityName>
@@ -24,12 +24,14 @@ interface MapComponentBaseProps : RProps {
     var onCityMouseOut: (CityName) -> Unit
 }
 
-interface MapComponentBaseState : RState {
+external interface MapComponentBaseState : RState {
     var mapZoom: Int
     var mapTilesProvider: MapTilesProvider
     var displayAllCityNames: Boolean
 }
 
+@JsExport
+@Suppress("NON_EXPORTABLE_TYPE")
 abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         where P : MapComponentBaseProps, S : MapComponentBaseState {
 
@@ -79,7 +81,7 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         props.gameMap.cities.forEach { city ->
             mapCityMarker {
                 key = city.name.value
-                name = city.name
+                nameBoxed = city.name
                 anchor = city.latLng.toPigeonMapCoords()
                 displayAllCityNames = state.displayAllCityNames
                 station = props.citiesWithStations[city.name]
