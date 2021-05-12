@@ -33,10 +33,10 @@ class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProp
 
     override fun MapCityMarkerProps.fill(city: City) {
         myTurn = gameState.myTurn
-        selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.name)
-        hasOccupiedSegment = me.occupiedSegments.any { it.from == city.name || it.to == city.name }
-        isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.name || it.to == city.name }
-        onClick = { act { onCityClick(city.name) } }
+        selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.id)
+        hasOccupiedSegment = me.occupiedSegments.any { it.from == city.id || it.to == city.id }
+        isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.id || it.to == city.id }
+        onClick = { act { onCityClick(city.id) } }
     }
 
     override fun MapSegmentProps.fill(segment: Segment) {
@@ -51,6 +51,7 @@ fun RBuilder.gameMap(props: ComponentBaseProps, builder: MapComponentProps.() ->
         attrs {
             this.locale = props.locale
             this.connected = props.connected
+            this.gameMap = props.gameMap
             this.gameState = props.gameState
             this.playerState = props.playerState
             this.onAction = props.onAction

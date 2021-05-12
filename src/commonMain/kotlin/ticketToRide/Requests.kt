@@ -87,4 +87,4 @@ class BuildSegmentRequest(val segment: Segment, val cards: List<Card>) : Request
 
 @Serializable
 @SerialName("station")
-class BuildStationRequest(val target: CityName, val cards: List<Card>) : Request()
+class BuildStationRequest(val target: CityId, val cards: List<Card>) : Request()

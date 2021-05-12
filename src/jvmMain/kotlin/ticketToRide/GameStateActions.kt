@@ -27,7 +27,7 @@ fun GameState.processRequest(
     is BuildSegmentRequest ->
         inTurnOnly(fromPlayerName) {
             if (!map.segmentExists(req.segment))
-                throw InvalidActionError("There is no segment ${req.segment.from.value} - ${req.segment.to.value} of ${req.segment.color} on the map")
+                throw InvalidActionError("There is no segment ${req.segment.from} - ${req.segment.to} of ${req.segment.color} on the map")
             buildSegment(fromPlayerName, req.segment, req.cards).recalculatePlayerScores(map).advanceTurn(map, isAway)
         }
 
@@ -121,14 +121,14 @@ private fun GameState.buildSegment(
     cards: List<Card>
 ): GameState {
     players.find { it.occupiedSegments.contains(segment) }?.let {
-        throw InvalidActionError("Segment ${segment.from.value} - ${segment.to.value} is already occupied by ${it.name.value}")
+        throw InvalidActionError("Segment ${segment.from} - ${segment.to} is already occupied by ${it.name}")
     }
     return updatePlayer(name) { occupySegment(segment, cards) }
 }
 
-private fun GameState.buildStation(name: PlayerName, target: CityName, cards: List<Card>): GameState {
+private fun GameState.buildStation(name: PlayerName, target: CityId, cards: List<Card>): GameState {
     players.find { it.placedStations.contains(target) }?.let {
-        throw InvalidActionError("There is already a station in ${target.value} owned by ${it.name.value}")
+        throw InvalidActionError("There is already a station in $target owned by ${it.name}")
     }
 
     return updatePlayer(name) { buildStation(target, cards) }
@@ -169,14 +169,14 @@ private fun Player.confirmTicketsChoice(ticketsToKeep: List<Ticket>) = when {
 
 private fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = when {
     segment.length > carsLeft ->
-        throw InvalidActionError("Not enough wagons ($carsLeft) to build ${segment.from.value} - ${segment.to.value} segment")
+        throw InvalidActionError("Not enough wagons ($carsLeft) to build ${segment.from} - ${segment.to} segment")
 
     !cards.contains(cardsToDrop) ->
         throw InvalidActionError("Cards to drop do not match cards on hand")
 
     !segment.canBuildWith(cardsToDrop) -> {
         val cardsDesc = cards.groupingBy { it }.eachCount().entries.joinToString { "${it.key} - ${it.value}" }
-        throw InvalidActionError("You cannot build ${segment.from.value} - ${segment.to.value} segment with the cards $cardsDesc")
+        throw InvalidActionError("You cannot build ${segment.from} - ${segment.to} segment with the cards $cardsDesc")
     }
 
     else -> copy(
@@ -186,7 +186,7 @@ private fun Player.occupySegment(segment: Segment, cardsToDrop: List<Card>) = wh
     )
 }
 
-private fun Player.buildStation(target: CityName, cardsToDrop: List<Card>) = when {
+private fun Player.buildStation(target: CityId, cardsToDrop: List<Card>) = when {
     cardsToDrop.filterIsInstance<Card.Car>().distinct().size > 1 ->
         throw InvalidActionError("Only cards of the same color (or locos) are allowed to be dropped for building a station")
 

@@ -139,16 +139,16 @@ private fun RBuilder.occupiedSegment(
 }
 
 private fun RBuilder.mapSegment(
-        segment: Segment,
-        cityByName: Map<CityName, City>,
-        currentIx: Int,
-        totalCount: Int,
-        builder: MapSegmentProps.() -> Unit) {
+    segment: Segment,
+    cityById: Map<CityId, City>,
+    currentIx: Int,
+    totalCount: Int,
+    builder: MapSegmentProps.() -> Unit) {
     child(mapSegment) {
         attrs {
             key = segment.hashCode().toString()
-            from = cityByName[segment.from] ?: error("City ${segment.from.value} not present in game map")
-            to = cityByName[segment.to] ?: error("City ${segment.to.value} not present in game map")
+            from = cityById[segment.from] ?: error("City ${segment.from} not present in game map")
+            to = cityById[segment.to] ?: error("City ${segment.to} not present in game map")
             color = segment.color
             points = segment.length
             this.currentIx = currentIx
@@ -184,7 +184,7 @@ val routeSegmentsComponent = functionalComponent<RouteSegmentsProps> { props ->
             }
         }
 
-        val cityByName = props.gameMap.cities.associateBy { it.name }
+        val cityByName = props.gameMap.cities.associateBy { it.id }
         props.gameMap.segments
                 .groupBy { segment -> segment.from to segment.to }.values
                 .forEach { segments ->

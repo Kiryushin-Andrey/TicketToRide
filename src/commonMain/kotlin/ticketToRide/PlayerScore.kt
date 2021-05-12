@@ -9,7 +9,7 @@ class PlayerScore(
     override val name: PlayerName,
     override val color: PlayerColor,
     val occupiedSegments: List<Segment>,
-    val placedStations: List<CityName>,
+    val placedStations: List<CityId>,
     tickets: List<Ticket>,
     segmentsOccupiedByOtherPlayers: List<Segment>,
     private val map: GameMap

@@ -12,6 +12,7 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState.MyTurn.*
 import kotlinx.browser.window
+import ticketToRide.localize
 
 external interface BuildingSegmentComponentState : RState {
     var showArrivalGif: Boolean
@@ -52,13 +53,13 @@ class BuildingSegmentComponent : ComponentBase<ComponentBaseProps, BuildingSegme
                 }
                 styledDiv {
                     with(props.playerState as BuildingSegment) {
-                        mTypography(from.value, MTypographyVariant.h6) {
+                        mTypography(from.localize(props.locale, props.gameMap), MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px
                             }
                         }
-                        mTypography(to.value, MTypographyVariant.h6) {
+                        mTypography(to.localize(props.locale, props.gameMap), MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px

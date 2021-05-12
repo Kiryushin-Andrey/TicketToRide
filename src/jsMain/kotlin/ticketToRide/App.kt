@@ -297,7 +297,7 @@ class App : RComponent<AppProps, AppState>() {
         is Response.GameEnd -> setState {
             (state.screen as? Screen.GameInProgress)?.let {
                 screen = Screen.GameOver(it.gameId, state.map, false, msg.players)
-                msg.action?.chatMessage(state.locale)?.let {
+                msg.action?.chatMessage(state.map, state.locale)?.let {
                     chatMessages = chatMessages.apply { add(it) }
                 }
             }
@@ -328,7 +328,7 @@ class App : RComponent<AppProps, AppState>() {
                 is Screen.ShowGameId -> setState {
                     screen = withGameState(gameState)
                     gameAction?.let {
-                        chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
+                        chatMessages = chatMessages.apply { add(it.chatMessage(state.map, state.locale)) }
                     }
                 }
 
@@ -348,7 +348,7 @@ class App : RComponent<AppProps, AppState>() {
                     setState {
                         screen = copy(gameState = gameState, playerState = newPlayerState)
                         gameAction?.let {
-                            chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
+                            chatMessages = chatMessages.apply { add(it.chatMessage(state.map, state.locale)) }
                         }
                     }
                 }
@@ -369,7 +369,7 @@ class App : RComponent<AppProps, AppState>() {
                 if (gameState.gameEnded) Screen.GameOver(gameId, state.map, true, gameState.players.zip(gameState.tickets))
                 else Screen.ObserveGameInProgress(gameState)
             gameState.action?.let {
-                chatMessages = chatMessages.apply { add(it.chatMessage(state.locale)) }
+                chatMessages = chatMessages.apply { add(it.chatMessage(state.map, state.locale)) }
             }
         }
     }

@@ -15,6 +15,7 @@ import ticketToRide.LocalizedStrings
 import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
+import ticketToRide.localize
 import ticketToRide.playerState.PlayerState
 
 @JsExport
@@ -48,7 +49,7 @@ class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
                         height = 100.px
                     }
                     with(props.playerState as PlayerState.MyTurn.PickedCity) {
-                        mTypography(target.value, MTypographyVariant.h6) {
+                        mTypography(target.localize(props.locale, gameMap), MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px

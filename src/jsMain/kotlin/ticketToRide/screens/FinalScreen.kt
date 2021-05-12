@@ -29,7 +29,7 @@ external interface FinalScreenProps : RProps {
 
 external interface FinalScreenState : RState {
     var playerToHighlight: IPlayerName?
-    var citiesToHighlight: Set<CityName>
+    var citiesToHighlight: Set<CityId>
 }
 
 @JsExport
@@ -215,7 +215,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
 
     private fun RBuilder.playerTicketStats(player: PlayerScore) {
         for (ticket in player.fulfilledTickets) {
-            ticket(ticket) {
+            ticket(ticket, props.gameMap, props.locale) {
                 finalScreen = true
                 fulfilled = true
                 onMouseOver = { setState { citiesToHighlight += listOf(ticket.from, ticket.to) } }
@@ -223,7 +223,7 @@ class FinalScreen(props: FinalScreenProps) : RComponent<FinalScreenProps, FinalS
             }
         }
         for (ticket in player.unfulfilledTickets) {
-            ticket(ticket) {
+            ticket(ticket, props.gameMap, props.locale) {
                 finalScreen = true
                 fulfilled = false
                 onMouseOver = { setState { citiesToHighlight += listOf(ticket.from, ticket.to) } }

@@ -18,10 +18,10 @@ import ticketToRide.*
 external interface MapComponentBaseProps : RProps {
     var locale: Locale
     var gameMap: GameMap
-    var citiesToHighlight: Set<CityName>
-    var citiesWithStations: Map<CityName, PlayerId>
-    var onCityMouseOver: (CityName) -> Unit
-    var onCityMouseOut: (CityName) -> Unit
+    var citiesToHighlight: Set<CityId>
+    var citiesWithStations: Map<CityId, PlayerId>
+    var onCityMouseOver: (CityId) -> Unit
+    var onCityMouseOut: (CityId) -> Unit
 }
 
 external interface MapComponentBaseState : RState {
@@ -80,12 +80,13 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
     private fun RBuilder.cityMarkers() {
         props.gameMap.cities.forEach { city ->
             mapCityMarker {
-                key = city.name.value
-                nameBoxed = city.name
+                key = city.id.value.toString()
+                cityIdBoxed = city.id
+                cityName = city.id.localize(props.locale, props.gameMap)
                 anchor = city.latLng.toPigeonMapCoords()
                 displayAllCityNames = state.displayAllCityNames
-                station = props.citiesWithStations[city.name]
-                selected = props.citiesToHighlight.contains(city.name)
+                station = props.citiesWithStations[city.id]
+                selected = props.citiesToHighlight.contains(city.id)
                 onMouseOver = props.onCityMouseOver
                 onMouseOut = props.onCityMouseOut
                 fill(city)

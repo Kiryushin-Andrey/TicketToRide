@@ -13,7 +13,7 @@ data class Player(
     val stationsLeft: Int,
     val cards: List<Card> = emptyList(),
     val occupiedSegments: List<Segment> = emptyList(),
-    val placedStations: List<CityName> = emptyList(),
+    val placedStations: List<CityId> = emptyList(),
     val ticketsForChoice: PendingTicketsChoice? = null,
     val ticketsOnHand: List<Ticket> = emptyList()
 ) : PlayerId {

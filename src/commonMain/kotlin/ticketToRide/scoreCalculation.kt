@@ -22,7 +22,7 @@ fun buildSegmentsGraph(occupiedSegments: List<Segment>): Graph<String> {
 fun getFulfilledTickets(
     tickets: List<Ticket>,
     occupiedSegments: List<Segment>,
-    placedStations: List<CityName>,
+    placedStations: List<CityId>,
     segmentsOccupiedByOtherPlayers: List<Segment>,
     graph: Graph<String> = buildSegmentsGraph(occupiedSegments),
     subgraphs: List<Graph<String>> = graph.splitIntoConnectedSubgraphs().toList()

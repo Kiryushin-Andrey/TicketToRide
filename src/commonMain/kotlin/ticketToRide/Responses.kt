@@ -67,7 +67,7 @@ sealed class PlayerAction {
 
     @Serializable
     @SerialName("station")
-    class BuildStation(val playerName: PlayerName, val target: CityName) : PlayerAction()
+    class BuildStation(val playerName: PlayerName, val target: CityId) : PlayerAction()
 }
 
 fun Request.toAction(playerName: PlayerName) = when (this) {

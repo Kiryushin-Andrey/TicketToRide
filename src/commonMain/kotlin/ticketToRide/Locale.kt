@@ -1,3 +1,3 @@
 package ticketToRide
 
-enum class Locale { En, Ru }
+enum class Locale { Ru, En }

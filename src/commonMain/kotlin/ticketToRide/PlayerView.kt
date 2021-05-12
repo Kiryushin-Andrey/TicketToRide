@@ -25,6 +25,6 @@ data class PlayerView(
     val ticketsOnHand: Int,
     val away: Boolean,
     val occupiedSegments: List<Segment> = emptyList(),
-    val placedStations: List<CityName> = emptyList(),
+    val placedStations: List<CityId> = emptyList(),
     val pendingTicketsChoice: PendingTicketsChoiceState
 ) : PlayerId

@@ -3,7 +3,7 @@ package ticketToRide
 import ticketToRide.Response.*
 import ticketToRide.PlayerAction.*
 
-fun PlayerAction.chatMessage(locale: Locale) = with(str(locale)) {
+fun PlayerAction.chatMessage(map: GameMap, locale: Locale) = with(str(locale)) {
     when (this@chatMessage) {
         is JoinGame ->
             ChatMessage(playerName, hello)
@@ -26,10 +26,10 @@ fun PlayerAction.chatMessage(locale: Locale) = with(str(locale)) {
                 .joinToString { (card, count) -> "$count ${card.getName(locale)}" }
             ChatMessage(
                 playerName,
-                buildSegment(Triple(segment.from.value, segment.to.value, cardsByCount))
+                buildSegment(Triple(segment.from.localize(locale, map), segment.to.localize(locale, map), cardsByCount))
             )
         }
-        is BuildStation -> ChatMessage(playerName, buildStation(target.value))
+        is BuildStation -> ChatMessage(playerName, buildStation(target.localize(locale, map)))
     }
 }
 

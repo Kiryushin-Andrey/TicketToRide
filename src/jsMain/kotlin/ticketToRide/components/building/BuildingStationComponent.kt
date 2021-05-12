@@ -9,6 +9,7 @@ import ticketToRide.LocalizedStrings
 import ticketToRide.components.ComponentBase
 import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
+import ticketToRide.localize
 import ticketToRide.playerState.PlayerState.MyTurn.BuildingStation
 
 @JsExport
@@ -36,7 +37,7 @@ class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
                 }
                 styledDiv {
                     with(props.playerState as BuildingStation) {
-                        mTypography(target.value, MTypographyVariant.h6) {
+                        mTypography(target.localize(props.locale, props.gameMap), MTypographyVariant.h6) {
                             css {
                                 textAlign = TextAlign.right
                                 paddingRight = 16.px

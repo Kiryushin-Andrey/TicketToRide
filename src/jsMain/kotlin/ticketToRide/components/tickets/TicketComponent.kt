@@ -5,11 +5,16 @@ import kotlinx.css.*
 import react.*
 import react.dom.label
 import styled.*
+import ticketToRide.GameMap
+import ticketToRide.Locale
 import ticketToRide.Ticket
+import ticketToRide.localize
 
 class TicketCheckbox(val checked: Boolean, val onChange: () -> Unit)
 
 external interface TicketComponentProps : RProps {
+    var locale: Locale
+    var gameMap: GameMap
     var ticket: Ticket
     var highlighted: Boolean
     var fulfilled: Boolean
@@ -27,10 +32,8 @@ class TicketComponent : RComponent<TicketComponentProps, RState>() {
         mPaper {
             attrs {
                 elevation = if (props.highlighted) 6 else 2
-                with(asDynamic()) {
-                    onMouseOver = { props.onMouseOver() }
-                    onMouseOut = { props.onMouseOut() }
-                }
+                onMouseOver = { props.onMouseOver() }
+                onMouseOut = { props.onMouseOut() }
             }
             css {
                 borderRadius = 4.px
@@ -61,7 +64,9 @@ class TicketComponent : RComponent<TicketComponentProps, RState>() {
                                 }
                             }
                         }
-                        +"${props.ticket.from.value} - ${props.ticket.to.value}"
+                        val from = props.ticket.from.localize(props.locale, props.gameMap)
+                        val to = props.ticket.to.localize(props.locale, props.gameMap)
+                        +"$from - $to"
                     }
                     when {
                         props.finalScreen && props.fulfilled ->
@@ -77,10 +82,12 @@ class TicketComponent : RComponent<TicketComponentProps, RState>() {
     }
 }
 
-fun RBuilder.ticket(ticket: Ticket, builder: TicketComponentProps.() -> Unit): ReactElement {
+fun RBuilder.ticket(ticket: Ticket, gameMap: GameMap, locale: Locale, builder: TicketComponentProps.() -> Unit): ReactElement {
     return child(TicketComponent::class) {
         attrs {
             this.ticket = ticket
+            this.gameMap = gameMap
+            this.locale = locale
             builder()
         }
     }

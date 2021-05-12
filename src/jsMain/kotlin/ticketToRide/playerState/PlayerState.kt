@@ -62,11 +62,11 @@ sealed class PlayerState {
 
         class PickedFirstCard internal constructor(prev: MyTurn, val chosenCardIx: Int) : MyTurn(prev)
 
-        class PickedCity internal constructor(prev: MyTurn, val target: CityName) : MyTurn(prev) {
+        class PickedCity internal constructor(prev: MyTurn, val target: CityId) : MyTurn(prev) {
             fun buildStation() = BuildingStation(this)
         }
 
-        class BuildingStation private constructor(prev: MyTurn, val target: CityName, val chosenCardsToDropIx: Int?) :
+        class BuildingStation private constructor(prev: MyTurn, val target: CityId, val chosenCardsToDropIx: Int?) :
             MyTurn(prev) {
             internal constructor(prev: PickedCity) : this(prev, prev.target, null)
             internal constructor(prev: BuildingStation, chosenCardsToDropIx: Int) : this(
@@ -92,11 +92,11 @@ sealed class PlayerState {
 
         class BuildingSegment private constructor(
             prev: MyTurn,
-            val from: CityName,
-            val to: CityName,
+            val from: CityId,
+            val to: CityId,
             val chosenCardsToDropIx: Int?
         ) : MyTurn(prev) {
-            internal constructor(prev: PickedCity, to: CityName) : this(prev, prev.target, to, null)
+            internal constructor(prev: PickedCity, to: CityId) : this(prev, prev.target, to, null)
 
             internal constructor(prev: PickedCity, segment: Segment) : this(prev, segment.from, segment.to, null)
 
@@ -173,13 +173,13 @@ sealed class PlayerState {
         else -> this
     }
 
-    fun onCityClick(cityName: CityName) = when (this) {
+    fun onCityClick(cityId: CityId) = when (this) {
         is PickedCity ->
-            gameMap.getSegmentsBetween(target, cityName).takeUnless { it.isEmpty() }
-                ?.let { BuildingSegment(this, cityName) }
-                ?: PickedCity(this, cityName)
+            gameMap.getSegmentsBetween(target, cityId).takeUnless { it.isEmpty() }
+                ?.let { BuildingSegment(this, cityId) }
+                ?: PickedCity(this, cityId)
         is MyTurn ->
-            PickedCity(this, cityName)
+            PickedCity(this, cityId)
         else ->
             this
     }

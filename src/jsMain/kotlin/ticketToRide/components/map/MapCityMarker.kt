@@ -11,23 +11,24 @@ import styled.StyleSheet
 import styled.css
 import styled.inlineStyles
 import styled.styledDiv
-import ticketToRide.CityName
-import ticketToRide.ICityName
+import ticketToRide.CityId
+import ticketToRide.ICityId
 import ticketToRide.PlayerId
 
 external interface MapCityMarkerProps: PigeonProps {
-    var nameBoxed: ICityName
+    var cityIdBoxed: ICityId
+    var cityName: String
     var displayAllCityNames: Boolean
     var selected: Boolean
     var station: PlayerId?
     var hasOccupiedSegment: Boolean
     var isTicketTarget: Boolean
     var myTurn: Boolean
-    var onMouseOver: ((CityName) -> Unit)?
-    var onMouseOut: ((CityName) -> Unit)?
-    var onClick: ((CityName) -> Unit)?
+    var onMouseOver: ((CityId) -> Unit)?
+    var onMouseOut: ((CityId) -> Unit)?
+    var onClick: ((CityId) -> Unit)?
 }
-val MapCityMarkerProps.name get() = nameBoxed.unboxed
+val MapCityMarkerProps.cityId get() = cityIdBoxed.unboxed
 
 private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
     styledDiv {
@@ -47,10 +48,10 @@ private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
         attrs {
             onClickFunction = {
                 it.stopPropagation()
-                props.onClick?.let { it(props.name) }
+                props.onClick?.let { it(props.cityId) }
             }
-            onMouseOverFunction = { props.onMouseOver?.let { it(props.name) } }
-            onMouseOutFunction = { props.onMouseOut?.let { it(props.name) } }
+            onMouseOverFunction = { props.onMouseOver?.let { it(props.cityId) } }
+            onMouseOutFunction = { props.onMouseOut?.let { it(props.cityId) } }
         }
         styledDiv {
             css {
@@ -94,7 +95,7 @@ private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
                             +ComponentStyle.popupBubble
                             backgroundColor = if (props.selected) Color.lightPink else Color.white
                         }
-                        +props.name.value
+                        +props.cityName
                     }
                 }
             }

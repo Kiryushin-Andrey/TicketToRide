@@ -9,13 +9,15 @@ data class LatLong(val lat: Double, val lng: Double)
 
 @JvmInline
 @Serializable
-value class CityName(override val value: String): ICityName
+value class CityId(override val value: String): ICityId {
+    override fun toString() = "City-$value"
+}
 
 @Serializable
-data class City(val name: CityName, val latLng: LatLong)
+data class City(val id: CityId, val locales: Map<Locale, String>, val latLng: LatLong)
 
 @Serializable
-class Segment constructor(val from: CityName, val to: CityName, val color: CardColor? = null, val length: Int) {
+class Segment constructor(val from: CityId, val to: CityId, val color: CardColor? = null, val length: Int) {
     override fun equals(other: Any?) =
         if (other is Segment)
             ((from == other.from && to == other.to) || (from == other.to && to == other.from))
@@ -31,8 +33,8 @@ class Segment constructor(val from: CityName, val to: CityName, val color: CardC
         return result
     }
 
-    fun connects(cityName1: CityName, cityName2: CityName) =
-        (from == cityName1 && to == cityName2) || (from == cityName2 && to == cityName1)
+    fun connects(cityId1: CityId, cityId2: CityId) =
+        (from == cityId1 && to == cityId2) || (from == cityId2 && to == cityId1)
 }
 
 @Serializable
@@ -66,9 +68,9 @@ data class GameMap(
     }
 
     private val allTickets by lazy {
-        val ixByCityName = cities.withIndex().associate { (ix, city) -> city.name to ix }
-        fun ixByCityName(cityName: CityName) =
-            ixByCityName[cityName] ?: throw Error("City $cityName not exists on game map")
+        val ixByCityName = cities.withIndex().associate { (ix, city) -> city.id to ix }
+        fun ixByCityName(cityId: CityId) =
+            ixByCityName[cityId] ?: throw Error("City $cityId not exists on game map")
 
         val citiesCount = cities.size
         val dist = Array(citiesCount) { IntArray(citiesCount) { Int.MAX_VALUE } }
@@ -90,15 +92,20 @@ data class GameMap(
             cities.asSequence()
                 .filter { dest ->
                     source != dest
-                            && getSegmentsBetween(source.name, dest.name).isEmpty()
-                            && ixByCityName(source.name) < ixByCityName(dest.name)
+                            && getSegmentsBetween(source.id, dest.id).isEmpty()
+                            && ixByCityName(source.id) < ixByCityName(dest.id)
                 }
                 .map { dest ->
-                    val distance = dist[ixByCityName(source.name)][ixByCityName(dest.name)]
-                    Ticket(source.name, dest.name, distance)
+                    val distance = dist[ixByCityName(source.id)][ixByCityName(dest.id)]
+                    Ticket(source.id, dest.id, distance)
                 }
         }.toList().sortedByDescending { it.points }
     }
+
+    private val citiesById by lazy { cities.associateBy { it.id } }
+
+    fun getCityName(id: CityId, locale: Locale) =
+        citiesById.getValue(id).let { it.locales[locale] ?: it.locales.getValue(Locale.values().first()) }
 
     @Transient
     private val segmentsByCities =
@@ -107,8 +114,10 @@ data class GameMap(
     @Transient
     private val segmentsSet = segments.toSet()
 
-    fun getSegmentsBetween(from: CityName, to: CityName) =
+    fun getSegmentsBetween(from: CityId, to: CityId) =
         segmentsByCities[from]?.filter { it.connects(from, to) } ?: emptyList()
 
     fun segmentExists(segment: Segment) = segmentsSet.contains(segment)
 }
+
+fun CityId.localize(locale: Locale, map: GameMap) = map.getCityName(this, locale)

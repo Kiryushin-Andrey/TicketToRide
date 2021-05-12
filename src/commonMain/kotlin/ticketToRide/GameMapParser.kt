@@ -22,7 +22,7 @@ sealed class GameMapParseError(val line: String, val lineNumber: Int) {
     }
 
     sealed class City(line: String, lineNumber: Int) : GameMapParseError(line, lineNumber) {
-        class Unknown(line: String, lineNumber: Int, val cityName: CityName) : City(line, lineNumber)
+        class Unknown(line: String, lineNumber: Int, val cityId: CityId) : City(line, lineNumber)
         class BadFormat(line: String, lineNumber: Int) : City(line, lineNumber)
         class InvalidLatLong(line: String, lineNumber: Int) : City(line, lineNumber)
     }
@@ -41,8 +41,8 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
     data class ParsingState(
         val mapCenter: LatLong? = null,
         val mapZoom: Int? = null,
-        val currentFrom: CityName? = null,
-        private val cities: PersistentMap<CityName, City> = persistentMapOf(),
+        val currentFrom: CityId? = null,
+        private val cities: PersistentMap<CityId, City> = persistentMapOf(),
         private val segments: PersistentList<Segment> = persistentListOf(),
         val errors: PersistentList<GameMapParseError> = persistentListOf(
             GameMapParseError.MapCenter.Missing,
@@ -54,12 +54,12 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
         fun withProp(block: GameMap.() -> GameMap) = copy(props = props + block, currentFrom = null)
 
         fun withCity(city: City) = copy(
-            currentFrom = city.name,
-            cities = cities + (city.name to city)
+            currentFrom = city.id,
+            cities = cities + (city.id to city)
         )
 
-        fun withSegment(to: CityName, count: Int, line: String, lineNumber: Int, createSegment: () -> Segment) = copy(
-                segments = segments + List<Segment>(count) { createSegment() },
+        fun withSegment(to: CityId, count: Int, line: String, lineNumber: Int, createSegment: () -> Segment) = copy(
+                segments = segments + List(count) { createSegment() },
                 errors =
                 if (cities.containsKey(to)) errors
                 else (errors + GameMapParseError.City.Unknown(line, lineNumber, to))
@@ -106,7 +106,7 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
         }
 
         fun build(): Try<GameMap, List<GameMapParseError>> =
-            errors.filterNot { it is GameMapParseError.City.Unknown && cities.containsKey(it.cityName) }.let { errors ->
+            errors.filterNot { it is GameMapParseError.City.Unknown && cities.containsKey(it.cityId) }.let { errors ->
                 if (errors.isEmpty() && mapCenter != null && mapZoom != null) {
                     val map = GameMap(
                         cities.values.toList(),
@@ -144,7 +144,7 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
                                 if (it.size != 2) {
                                     withError(GameMapParseError.BadRouteFormat(line, lineNumber))
                                 } else {
-                                    val to = CityName(it[0])
+                                    val to = CityId(it[0])
                                     val segmentLength = it.getOrNull(1)?.toIntOrNull()
                                     if (segmentLength == null)
                                         withError(GameMapParseError.BadRouteFormat(line, lineNumber))
@@ -224,18 +224,21 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
                     else -> {
                         line.split(';').map { it.trim() }
                             .let {
-                                if (it.size != 3)
+                                if (it.size < 3)
                                     withError(
                                         GameMapParseError.City.BadFormat(line, lineNumber)
                                     )
                                 else {
-                                    val name = CityName(it[0])
-                                    val latitude = it[1].tryParseDouble()
-                                    val longitude = it[2].tryParseDouble()
+                                    val name = CityId(it[0])
+                                    val locales = Locale.values().take(it.size - 2)
+                                        .mapIndexed { ix, locale -> locale to it[ix] }
+                                        .associate { it }
+                                    val latitude = it[it.size - 2].tryParseDouble()
+                                    val longitude = it[it.size - 1].tryParseDouble()
                                     if (latitude == null || longitude == null)
                                         withError(GameMapParseError.City.InvalidLatLong(line, lineNumber))
                                     else {
-                                        withCity(City(name, LatLong(latitude, longitude)))
+                                        withCity(City(name, locales, LatLong(latitude, longitude)))
                                     }
                                 }
                             }

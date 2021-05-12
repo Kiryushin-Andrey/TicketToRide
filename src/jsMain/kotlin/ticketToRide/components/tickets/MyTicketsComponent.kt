@@ -14,7 +14,7 @@ import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState
 
 external interface MyTicketsComponentProps : ComponentBaseProps {
-    var citiesToHighlight: Set<CityName>
+    var citiesToHighlight: Set<CityId>
     var onTicketMouseOver: (Ticket) -> Unit
     var onTicketMouseOut: (Ticket) -> Unit
 }
@@ -83,7 +83,7 @@ class MyTicketsComponent : ComponentBase<MyTicketsComponentProps, RState>() {
     }
 
     private fun RBuilder.render(ticket: Ticket, isFulfilled: Boolean, checkbox: TicketCheckbox? = null) {
-        ticket(ticket) {
+        ticket(ticket, gameMap, props.locale) {
             finalScreen = false
             highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
             fulfilled = isFulfilled

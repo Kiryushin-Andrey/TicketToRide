@@ -10,4 +10,4 @@ interface ValueClass<V, T> {
 
 interface IGameId : ValueClass<String, GameId>
 interface IPlayerName : ValueClass<String, PlayerName>
-interface ICityName : ValueClass<String, CityName>
+interface ICityId : ValueClass<String, CityId>

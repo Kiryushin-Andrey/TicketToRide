@@ -23,14 +23,13 @@ import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.*
 
 external interface GameScreenProps : ComponentBaseProps {
-    var gameMap: GameMap
     var calculateScores: Boolean
     var chatMessages: List<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
 }
 
 external interface GameScreenState : RState {
-    var citiesToHighlight: Set<CityName>
+    var citiesToHighlight: Set<CityId>
     var searchText: String
 }
 
@@ -86,8 +85,6 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                     height = 100.pct
                 }
                 gameMap(props) {
-                    connected = props.connected
-                    gameMap = props.gameMap
                     citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
                     citiesWithStations = players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
                     onCityMouseOver = { setState { citiesToHighlight += it } }
@@ -155,7 +152,9 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
 
     private fun getCitiesBySearchText() = state.searchText.let { input ->
         if (input.isNotBlank())
-            props.gameMap.cities.filter { it.name.value.startsWith(input) }.map { it.name }
+            props.gameMap.cities
+                .filter { it.id.localize(props.locale, props.gameMap).startsWith(input) }
+                .map { it.id }
         else
             emptyList()
     }
