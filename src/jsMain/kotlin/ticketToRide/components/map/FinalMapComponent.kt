@@ -18,7 +18,7 @@ class FinalMapComponent(props: FinalMapComponentProps) :
     }
 
     override fun MapSegmentProps.fill(segment: Segment) {
-        occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.id, to.id) } }
+        occupiedBy = props.players.find { it.occupiedSegments.contains(segment) }
         if (props.playerToHighlight != null && occupiedBy?.name != props.playerToHighlight) {
             occupiedBy = null
         }
