@@ -12,5 +12,8 @@ pluginManagement {
         }
     }
 }
-rootProject.name = "ticket-to-ride"
 
+rootProject.name = "ticket-to-ride"
+include("server")
+include("client")
+include("common")
