@@ -31,7 +31,7 @@ external interface BoundsChangedEventArgs {
     var initial: Boolean
 }
 
-external interface MapProps : RProps {
+external interface MapProps : Props {
     var center: Array<Double>? /* JsTuple<Number, Number> */
         get() = definedExternally
         set(value) = definedExternally
@@ -141,7 +141,7 @@ external interface TileValues {
     var scale: Number
 }
 
-external interface MapState: RState {
+external interface MapState: State {
     var zoom: Number
     var center: Array<Double>? /* JsTuple<Number, Number> */
         get() = definedExternally
@@ -159,7 +159,7 @@ external interface MapState: RState {
         set(value) = definedExternally
 }
 
-@JsName("default")
+@JsName("Map")
 external open class Map(props: MapProps) : Component<MapProps, MapState> {
-    override fun render(): ReactElement?
+    override fun render()
 }

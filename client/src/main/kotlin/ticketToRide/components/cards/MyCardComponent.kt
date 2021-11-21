@@ -5,21 +5,21 @@ import com.ccfraser.muirwik.components.mTooltip
 import kotlinx.css.*
 import react.RBuilder
 import react.RComponent
-import react.RProps
-import react.RState
+import react.Props
+import react.State
 import styled.css
 import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.getName
 
-external interface MyCardComponentProps : RProps {
+external interface MyCardComponentProps : Props {
     var card: Card
     var locale: Locale
 }
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class MyCardComponent : RComponent<MyCardComponentProps, RState>() {
+class MyCardComponent : RComponent<MyCardComponentProps, State>() {
 
     override fun RBuilder.render() {
         val card = props.card

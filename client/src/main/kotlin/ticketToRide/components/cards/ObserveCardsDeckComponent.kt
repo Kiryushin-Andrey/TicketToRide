@@ -3,22 +3,22 @@ package ticketToRide.components.cards
 import kotlinx.css.*
 import react.RBuilder
 import react.RComponent
-import react.RProps
-import react.RState
+import react.Props
+import react.State
 import styled.StyleSheet
 import styled.css
 import styled.styledDiv
 import ticketToRide.Card
 import ticketToRide.Locale
 
-external interface ObserveCardsDeckComponentProps : RProps {
+external interface ObserveCardsDeckComponentProps : Props {
     var openCards: List<Card>
     var locale: Locale
 }
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class ObserveCardsDeckComponent : RComponent<ObserveCardsDeckComponentProps, RState>() {
+class ObserveCardsDeckComponent : RComponent<ObserveCardsDeckComponentProps, State>() {
 
     override fun RBuilder.render() {
         styledDiv {

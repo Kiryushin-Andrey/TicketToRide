@@ -7,7 +7,7 @@ import mu.KotlinLogging
 
 data class GameFlowValue(val state: GameState, val responses: List<SendResponse>)
 
-@FlowPreview
+//@FlowPreview
 class Game private constructor(
     initialState: GameState,
     val map: GameMap,

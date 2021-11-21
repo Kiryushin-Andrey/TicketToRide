@@ -3,6 +3,7 @@ package ticketToRide.components.building
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
 import react.*
+import react.dom.attrs
 import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
@@ -14,7 +15,7 @@ import ticketToRide.playerState.PlayerState.MyTurn.BuildingStation
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class BuildingStationComponent : ComponentBase<ComponentBaseProps, RState>() {
+class BuildingStationComponent : ComponentBase<ComponentBaseProps, State>() {
     override fun RBuilder.render() {
         styledDiv {
             css {

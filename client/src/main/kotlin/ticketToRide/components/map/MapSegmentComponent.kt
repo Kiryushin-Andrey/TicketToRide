@@ -6,6 +6,7 @@ import kotlinx.css.cursor
 import kotlinx.html.js.onClickFunction
 import pigeonMaps.PigeonProps
 import react.*
+import react.dom.attrs
 import react.dom.svg
 import styled.css
 import svg.*
@@ -37,7 +38,7 @@ private fun MapSegmentProps.getPixels(): Pair<PigeonMapCoords, PigeonMapCoords> 
     return if (from.x < to.x) from to to else to to from
 }
 
-private val mapSegment = functionalComponent<MapSegmentProps> { props ->
+private val mapSegment = fc<MapSegmentProps> { props ->
     val (from, to) = props.getPixels()
     val distance = distance(from, to)
     val angle = acos((to.x - from.x) / distance) * (180 / PI) * (if (from.y < to.y) 1 else -1)
@@ -111,7 +112,7 @@ private fun RBuilder.occupiedSegment(
     angle: Double,
     lineHeight: Int,
     lineShift: Int
-): ReactElement {
+) {
     // rails
     fun horizontal(delta: Int) = line {
         x1 = from.x.toInt()
@@ -126,7 +127,7 @@ private fun RBuilder.occupiedSegment(
     horizontal(2)
 
     // sleepers
-    return styledRect {
+    styledRect {
         attrs {
             x = from.x.toInt()
             y = (from.y + lineShift - lineHeight / 2).toInt()
@@ -165,7 +166,7 @@ external interface RouteSegmentsProps : PigeonProps {
     var fillSegmentProps: (MapSegmentProps, Segment) -> Unit
 }
 
-val routeSegmentsComponent = functionalComponent<RouteSegmentsProps> { props ->
+val routeSegmentsComponent = fc<RouteSegmentsProps> { props ->
     svg {
         attrs["width"] = "100%"
         attrs["height"] = "100%"

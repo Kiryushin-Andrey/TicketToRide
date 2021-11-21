@@ -10,12 +10,12 @@ import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-external interface ChatSendMessageTextBoxProps : RProps {
+external interface ChatSendMessageTextBoxProps : Props {
     var locale: Locale
     var onSendMessage: (String) -> Unit
 }
 
-external interface ChatSendMessageTextBoxState : RState {
+external interface ChatSendMessageTextBoxState : State {
     var messageText: String
 }
 

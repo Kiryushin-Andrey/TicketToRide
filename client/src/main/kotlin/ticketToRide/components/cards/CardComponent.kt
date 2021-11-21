@@ -11,7 +11,7 @@ import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 import ticketToRide.getName
 
-external interface CardComponentProps : RProps {
+external interface CardComponentProps : Props {
     var locale: Locale
     var imageUrl: String
     var assignedKey: String?
@@ -23,7 +23,7 @@ external interface CardComponentProps : RProps {
     var onClick: () -> Unit
 }
 
-external interface CardComponentState : RState {
+external interface CardComponentState : State {
     var hovered: Boolean
 }
 
@@ -168,11 +168,8 @@ private fun RBuilder.card(card: Card?, locale: Locale, builder: CardComponentPro
         }
     }
 
-fun RBuilder.openCardForObserver(card: Card, locale: Locale): ReactElement {
-    return card(card, locale) {
-        observing = true
-    }
-}
+fun RBuilder.openCardForObserver(card: Card, locale: Locale) =
+    card(card, locale) { observing = true }
 
 fun RBuilder.openCard(
     card: Card,
@@ -182,15 +179,14 @@ fun RBuilder.openCard(
     chosenCardIx: Int?,
     disabledTooltip: String?,
     clickHandler: () -> Unit
-): ReactElement {
-    return card(card, locale) {
+) =
+    card(card, locale) {
         this.assignedKey = (cardIx + 1).toString()
         tooltip = disabledTooltip ?: card.getName(locale)
         enabled = canPickCards && (card is Card.Car || chosenCardIx == null)
         checked = cardIx == chosenCardIx
         onClick = clickHandler
     }
-}
 
 fun RBuilder.closedCardForObserver(locale: Locale) =
     card(null, locale) {

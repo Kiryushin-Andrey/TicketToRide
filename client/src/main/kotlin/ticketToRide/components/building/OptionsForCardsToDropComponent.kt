@@ -6,13 +6,13 @@ import com.ccfraser.muirwik.components.button.mButton
 import kotlinx.css.*
 import react.RBuilder
 import react.RComponent
-import react.RProps
-import react.RState
+import react.Props
+import react.State
 import styled.*
 import ticketToRide.*
 import ticketToRide.components.cards.myCard
 
-external interface OptionsForCardsToDropComponentProps : RProps {
+external interface OptionsForCardsToDropComponentProps : Props {
     var locale: Locale
     var options: List<OptionForCardsToDrop>
     var chosenCardsToDropIx: Int?
@@ -23,7 +23,7 @@ external interface OptionsForCardsToDropComponentProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponentProps, RState>() {
+class OptionsForCardsToDropComponent : RComponent<OptionsForCardsToDropComponentProps, State>() {
 
     override fun RBuilder.render() {
         when {

@@ -45,10 +45,10 @@ fun HTML.indexHtml(isLoopbackAddress: Boolean) {
     }
 }
 
-fun FlowOrMetaDataContent.styleBlock(builder: CSSBuilder.() -> Unit) {
+fun FlowOrMetaDataContent.styleBlock(builder: CssBuilder.() -> Unit) {
     style(type = ContentType.Text.CSS.toString()) {
         unsafe {
-            raw(CSSBuilder().apply(builder).toString())
+            raw(CssBuilder().apply(builder).toString())
         }
     }
 }

@@ -12,9 +12,10 @@ import ticketToRide.components.ComponentBaseProps
 import ticketToRide.components.componentBase
 import ticketToRide.playerState.PlayerState.MyTurn.*
 import kotlinx.browser.window
+import react.dom.attrs
 import ticketToRide.localize
 
-external interface BuildingSegmentComponentState : RState {
+external interface BuildingSegmentComponentState : State {
     var showArrivalGif: Boolean
 }
 

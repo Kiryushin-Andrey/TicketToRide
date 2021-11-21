@@ -7,6 +7,7 @@ import kotlinx.html.js.onMouseOutFunction
 import kotlinx.html.js.onMouseOverFunction
 import pigeonMaps.PigeonProps
 import react.*
+import react.dom.attrs
 import styled.StyleSheet
 import styled.css
 import styled.inlineStyles
@@ -30,7 +31,7 @@ external interface MapCityMarkerProps: PigeonProps {
 }
 val MapCityMarkerProps.cityId get() = cityIdBoxed.unboxed
 
-private val mapCityMarker = functionalComponent<MapCityMarkerProps> { props ->
+private val mapCityMarker = fc<MapCityMarkerProps> { props ->
     styledDiv {
         inlineStyles {
             position = Position.absolute
@@ -163,8 +164,8 @@ private object ComponentStyle : StyleSheet("mapMarker", isStatic = true) {
         }
     }
 
-fun RBuilder.mapCityMarker(block: MapCityMarkerProps.() -> Unit): ReactElement {
-    return child(mapCityMarker) {
+fun RBuilder.mapCityMarker(block: MapCityMarkerProps.() -> Unit) {
+    child(mapCityMarker) {
         attrs(block)
     }
 }

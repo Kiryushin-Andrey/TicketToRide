@@ -21,7 +21,7 @@ external interface MyTicketsComponentProps : ComponentBaseProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class MyTicketsComponent : ComponentBase<MyTicketsComponentProps, RState>() {
+class MyTicketsComponent : ComponentBase<MyTicketsComponentProps, State>() {
 
     override fun RBuilder.render() {
         if (playerState !is PlayerState.ChoosingTickets) {

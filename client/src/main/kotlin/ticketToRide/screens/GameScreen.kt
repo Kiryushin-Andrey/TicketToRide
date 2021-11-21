@@ -28,7 +28,7 @@ external interface GameScreenProps : ComponentBaseProps {
     var onSendMessage: (String) -> Unit
 }
 
-external interface GameScreenState : RState {
+external interface GameScreenState : State {
     var citiesToHighlight: Set<CityId>
     var searchText: String
 }
@@ -114,6 +114,7 @@ class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
                         buildingSegment(props)
                         horizontalDivider()
                     }
+                    else -> {}
                 }
 
                 myTickets(props) {

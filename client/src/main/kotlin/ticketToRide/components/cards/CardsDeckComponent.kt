@@ -4,7 +4,7 @@ import kotlinx.css.*
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import react.RBuilder
-import react.RState
+import react.State
 import styled.StyleSheet
 import styled.css
 import styled.styledDiv
@@ -20,7 +20,7 @@ import kotlinx.browser.document
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class CardsDeckComponent : ComponentBase<ComponentBaseProps, RState>() {
+class CardsDeckComponent : ComponentBase<ComponentBaseProps, State>() {
 
     override fun componentDidMount() {
         document.addEventListener("keypress", onKeyPress)

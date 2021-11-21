@@ -7,6 +7,7 @@ import com.ccfraser.muirwik.components.button.mButton
 import com.ccfraser.muirwik.components.mTypography
 import kotlinx.css.*
 import react.*
+import react.dom.attrs
 import styled.css
 import styled.styledDiv
 import styled.styledImg
@@ -20,7 +21,7 @@ import ticketToRide.playerState.PlayerState
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class PickedCityComponent : ComponentBase<ComponentBaseProps, RState>() {
+class PickedCityComponent : ComponentBase<ComponentBaseProps, State>() {
     override fun RBuilder.render() {
         styledDiv {
             css {

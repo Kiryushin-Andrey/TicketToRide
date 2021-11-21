@@ -9,13 +9,14 @@ import kotlinx.css.textDecoration
 import org.w3c.dom.Element
 import pigeonMaps.MapProps
 import react.*
+import react.dom.attrs
 import react.dom.findDOMNode
 import react.dom.span
 import styled.css
 import styled.styledA
 import ticketToRide.*
 
-external interface MapComponentBaseProps : RProps {
+external interface MapComponentBaseProps : Props {
     var locale: Locale
     var gameMap: GameMap
     var citiesToHighlight: Set<CityId>
@@ -24,7 +25,7 @@ external interface MapComponentBaseProps : RProps {
     var onCityMouseOut: (CityId) -> Unit
 }
 
-external interface MapComponentBaseState : RState {
+external interface MapComponentBaseState : State {
     var mapZoom: Int
     var mapTilesProvider: MapTilesProvider
     var displayAllCityNames: Boolean
@@ -35,6 +36,8 @@ external interface MapComponentBaseState : RState {
 abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
         where P : MapComponentBaseProps, S : MapComponentBaseState {
 
+    private val mapElement = createRef<Element>()
+
     override fun S.init(props: P) {
         mapZoom = props.gameMap.mapZoom
         mapTilesProvider = MapTilesProvider.Watermark
@@ -42,12 +45,9 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
     }
 
     override fun RBuilder.render() {
-        var mapElement: Element? = null
         pigeonMap(state.mapTilesProvider) {
-            ref {
-                mapElement = findDOMNode(it)
-            }
             attrs {
+                ref = mapElement
                 defaultCenter = props.gameMap.mapCenter.toPigeonMapCoords()
                 defaultZoom = props.gameMap.mapZoom
                 zoom = state.mapZoom
@@ -72,7 +72,7 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
 
             zoomInButton()
             zoomOutButton()
-            switchToFullScreenButton { mapElement }
+            switchToFullScreenButton { mapElement.current }
             switchMapTilesButton()
         }
     }
@@ -184,13 +184,11 @@ abstract class MapComponentBase<P, S>(props: P) : RComponent<P, S>(props)
 private fun RBuilder.pigeonMap(
     tilesProvider: MapTilesProvider,
     block: RElementBuilder<MapProps>.() -> Unit
-): ReactElement {
-    return child(pigeonMaps.Map::class) {
-        attrs {
-            block()
-            provider = tilesProvider.provider
-            attribution = attribution(tilesProvider)
-        }
+) = child(pigeonMaps.Map::class) {
+    attrs {
+        block()
+        provider = tilesProvider.provider
+        attribution = attribution(tilesProvider)
     }
 }
 
@@ -211,11 +209,15 @@ private fun RBuilder.link(text: String, href: String) {
 
 // attribution element shouldn't fall into map component's children
 // otherwise it will get map specific properties like latLngToPixel that don't make sense for it
-private fun attribution(tilesProvider: MapTilesProvider) = RBuilder().span {
-    +"Map tiles by "; link("Stamen Design", "http://stamen.com/")
-    +", under "; link("CC BY 3.0", "http://creativecommons.org/licenses/by/3.0")
-    +". Data by "; link("OpenStreetMap", "http://openstreetmap.org/")
-    +", under "
-    if (tilesProvider == MapTilesProvider.Terrain) link("ODbL", "http://www.openstreetmap.org/copyright")
-    else link("CC BY SA", "http://creativecommons.org/licenses/by-sa/3.0")
-}
+private fun attribution(tilesProvider: MapTilesProvider): ReactNode = RBuilder()
+    .apply {
+        span {
+            +"Map tiles by "; link("Stamen Design", "http://stamen.com/")
+            +", under "; link("CC BY 3.0", "http://creativecommons.org/licenses/by/3.0")
+            +". Data by "; link("OpenStreetMap", "http://openstreetmap.org/")
+            +", under "
+            if (tilesProvider == MapTilesProvider.Terrain) link("ODbL", "http://www.openstreetmap.org/copyright")
+            else link("CC BY SA", "http://creativecommons.org/licenses/by-sa/3.0")
+        }
+    }
+    .childList.first()

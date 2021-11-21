@@ -6,11 +6,12 @@ import com.ccfraser.muirwik.components.dialog.*
 import kotlinx.browser.window
 import react.*
 import react.dom.a
+import react.dom.attrs
 import react.dom.p
 import styled.*
 import ticketToRide.*
 
-external interface ShowGameIdScreenProps : RProps {
+external interface ShowGameIdScreenProps : Props {
     var gameId: IGameId
     var locale: Locale
     var onClosed: () -> Unit
@@ -18,7 +19,7 @@ external interface ShowGameIdScreenProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, RState>() {
+class ShowGameIdScreen : RComponent<ShowGameIdScreenProps, State>() {
     override fun RBuilder.render() {
         val gameUrl = window.location.href
 

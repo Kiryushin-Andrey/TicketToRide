@@ -10,20 +10,21 @@ import org.w3c.dom.HTMLInputElement
 import org.w3c.files.FileReader
 import org.w3c.files.get
 import react.*
+import react.dom.attrs
 import styled.*
 import ticketToRide.*
 
 data class CustomGameMap(val filename: String, val map: GameMap)
 data class CustomGameMapParseErrors(val filename: String, val errors: List<GameMapParseError>)
 
-external interface ChooseGameMapComponentProps : RProps {
+external interface ChooseGameMapComponentProps : Props {
     var locale: Locale
     var customMap: CustomGameMap?
     var onCustomMapChanged: (CustomGameMap?) -> Unit
     var onShowParseErrors: (CustomGameMapParseErrors) -> Unit
 }
 
-external interface ChooseGameMapComponentState : RState {
+external interface ChooseGameMapComponentState : State {
     var fileTooLarge: Boolean
     var errors: CustomGameMapParseErrors?
 }

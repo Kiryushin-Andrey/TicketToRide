@@ -154,6 +154,7 @@ class ServerConnection<T>(
                         ws.close()
                         wsDeferred = CompletableDeferred()
                     }
+                    else -> {}
                 }
                 response.complete(message)
             }.onFailure { response.completeExceptionally(it) }

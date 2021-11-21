@@ -3,7 +3,7 @@ package svg
 import kotlinx.html.HTMLTag
 import kotlinx.html.TagConsumer
 import react.RBuilder
-import react.ReactElement
+import react.dom.attrs
 import react.dom.tag
 
 class LINE(override val consumer: TagConsumer<*>) : HTMLTag("line", consumer, emptyMap(), null, true, false) {
@@ -16,4 +16,4 @@ class LINE(override val consumer: TagConsumer<*>) : HTMLTag("line", consumer, em
     var transform by stringAttribute("transform")
 }
 
-inline fun RBuilder.line(block: LINE.() -> Unit): ReactElement = tag({ attrs(block) }) { LINE(it) }
+inline fun RBuilder.line(block: LINE.() -> Unit) = tag({ attrs(block) }) { LINE(it) }

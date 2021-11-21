@@ -8,7 +8,6 @@ import java.net.Socket
 
 class RedisStorage(val host: String, val port: Int, val password: String?)
 
-private val protobuf = ProtoBuf { encodeDefaults = false }
 private fun mapKey(id: GameId) = "${id.value}-map"
 private const val expireTimeSec = 3600.toString()
 

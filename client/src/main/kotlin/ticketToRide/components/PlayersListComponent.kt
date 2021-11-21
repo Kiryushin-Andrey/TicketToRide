@@ -3,13 +3,14 @@ package ticketToRide.components
 import com.ccfraser.muirwik.components.*
 import kotlinx.css.*
 import react.*
+import react.dom.attrs
 import styled.*
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 import ticketToRide.PlayerView
 import ticketToRide.components.tickets.pointsLabel
 
-external interface PlayersListComponentProps : RProps {
+external interface PlayersListComponentProps : Props {
     var players: List<PlayerView>
     var turn: Int
     var locale: Locale
@@ -18,7 +19,7 @@ external interface PlayersListComponentProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class PlayersListComponent : RComponent<PlayersListComponentProps, RState>() {
+class PlayersListComponent : RComponent<PlayersListComponentProps, State>() {
 
     override fun RBuilder.render() {
         for ((ix, player) in props.players.withIndex()) {

@@ -20,7 +20,7 @@ import ticketToRide.components.welcomeScreen.*
 
 private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
 
-external interface WelcomeScreenProps : RProps {
+external interface WelcomeScreenProps : Props {
     var gameIdBoxed: IGameId?
     var locale: Locale
     var onLocaleChanged: (Locale) -> Unit
@@ -31,7 +31,7 @@ external interface WelcomeScreenProps : RProps {
 }
 val WelcomeScreenProps.gameId get() = gameIdBoxed?.unboxed
 
-external interface WelcomeScreenState : RState {
+external interface WelcomeScreenState : State {
     var playerName: String
     var playerColor: PlayerColor?
     var otherPlayers: List<PlayerView>

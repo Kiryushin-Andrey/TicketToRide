@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val serializationVersion = "1.2.0"
+val serializationVersion = "1.3.0"
 val kotestVersion = "4.5.0"
 
 repositories {
@@ -22,7 +22,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.4")
@@ -39,9 +39,7 @@ kotlin {
 
     kotlin.sourceSets.all {
         languageSettings.apply {
-            useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-            useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
-            useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
+            optIn("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
 }
@@ -50,4 +48,5 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
     }
+
 }

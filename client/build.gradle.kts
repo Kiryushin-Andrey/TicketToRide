@@ -8,16 +8,15 @@ group = "ticket-to-ride"
 version = "1.0.0"
 
 repositories {
-    mavenLocal()    // for muirwik compiled locally with IR and Kotlin 1.5
+    mavenLocal()    // for muirwik compiled locally with Kotlin 1.6.0
     mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers")
 }
 
 dependencies {
-    implementation(kotlin("stdlib-js"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-js:1.6.0")
 }
 
-val reactVersion = "16.13.0"
+val reactVersion = "17.0.2"
 
 kotlin {
     js(IR) {
@@ -36,21 +35,21 @@ kotlin {
                 implementation(npm("react-is", reactVersion))
                 implementation(npm("styled-components", "5.2.0"))
                 implementation(npm("inline-style-prefixer", "6.0.0"))
-                implementation(npm("pigeon-maps", "0.17.0"))
+                implementation(npm("pigeon-maps", "0.19.7"))
                 implementation(npm("fscreen", "1.2.0"))
                 implementation(npm("@material-ui/core", "4.11.0"))
                 compileOnly(npm("raw-loader", "4.0.1"))
 
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.3")
-                implementation("org.jetbrains:kotlin-styled:5.2.3-pre.154-kotlin-1.5.0")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.3-pre.268-kotlin-1.6.0")
 
-                // compiled locally from https://github.com/Kiryushin-Andrey/muirwik/tree/IR-Compiler and published to local maven
-                implementation("com.ccfraser.muirwik:muirwik-components:0.6.7-kotlin-IR-1.5")
+                // compiled locally from https://github.com/Kiryushin-Andrey/muirwik/tree/kotlin-1.6.0 and published to local maven
+                implementation("com.ccfraser.muirwik:muirwik-components:0.9.1-kotlin-1.6.0")
             }
             languageSettings.apply {
-                useExperimentalAnnotation("kotlin.js.ExperimentalJsExport")
-                useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
+                optIn("kotlin.js.ExperimentalJsExport")
+                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                optIn("kotlinx.serialization.ExperimentalSerializationApi")
             }
         }
     }
@@ -67,8 +66,8 @@ tasks {
     }
 
     artifacts {
-        add("generatedJs", prodJs.outputFile) {
-            builtBy(prodJs)
+        add("generatedJs", devJs.outputFile) {
+            builtBy(devJs)
         }
     }
 }

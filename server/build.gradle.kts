@@ -16,16 +16,15 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers")
 }
 
 application {
     mainClass.set("ticketToRide.ServerKt")
 }
 
-val ktorVersion = "1.5.4"
-val kotlinWrappersVersion = "1.0.0-pre.154-kotlin-1.5.0"
-val serializationVersion = "1.2.0"
+val ktorVersion = "1.6.4"
+val kotlinWrappersVersion = "1.0.0-pre.268-kotlin-1.6.0"
+val serializationVersion = "1.3.0"
 val kotestVersion = "4.5.0"
 
 val dockerImageForHeroku = "registry.heroku.com/ticketgame/web"
@@ -38,12 +37,12 @@ kotlin {
                     isTransitive = false
                 }
                 implementation(project(":common"))
-                implementation(kotlin("reflect", "1.5.0"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC")
+                implementation(kotlin("reflect", "1.6.0"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serializationVersion")
-                implementation("org.jetbrains:kotlin-css:$kotlinWrappersVersion")
-                implementation("org.jetbrains:kotlin-css-jvm:$kotlinWrappersVersion")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-css:$kotlinWrappersVersion")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-css-jvm:$kotlinWrappersVersion")
                 implementation("io.ktor:ktor-server-core:$ktorVersion")
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")

@@ -10,12 +10,12 @@ import com.ccfraser.muirwik.components.mTooltip
 import com.ccfraser.muirwik.components.targetInputValue
 import react.RBuilder
 import react.RComponent
-import react.RProps
-import react.RState
+import react.Props
+import react.State
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-external interface CitySearchTextBoxProps : RProps {
+external interface CitySearchTextBoxProps : Props {
     var text: String
     var locale: Locale
     var onTextChanged: (String) -> Unit
@@ -24,7 +24,7 @@ external interface CitySearchTextBoxProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class CitySearchTextBox : RComponent<CitySearchTextBoxProps, RState>() {
+class CitySearchTextBox : RComponent<CitySearchTextBoxProps, State>() {
 
     override fun RBuilder.render() {
         mTooltip(str.tooltip, TooltipPlacement.topStart) {

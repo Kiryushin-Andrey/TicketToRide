@@ -9,7 +9,7 @@ external interface Bounds {
     var sw: Array<Double> /* JsTuple<Number, Number> */
 }
 
-external interface PigeonProps: RProps {
+external interface PigeonProps: Props {
     var anchor: Array<Double>? /* JsTuple<Number, Number> */
         get() = definedExternally
         set(value) = definedExternally

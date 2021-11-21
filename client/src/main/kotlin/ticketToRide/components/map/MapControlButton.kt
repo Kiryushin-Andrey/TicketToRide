@@ -16,7 +16,7 @@ external interface MapControlButtonProps: PigeonProps {
     var onClick: () -> Unit
 }
 
-private val mapControlButton = functionalComponent<MapControlButtonProps> { props ->
+private val mapControlButton = fc<MapControlButtonProps> { props ->
     mTooltip(props.tooltip, TooltipPlacement.right) {
         mIconButton(props.icon, size = MIconButtonSize.small) {
             attrs {
@@ -39,8 +39,5 @@ private val mapControlButton = functionalComponent<MapControlButtonProps> { prop
     }
 }
 
-fun RBuilder.mapControlButton(block: MapControlButtonProps.() -> Unit): ReactElement {
-    return child(mapControlButton) {
-        attrs(block)
-    }
-}
+fun RBuilder.mapControlButton(block: MapControlButtonProps.() -> Unit) =
+    child(mapControlButton) { attrs(block) }

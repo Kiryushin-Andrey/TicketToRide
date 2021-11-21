@@ -6,14 +6,14 @@ import react.*
 import styled.StyleSheet
 import styled.css
 
-external interface PointsLabelComponentProps : RProps {
+external interface PointsLabelComponentProps : Props {
     var color: Color
     var text: String
 }
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class PointsLabelComponent : RComponent<PointsLabelComponentProps, RState>() {
+class PointsLabelComponent : RComponent<PointsLabelComponentProps, State>() {
 
     override fun RBuilder.render() {
         mPaper {

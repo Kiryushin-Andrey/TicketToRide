@@ -6,7 +6,7 @@ import ticketToRide.GameStateView
 import ticketToRide.Locale
 import ticketToRide.playerState.PlayerState
 
-external interface ComponentBaseProps : RProps {
+external interface ComponentBaseProps : Props {
     var locale: Locale
     var connected: Boolean
     var playerState: PlayerState
@@ -17,7 +17,7 @@ external interface ComponentBaseProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-abstract class ComponentBase<P, S> : RComponent<P, S>() where P : ComponentBaseProps, S : RState {
+abstract class ComponentBase<P, S> : RComponent<P, S>() where P : ComponentBaseProps, S : State {
 
     val gameMap get() = props.gameMap
     val gameState get() = props.gameState

@@ -9,6 +9,7 @@ import com.ccfraser.muirwik.components.mPaper
 import com.ccfraser.muirwik.components.mTypography
 import kotlinx.css.*
 import react.*
+import react.dom.attrs
 import styled.*
 import ticketToRide.*
 import ticketToRide.components.chat.chatMessages
@@ -18,7 +19,7 @@ import ticketToRide.components.tickets.pointsLabel
 import ticketToRide.components.tickets.ticket
 import ticketToRide.components.withClasses
 
-external interface FinalScreenProps : RProps {
+external interface FinalScreenProps : Props {
     var locale: Locale
     var gameMap: GameMap
     var observing: Boolean
@@ -27,7 +28,7 @@ external interface FinalScreenProps : RProps {
     var onSendMessage: (String) -> Unit
 }
 
-external interface FinalScreenState : RState {
+external interface FinalScreenState : State {
     var playerToHighlight: IPlayerName?
     var citiesToHighlight: Set<CityId>
 }

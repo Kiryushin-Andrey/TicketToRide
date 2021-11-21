@@ -4,7 +4,7 @@ import com.ccfraser.muirwik.components.MTypographyVariant
 import com.ccfraser.muirwik.components.mTypography
 import kotlinx.css.*
 import react.RBuilder
-import react.RState
+import react.State
 import styled.css
 import styled.styledDiv
 import ticketToRide.Locale
@@ -15,7 +15,7 @@ import ticketToRide.components.componentBase
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class MyCardsComponent : ComponentBase<ComponentBaseProps, RState>() {
+class MyCardsComponent : ComponentBase<ComponentBaseProps, State>() {
     override fun RBuilder.render() {
         mTypography(str.header, variant = MTypographyVariant.h6) {
             css { paddingLeft = 10.px }

@@ -3,7 +3,7 @@ package ticketToRide.screens
 import kotlinx.css.*
 import react.RBuilder
 import react.RComponent
-import react.RProps
+import react.Props
 import react.setState
 import styled.css
 import styled.styledDiv
@@ -16,7 +16,7 @@ import ticketToRide.components.searchTextBox
 import ticketToRide.screens.GameScreen.Companion.gridLayout
 import ticketToRide.screens.GameScreen.Companion.headerMessage
 
-external interface ObserveGameScreenProps : RProps {
+external interface ObserveGameScreenProps : Props {
     var locale: Locale
     var connected: Boolean
     var gameMap: GameMap

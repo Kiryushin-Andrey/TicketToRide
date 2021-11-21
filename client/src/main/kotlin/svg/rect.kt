@@ -4,8 +4,6 @@ import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.HTMLTag
 import kotlinx.html.TagConsumer
 import react.RBuilder
-import react.ReactElement
-import react.dom.tag
 import styled.StyledDOMBuilder
 import styled.styledTag
 
@@ -21,4 +19,4 @@ class RECT(override val consumer: TagConsumer<*>) : HTMLTag("rect", consumer, em
     var transform by stringAttribute("transform")
 }
 
-inline fun RBuilder.styledRect(block: StyledDOMBuilder<RECT>.() -> Unit): ReactElement = styledTag(block) { RECT(it) }
+inline fun RBuilder.styledRect(block: StyledDOMBuilder<RECT>.() -> Unit) = styledTag(block) { RECT(it) }

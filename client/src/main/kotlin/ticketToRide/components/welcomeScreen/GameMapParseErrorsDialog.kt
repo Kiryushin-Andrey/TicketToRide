@@ -16,7 +16,7 @@ import ticketToRide.GameMapPropertyNames
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
-external interface GameMapParseErrorsDialogProps : RProps {
+external interface GameMapParseErrorsDialogProps : Props {
     var locale: Locale
     var filename: String
     var errors: List<GameMapParseError>
@@ -25,7 +25,7 @@ external interface GameMapParseErrorsDialogProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialogProps, RState>() {
+class GameMapParseErrorsDialog : RComponent<GameMapParseErrorsDialogProps, State>() {
 
     override fun RBuilder.render() {
         mDialog {

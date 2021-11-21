@@ -16,11 +16,11 @@ import ticketToRide.ConnectionState.*
 import ticketToRide.playerState.PlayerState
 import ticketToRide.screens.*
 
-external interface AppProps: RProps {
+external interface AppProps: Props {
     var onGameStarted: () -> Unit
 }
 
-external interface AppState: RState {
+external interface AppState: State {
     var gameIdBoxed: IGameId?
     var screen: Screen
     var locale: Locale
@@ -222,6 +222,7 @@ class App : RComponent<AppProps, AppState>() {
                     else
                         cannotJoinGame(connectResponse)
                 }
+                else -> {}
             }
         }
     }
@@ -235,6 +236,7 @@ class App : RComponent<AppProps, AppState>() {
                         close()
                         cannotJoinGame(connectResponse)
                     }
+                    else -> {}
                 }
             }
         } ?: throw Error("Cannot join game without game id")
@@ -249,6 +251,7 @@ class App : RComponent<AppProps, AppState>() {
                         close()
                         cannotJoinGame(connectResponse)
                     }
+                    is PlayerConnected -> error("Unexpected PlayerConnected as response to join observer request")
                 }
             }
         } ?: throw Error("Cannot join game without game id")

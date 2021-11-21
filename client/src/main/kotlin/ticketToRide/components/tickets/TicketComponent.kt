@@ -12,7 +12,7 @@ import ticketToRide.localize
 
 class TicketCheckbox(val checked: Boolean, val onChange: () -> Unit)
 
-external interface TicketComponentProps : RProps {
+external interface TicketComponentProps : Props {
     var locale: Locale
     var gameMap: GameMap
     var ticket: Ticket
@@ -26,7 +26,7 @@ external interface TicketComponentProps : RProps {
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class TicketComponent : RComponent<TicketComponentProps, RState>() {
+class TicketComponent : RComponent<TicketComponentProps, State>() {
 
     override fun RBuilder.render() {
         mPaper {
@@ -82,8 +82,8 @@ class TicketComponent : RComponent<TicketComponentProps, RState>() {
     }
 }
 
-fun RBuilder.ticket(ticket: Ticket, gameMap: GameMap, locale: Locale, builder: TicketComponentProps.() -> Unit): ReactElement {
-    return child(TicketComponent::class) {
+fun RBuilder.ticket(ticket: Ticket, gameMap: GameMap, locale: Locale, builder: TicketComponentProps.() -> Unit) {
+    child(TicketComponent::class) {
         attrs {
             this.ticket = ticket
             this.gameMap = gameMap
