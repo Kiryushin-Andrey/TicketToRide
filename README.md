@@ -7,5 +7,5 @@ This is a web version of the [Ticket to Ride](https://www.daysofwonder.com/ticke
 * Websockets for the bidirectional communication between server and clients
 * Some simple graph algorithms for final score calculation covered with property-based testing
 
-The game is hosted at https://ticketgame.herokuapp.com/ (EU server) and https://ticketgame-us.herokuapp.com/ (US server).
+The game is hosted at https://ticket-to-ride.onrender.com.
 Check out my writings on what I've learned in this project here - https://medium.com/@kiryushin.andrey.
