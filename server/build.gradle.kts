@@ -27,7 +27,7 @@ val kotlinWrappersVersion = "1.0.0-pre.268-kotlin-1.6.0"
 val serializationVersion = "1.3.0"
 val kotestVersion = "4.5.0"
 
-val dockerImageForHeroku = "registry.heroku.com/ticketgame/web"
+val dockerImageName = "andreykir/ticket-to-ride"
 
 kotlin {
     sourceSets {
@@ -88,7 +88,7 @@ tasks {
     val buildDockerImage = create<DockerBuildImage>("dockerBuildImage") {
         group = "docker"
         dependsOn(shadowJar)
-        images.add(dockerImageForHeroku)
+        images.add(dockerImageName)
         inputDir.set(buildDir)
         dockerFile.set(createDockerfile.destFile)
     }
@@ -96,7 +96,7 @@ tasks {
     val createDockerContainer = create<DockerCreateContainer>("dockerCreateContainer") {
         group = "docker"
         dependsOn(buildDockerImage)
-        this.imageId.set(dockerImageForHeroku)
+        this.imageId.set(dockerImageName)
         hostConfig.portBindings.add("8080:8080")
         hostConfig.autoRemove.set(true)
     }
@@ -107,13 +107,10 @@ tasks {
         containerId.set(createDockerContainer.containerId)
     }
 
-    create<DockerPushImage>("dockerPushToHeroku") {
+    create<DockerPushImage>("dockerPushImage") {
         group = "docker"
         dependsOn(buildDockerImage)
-        images.add(dockerImageForHeroku)
-        registryCredentials {
-            url.set("registry.heroku.com")
-        }
+        images.add(dockerImageName)
     }
 }
 

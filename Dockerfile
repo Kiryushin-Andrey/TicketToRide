@@ -1,0 +1,1 @@
+FROM andreykir/ticket-to-ride:latest
