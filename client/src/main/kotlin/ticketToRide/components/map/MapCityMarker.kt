@@ -1,23 +1,15 @@
 package ticketToRide.components.map
 
-import kotlinx.css.*
-import kotlinx.css.properties.*
-import kotlinx.html.js.onClickFunction
-import kotlinx.html.js.onMouseOutFunction
-import kotlinx.html.js.onMouseOverFunction
+import csstype.*
+import emotion.react.css
 import pigeonMaps.PigeonProps
 import react.*
-import react.dom.attrs
-import styled.StyleSheet
-import styled.css
-import styled.inlineStyles
-import styled.styledDiv
+import react.dom.html.ReactHTML.div
 import ticketToRide.CityId
-import ticketToRide.ICityId
 import ticketToRide.PlayerId
 
 external interface MapCityMarkerProps: PigeonProps {
-    var cityIdBoxed: ICityId
+    var cityId: CityId
     var cityName: String
     var displayAllCityNames: Boolean
     var selected: Boolean
@@ -29,72 +21,65 @@ external interface MapCityMarkerProps: PigeonProps {
     var onMouseOut: ((CityId) -> Unit)?
     var onClick: ((CityId) -> Unit)?
 }
-val MapCityMarkerProps.cityId get() = cityIdBoxed.unboxed
 
-private val mapCityMarker = fc<MapCityMarkerProps> { props ->
-    styledDiv {
-        inlineStyles {
+val MapCityMarker = FC<MapCityMarkerProps> { props ->
+    div {
+        css {
             position = Position.absolute
-            transform {
-                translate((props.left ?: 0).px, (props.top ?: 0).px)
-            }
+            transform = translate((props.left ?: 0).px, (props.top ?: 0).px)
             if (props.myTurn) {
                 cursor = Cursor.pointer
             }
             if (props.selected) {
-                transform { scale(1.2) }
-                zIndex = 150
+                scale = number(1.2)
+                zIndex = integer(150)
             }
         }
-        attrs {
-            onClickFunction = {
-                it.stopPropagation()
-                props.onClick?.let { it(props.cityId) }
-            }
-            onMouseOverFunction = { props.onMouseOver?.let { it(props.cityId) } }
-            onMouseOutFunction = { props.onMouseOut?.let { it(props.cityId) } }
+
+        onClick = {
+            it.stopPropagation()
+            props.onClick?.let { it(props.cityId) }
         }
-        styledDiv {
+        onMouseOver = { props.onMouseOver?.let { it(props.cityId) } }
+        onMouseOut = { props.onMouseOut?.let { it(props.cityId) } }
+
+        div {
             css {
-                +ComponentStyle.markerIcon
+                cssMarkerIcon()
                 val img = props.station?.let { "station-${it.color.name.lowercase()}" } ?: when {
                     props.selected -> "city-marker-red"
                     props.hasOccupiedSegment -> "city-marker-green"
                     props.isTicketTarget -> "city-marker-yellow"
                     else -> "city-marker-blue"
                 }
-                backgroundImage = Image("url(/icons/${img}.svg)")
+                backgroundImage = url("/icons/${img}.svg")
                 if (props.station != null) {
-                    put("transform-origin", "center")
-                    transform {
-                        translate((-50).pct, (-50).pct)
-                        scale(1.5)
-                    }
+                    transformOrigin = GeometryPosition.center
+                    transform = translate((-50).pct, (-50).pct)
+                    scale = number(1.5)
                 } else {
-                    transform {
-                        translate((-50).pct, (-50).pct)
-                    }
+                    transform = translate((-50).pct, (-50).pct)
                 }
             }
         }
         if (props.selected || props.displayAllCityNames) {
             // popup bubble style taken from https://developers.google.com/maps/documentation/javascript/examples/overlay-popup
-            styledDiv {
+            div {
                 css {
-                    +ComponentStyle.popupContainer
+                    cssPopupContainer()
                 }
-                styledDiv {
+                div {
                     css {
-                        +ComponentStyle.popupBubbleAnchor
+                        cssPopupBubbleAnchor()
                         bottom = if (props.station != null) 20.px else 16.px
                         after {
-                            borderTopColor = if (props.selected) Color.lightPink else Color.white
+                            borderTopColor = if (props.selected) NamedColor.lightpink else NamedColor.white
                         }
                     }
-                    styledDiv {
+                    div {
                         css {
-                            +ComponentStyle.popupBubble
-                            backgroundColor = if (props.selected) Color.lightPink else Color.white
+                            popupBubble()
+                            backgroundColor = if (props.selected) NamedColor.lightpink else NamedColor.white
                         }
                         +props.cityName
                     }
@@ -104,68 +89,65 @@ private val mapCityMarker = fc<MapCityMarkerProps> { props ->
     }
 }
 
-private object ComponentStyle : StyleSheet("mapMarker", isStatic = true) {
-        val markerIcon by css {
-            position = Position.absolute
-            width = 20.px
-            height = 20.px
-            backgroundSize = "${20.px} ${20.px}"
-            backgroundRepeat = BackgroundRepeat.noRepeat
-        }
-        val popupContainer by css {
-            cursor = Cursor.auto
-            position = Position.absolute
-            height = 0.px
-            width = 200.px
-        }
-        val popupBubbleAnchor by css {
-            /* Position the div a fixed distance above the tip. */
-            position = Position.absolute
-            width = 100.pct
-            left = 0.px
-            after {
-                content = QuotedString("")
-                position = Position.absolute
-                top = 0.px
-                left = 0.px
-                /* Center the tip horizontally. */
-                transform {
-                    translateX((-50).pct)
-                }
-                /* The tip is a https://css-tricks.com/snippets/css/css-triangle/ */
-                width = 0.px
-                height = 0.px
-                /* The tip is 8px high, and 12px wide. */
-                borderLeftWidth = 6.px
-                borderLeftStyle = BorderStyle.solid
-                borderLeftColor = Color.transparent
-                borderRightWidth = 6.px
-                borderRightStyle = BorderStyle.solid
-                borderRightColor = Color.transparent
-                borderTopWidth = 8.px /* tip height */
-                borderTopStyle = BorderStyle.solid
-            }
-        }
-        val popupBubble by css {
-            /* Position the bubble centred-above its parent. */
-            position = Position.absolute
-            top = 0.px
-            left = 0.px
-            transform {
-                translate((-50).pct, (-100).pct)
-            }
-            /* Style the bubble. */
-            padding = 5.px.toString()
-            borderRadius = 5.px
-            fontSize = 14.px
-            overflowY = Overflow.auto
-            maxHeight = 60.px
-            boxShadow(Color.grey, 0.px, 2.px, 10.px, 1.px)
-        }
-    }
+fun PropertiesBuilder.cssMarkerIcon() {
+    position = Position.absolute
+    width = 20.px
+    height = 20.px
+    backgroundSize = "${20.px} ${20.px}".unsafeCast<BackgroundSize>()
+    backgroundRepeat = BackgroundRepeat.noRepeat
+}
 
-fun RBuilder.mapCityMarker(block: MapCityMarkerProps.() -> Unit) {
-    child(mapCityMarker) {
-        attrs(block)
+fun PropertiesBuilder.cssPopupContainer() {
+    cursor = Auto.auto
+    position = Position.absolute
+    height = 0.px
+    width = 200.px
+}
+
+fun PropertiesBuilder.cssPopupBubbleAnchor() {
+    /* Position the div a fixed distance above the tip. */
+    position = Position.absolute
+    width = 100.pct
+    left = 0.px
+    after {
+        content = string("''")
+        position = Position.absolute
+        top = 0.px
+        left = 0.px
+        /* Center the tip horizontally. */
+        transform = translate((-50).pct)
+        /* The tip is a https://css-tricks.com/snippets/css/css-triangle/ */
+        width = 0.px
+        height = 0.px
+        /* The tip is 8px high, and 12px wide. */
+        borderLeftWidth = 6.px
+        borderLeftStyle = LineStyle.solid
+        borderLeftColor = NamedColor.transparent
+        borderRightWidth = 6.px
+        borderRightStyle = LineStyle.solid
+        borderRightColor = NamedColor.transparent
+        borderTopWidth = 8.px /* tip height */
+        borderTopStyle = LineStyle.solid
     }
+}
+
+fun PropertiesBuilder.popupBubble() {
+    /* Position the bubble centred-above its parent. */
+    position = Position.absolute
+    top = 0.px
+    left = 0.px
+    transform = translate((-50).pct, (-100).pct)
+    /* Style the bubble. */
+    padding = 5.px
+    borderRadius = 5.px
+    fontSize = 14.px
+    overflowY = Auto.auto
+    maxHeight = 60.px
+    boxShadow = BoxShadow(
+        offsetX = 0.px,
+        offsetY = 2.px,
+        blurRadius = 10.px,
+        spreadRadius = 1.px,
+        color = NamedColor.grey
+    )
 }

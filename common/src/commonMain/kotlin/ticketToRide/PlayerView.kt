@@ -5,7 +5,7 @@ import kotlin.jvm.JvmInline
 
 @JvmInline
 @Serializable
-value class PlayerName(override val value: String): IPlayerName {
+value class PlayerName(val value: String) {
     override fun toString() = "player $value"
 }
 

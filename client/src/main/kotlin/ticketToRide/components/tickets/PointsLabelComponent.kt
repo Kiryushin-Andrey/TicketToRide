@@ -1,51 +1,43 @@
 package ticketToRide.components.tickets
 
-import com.ccfraser.muirwik.components.mPaper
-import kotlinx.css.*
+import csstype.Color
+import csstype.TextAlign
+import csstype.VerticalAlign
+import csstype.px
+import emotion.react.css
+import mui.material.Paper
+import mui.system.sx
 import react.*
-import styled.StyleSheet
-import styled.css
 
 external interface PointsLabelComponentProps : Props {
     var color: Color
     var text: String
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class PointsLabelComponent : RComponent<PointsLabelComponentProps, State>() {
-
-    override fun RBuilder.render() {
-        mPaper {
-            attrs { elevation = 4 }
-            css {
-                +ComponentStyles.pointsLabel
-                marginLeft = 10.px
-                backgroundColor = props.color
-            }
-            +props.text
-        }
-    }
-
-    object ComponentStyles : StyleSheet("pointsLabel", isStatic = true) {
-        val pointsLabel by css {
+val PointsLabelComponent = FC<PointsLabelComponentProps> { props ->
+    Paper {
+        elevation = 4
+        sx {
             width = 30.px
             height = 20.px
             textAlign = TextAlign.center
             verticalAlign = VerticalAlign.middle
-            padding = 5.px.toString()
+            padding = 5.px
             borderRadius = 5.px
+            marginLeft = 10.px
+            backgroundColor = props.color
         }
+        +props.text
     }
 }
 
-fun RBuilder.pointsLabel(text: String, color: Color) {
-    child(PointsLabelComponent::class) {
-        attrs {
-            this.text = text
-            this.color = color
-        }
+fun ChildrenBuilder.pointsLabel(text: String, color: Color) {
+    PointsLabelComponent {
+        this.text = text
+        this.color = color
     }
 }
 
-fun RBuilder.pointsLabel(value: Int, color: Color) = pointsLabel(value.toString(), color)
+fun ChildrenBuilder.pointsLabel(value: Int, color: Color) {
+    pointsLabel(value.toString(), color)
+}

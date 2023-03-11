@@ -1,128 +1,126 @@
 package ticketToRide.components.tickets
 
-import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.button.MButtonVariant
-import com.ccfraser.muirwik.components.button.mButton
-import kotlinx.css.*
+import csstype.*
+import emotion.react.css
+import mui.material.*
+import mui.material.styles.TypographyVariant
+import mui.system.sx
 import react.*
-import react.dom.span
-import styled.*
+import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.span
 import ticketToRide.*
-import ticketToRide.components.ComponentBase
-import ticketToRide.components.ComponentBaseProps
-import ticketToRide.components.componentBase
+import ticketToRide.components.*
 import ticketToRide.playerState.PlayerState
 
-external interface MyTicketsComponentProps : ComponentBaseProps {
+external interface MyTicketsComponentProps : GameComponentProps {
     var citiesToHighlight: Set<CityId>
     var onTicketMouseOver: (Ticket) -> Unit
     var onTicketMouseOut: (Ticket) -> Unit
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class MyTicketsComponent : ComponentBase<MyTicketsComponentProps, State>() {
+val MyTicketsComponent = FC<MyTicketsComponentProps> { props ->
+    val str = useMemo(props.locale) { strings(props.locale) }
+    val playerState = props.playerState
+    val gameState = props.gameState
+    val me = gameState.me
+    val connected = props.connected
 
-    override fun RBuilder.render() {
-        if (playerState !is PlayerState.ChoosingTickets) {
-            mTypography(str.header, MTypographyVariant.h6) {
-                css {
-                    paddingLeft = 10.px
-                }
-            }
+    if (playerState !is PlayerState.ChoosingTickets) {
+        Typography {
+            variant = TypographyVariant.h6
+            sx { paddingLeft = 10.px }
+            +str.header
         }
+    }
 
-        val fulfilledTickets = me.getFulfilledTickets(myTickets, gameState.players)
-        myTickets.forEach { render(it, fulfilledTickets.contains(it)) }
+    val fulfilledTickets = me.getFulfilledTickets(gameState.myTicketsOnHand, gameState.players)
+    gameState.myTicketsOnHand.forEach { ticket ->
+        render(props, ticket, isFulfilled = fulfilledTickets.contains(ticket))
+    }
 
-        (playerState as? PlayerState.ChoosingTickets)?.let { choice ->
-            styledDiv {
-                css {
-                    display = Display.flex
-                    flexDirection = FlexDirection.row
-                    justifyContent = JustifyContent.spaceBetween
-                    alignItems = Align.baseline
-                    paddingTop = 6.px
-                    paddingBottom = 6.px
-                }
-                mTypography(str.ticketsChoice, MTypographyVariant.h6) {
-                    css {
-                        paddingLeft = 10.px
-                    }
-                }
+    (playerState as? PlayerState.ChoosingTickets)?.let { choice ->
+        div {
+            css {
+                display = Display.flex
+                flexDirection = FlexDirection.row
+                justifyContent = JustifyContent.spaceBetween
+                alignItems = AlignItems.baseline
+                paddingTop = 6.px
+                paddingBottom = 6.px
+            }
+            Typography {
+                variant = TypographyVariant.h6
+                sx { paddingLeft = 10.px }
+                +str.ticketsChoice
+            }
 
-                val disabledTooltip = when {
-                    !props.connected -> str.disconnected
-                    !choice.isValid ->  str.youNeedToKeepAtLeastNTickets(choice.minCountToKeep)
-                    else -> ""
-                }
-                mTooltip(disabledTooltip) {
-                    attrs {
-                        disableHoverListener = choice.isValid && props.connected
-                    }
-                    span {
-                        mButton(str.ticketsChoiceDone, MColor.primary, MButtonVariant.contained) {
-                            attrs {
-                                disabled = !choice.isValid || !props.connected
-                                onClick = {
-                                    if (choice.isValid && props.connected)
-                                        act { choice.confirm() }
-                                }
-                            }
+            val disabledTooltip = when {
+                !connected -> str.disconnected
+                !choice.isValid -> str.youNeedToKeepAtLeastNTickets(choice.minCountToKeep)
+                else -> ""
+            }
+            Tooltip {
+                title = ReactNode(disabledTooltip)
+                disableHoverListener = choice.isValid && connected
+
+                span {
+                    Button {
+                        +str.ticketsChoiceDone
+                        color = ButtonColor.primary
+                        variant = ButtonVariant.contained
+                        disabled = !choice.isValid || !connected
+                        onClick = {
+                            if (choice.isValid && connected)
+                                props.act { choice.confirm() }
                         }
                     }
                 }
             }
+        }
 
-            choice.items.forEach {
-                render(it.ticket, false, TicketCheckbox(it.keep) {
-                    act { choice.toggleTicket(it.ticket) }
-                })
-            }
+        choice.items.forEach {
+            render(props, it.ticket, isFulfilled = false, TicketCheckbox(it.keep) {
+                props.act { choice.toggleTicket(it.ticket) }
+            })
         }
     }
-
-    private fun RBuilder.render(ticket: Ticket, isFulfilled: Boolean, checkbox: TicketCheckbox? = null) {
-        ticket(ticket, gameMap, props.locale) {
-            finalScreen = false
-            highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
-            fulfilled = isFulfilled
-            onMouseOver = { props.onTicketMouseOver(ticket) }
-            onMouseOut = { props.onTicketMouseOut(ticket) }
-            this.checkbox = checkbox
-        }
-    }
-
-    private inner class Strings : LocalizedStrings({ props.locale }) {
-
-        val header by loc(
-            Locale.En to "My tickets",
-            Locale.Ru to "Мои маршруты"
-        )
-
-        val ticketsChoice by loc(
-            Locale.En to "Tickets choice",
-            Locale.Ru to "Выбор маршрутов"
-        )
-
-        val youNeedToKeepAtLeastNTickets by locWithParam<Int>(
-            Locale.En to { n -> "You need to keep at least $n tickets " },
-            Locale.Ru to { n -> "Надо оставить минимум $n маршрутов" }
-        )
-
-        val ticketsChoiceDone by loc(
-            Locale.En to "Done",
-            Locale.Ru to "Готово"
-        )
-
-        val disconnected by loc(
-            Locale.En to "Server connection lost",
-            Locale.Ru to "Нет соединения с сервером"
-        )
-    }
-
-    private val str = Strings()
 }
 
-fun RBuilder.myTickets(props: ComponentBaseProps, block: MyTicketsComponentProps.() -> Unit) =
-    componentBase<MyTicketsComponent, MyTicketsComponentProps>(props, block)
+private fun ChildrenBuilder.render(props: MyTicketsComponentProps, ticket: Ticket, isFulfilled: Boolean, checkbox: TicketCheckbox? = null) {
+    ticket(ticket, props.gameMap, props.locale) {
+        finalScreen = false
+        highlighted = props.citiesToHighlight.containsAll(listOf(ticket.from, ticket.to))
+        fulfilled = isFulfilled
+        onMouseOver = { props.onTicketMouseOver(ticket) }
+        onMouseOut = { props.onTicketMouseOut(ticket) }
+        this.checkbox = checkbox
+    }
+}
+
+private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
+
+    val header by loc(
+        Locale.En to "My tickets",
+        Locale.Ru to "Мои маршруты"
+    )
+
+    val ticketsChoice by loc(
+        Locale.En to "Tickets choice",
+        Locale.Ru to "Выбор маршрутов"
+    )
+
+    val youNeedToKeepAtLeastNTickets by locWithParam<Int>(
+        Locale.En to { n -> "You need to keep at least $n tickets " },
+        Locale.Ru to { n -> "Надо оставить минимум $n маршрутов" }
+    )
+
+    val ticketsChoiceDone by loc(
+        Locale.En to "Done",
+        Locale.Ru to "Готово"
+    )
+
+    val disconnected by loc(
+        Locale.En to "Server connection lost",
+        Locale.Ru to "Нет соединения с сервером"
+    )
+}

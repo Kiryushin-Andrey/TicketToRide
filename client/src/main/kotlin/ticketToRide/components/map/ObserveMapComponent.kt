@@ -1,6 +1,8 @@
 package ticketToRide.components.map
 
-import react.RBuilder
+import react.ChildrenBuilder
+import react.FC
+import react.useCallback
 import ticketToRide.City
 import ticketToRide.PlayerView
 import ticketToRide.Segment
@@ -11,31 +13,35 @@ external interface ObserveMapComponentProps : MapComponentBaseProps {
     var players: List<PlayerView>
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class ObserveMapComponent(props: ObserveMapComponentProps) :
-    MapComponentBase<ObserveMapComponentProps, MapComponentBaseState>(props) {
-
-    override fun MapCityMarkerProps.fill(city: City) {
-        selected = props.citiesToHighlight.contains(city.id)
-        hasOccupiedSegment = false
-        isTicketTarget = false
+val ObserveMapComponent = FC<ObserveMapComponentProps> { props ->
+    val cityMarkerPropsBuilder = useCallback(props.citiesToHighlight) { cityMarkerProps: MapCityMarkerProps, city: City ->
+        with (cityMarkerProps) {
+            selected = props.citiesToHighlight.contains(city.id)
+            hasOccupiedSegment = false
+            isTicketTarget = false
+        }
     }
 
-    override fun MapSegmentProps.fill(segment: Segment) {
-        occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.id, to.id) } }
+    val segmentPropsBuilder = useCallback(props.players) { segmentProps: MapSegmentProps, _: Segment ->
+        with (segmentProps) {
+            occupiedBy = props.players.find { it.occupiedSegments.any { it.connects(from.id, to.id) } }
+        }
+    }
+
+    MapComponentBase {
+        copyFrom(props)
+        this.cityMarkerPropsBuilder = cityMarkerPropsBuilder
+        this.segmentPropsBuilder = segmentPropsBuilder
     }
 }
 
-fun RBuilder.observeMap(props: ObserveGameScreenProps, builder: ObserveMapComponentProps.() -> Unit) {
-    child(ObserveMapComponent::class) {
-        attrs {
-            locale = props.locale
-            connected = props.connected
-            players = props.gameState.players
-            gameMap = props.gameMap
+fun ChildrenBuilder.observeMap(props: ObserveGameScreenProps, builder: ObserveMapComponentProps.() -> Unit) {
+    ObserveMapComponent {
+        locale = props.locale
+        connected = props.connected
+        players = props.gameState.players
+        gameMap = props.gameMap
 
-            builder()
-        }
+        builder()
     }
 }

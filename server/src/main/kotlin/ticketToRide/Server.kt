@@ -20,7 +20,6 @@ private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
-    val host = environment.config.property("ktor.deployment.host").getString()
     val redis = environment.config.propertyOrNull("redis.host")?.let {
         RedisStorage(
             it.getString(),
@@ -28,7 +27,6 @@ fun Application.module() {
             environment.config.propertyOrNull("redis.password")?.getString()
         )
     }
-    val isLoopbackAddress = InetAddress.getByName(host).isLoopbackAddress
     val useProtobuf = environment.config.propertyOrNull("use-protobuf") != null
     val formatter = if (useProtobuf) ProtobufFormatter() else JsonFormatter()
 
@@ -64,10 +62,10 @@ fun Application.module() {
         static("images") { resources("images") }
 
         get("/") {
-            call.respondHtml { indexHtml(isLoopbackAddress) }
+            call.respondHtml { indexHtml() }
         }
         get("/game/{id}") {
-            call.respondHtml { indexHtml(isLoopbackAddress) }
+            call.respondHtml { indexHtml() }
         }
 
         route("/internal") {

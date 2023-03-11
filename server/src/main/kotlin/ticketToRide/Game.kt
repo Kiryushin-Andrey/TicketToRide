@@ -186,7 +186,6 @@ class Game private constructor(
     }
 
     private fun GameState.forObservers(action: PlayerAction?) = GameStateForObserver(
-        id,
         players.map { it.toPlayerView(true, isAway(it.name)) },
         if (endsOnPlayer == turn) players.map { it.ticketsOnHand } else emptyList(),
         openCards,

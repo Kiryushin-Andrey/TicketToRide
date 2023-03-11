@@ -8,15 +8,24 @@ group = "ticket-to-ride"
 version = "1.0.0"
 
 repositories {
-    mavenLocal()    // for muirwik compiled locally with Kotlin 1.6.0
     mavenCentral()
 }
 
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-js:1.6.0")
-}
-
 val reactVersion = "17.0.2"
+val kotlinWrappersVersion = "1.0.0-pre.508"
+
+fun kotlinw(target: String): String =
+    "org.jetbrains.kotlin-wrappers:kotlin-$target"
+
+dependencies {
+    implementation(enforcedPlatform(kotlinw("wrappers-bom:$kotlinWrappersVersion")))
+    implementation(kotlinw("react"))
+    implementation(kotlinw("react-dom"))
+    implementation(kotlinw("extensions"))
+    implementation(kotlinw("mui"))
+    implementation(kotlinw("mui-icons"))
+    implementation(kotlinw("emotion"))
+}
 
 kotlin {
     js(IR) {
@@ -29,22 +38,10 @@ kotlin {
         val main by getting {
             dependencies {
                 implementation(project(":common"))
-
-                implementation(npm("react", reactVersion))
-                implementation(npm("react-dom", reactVersion))
-                implementation(npm("react-is", reactVersion))
-                implementation(npm("styled-components", "5.2.0"))
-                implementation(npm("inline-style-prefixer", "6.0.0"))
                 implementation(npm("pigeon-maps", "0.19.7"))
                 implementation(npm("fscreen", "1.2.0"))
-                implementation(npm("@material-ui/core", "4.11.0"))
+                implementation(npm("@hookstate/core", "4.0.0"))
                 compileOnly(npm("raw-loader", "4.0.1"))
-
-                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.3")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.3-pre.268-kotlin-1.6.0")
-
-                // compiled locally from https://github.com/Kiryushin-Andrey/muirwik/tree/kotlin-1.6.0 and published to local maven
-                implementation("com.ccfraser.muirwik:muirwik-components:0.9.1-kotlin-1.6.0")
             }
             languageSettings.apply {
                 optIn("kotlin.js.ExperimentalJsExport")

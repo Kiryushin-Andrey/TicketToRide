@@ -9,7 +9,7 @@ data class LatLong(val lat: Double, val lng: Double)
 
 @JvmInline
 @Serializable
-value class CityId(override val value: String): ICityId {
+value class CityId(val value: String) {
     override fun toString() = "City-$value"
 }
 

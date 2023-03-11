@@ -1,11 +1,13 @@
 package ticketToRide.components.cards
 
-import com.ccfraser.muirwik.components.*
-import kotlinx.css.*
-import kotlinx.css.properties.*
+import csstype.*
+import emotion.react.css
+import mui.material.Paper
+import mui.material.Tooltip
+import mui.system.sx
 import react.*
-import react.dom.*
-import styled.*
+import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.img
 import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
@@ -23,101 +25,85 @@ external interface CardComponentProps : Props {
     var onClick: () -> Unit
 }
 
-external interface CardComponentState : State {
-    var hovered: Boolean
-}
+val CardComponent = FC<CardComponentProps> { props ->
+    val str = useMemo(props.locale) { strings(props.locale) }
+    var hovered by useState(false)
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class CardComponent : RComponent<CardComponentProps, CardComponentState>() {
-
-    override fun RBuilder.render() {
-        mPaper {
-            attrs {
-                elevation = if (props.enabled && state.hovered) 8 else 4
-                if (!props.observing) {
-                    with(asDynamic()) {
-                        onMouseOver = { setState { hovered = true } }
-                        onMouseOut = { setState { hovered = false } }
-                        onClick = { if (props.enabled) props.onClick() }
-                    }
-                }
-            }
-            css {
-                position = Position.relative
-                padding = "8px"
-                margin = "8px"
-                borderColor = Color.black
-                borderStyle = BorderStyle.solid
-                borderWidth = 1.px
-                if (!props.observing) {
-                    cursor = if (props.enabled) Cursor.pointer else Cursor.notAllowed
-                }
-                if (props.color != null) {
-                    backgroundColor = props.color!!
-                }
-                if (props.enabled && state.hovered) {
-                    transform { translate(3.px, (-3).px) }
-                }
-            }
-
-            mTooltip(tooltip) {
-                img {
-                    attrs {
-                        src = props.imageUrl
-                        width = "140px"
-                        height = "70px"
-                    }
-                }
-            }
-
+    Paper {
+        elevation = if (props.enabled && hovered) 8 else 4
+        sx {
+            position = Position.relative
+            padding = 8.px
+            margin = 8.px
+            borderColor = NamedColor.black
+            borderStyle = LineStyle.solid
+            borderWidth = 1.px
             if (!props.observing) {
+                cursor = if (props.enabled) Cursor.pointer else Cursor.notAllowed
+            }
+            if (props.color != null) {
+                backgroundColor = props.color!!
+            }
+            if (props.enabled && hovered) {
+                transform = translate(3.px, (-3).px)
+            }
+        }
+
+        if (!props.observing) {
+            onMouseOver = { hovered = true }
+            onMouseOut = { hovered = false }
+            onClick = { if (props.enabled) props.onClick() }
+        }
+
+        Tooltip {
+            val tooltip = props.tooltip?.let { msg ->
+                if (props.enabled) props.assignedKey?.let { "$msg (${str.keyTip(it)})" } ?: msg else msg
+            } ?: ""
+            title = ReactNode(tooltip)
+
+            img {
+                src = props.imageUrl
+                width = 140.0
+                height = 70.0
+            }
+        }
+
+        if (!props.observing) {
+            if (props.checked) {
                 checkedMark()
-                assignedKeyHint()
+            }
+            props.assignedKey?.let {
+                assignedKeyHint(it)
             }
         }
     }
-
-    private val tooltip
-        get() = props.tooltip?.let { msg ->
-            if (props.enabled) props.assignedKey?.let { "$msg (${str.keyTip(it)})" } ?: msg else msg
-        } ?: ""
-
-    private fun RBuilder.checkedMark() {
-        if (props.checked) {
-            styledImg {
-                css {
-                    position = Position.absolute
-                    left = 130.px
-                    top = (-10).px
-                }
-                attrs {
-                    src = "/icons/card-check.svg"
-                    width = 32.px.toString()
-                    height = 32.px.toString()
-                }
-            }
-        }
-    }
-
-    private fun RBuilder.assignedKeyHint() {
-        props.assignedKey?.let { ch ->
-            styledDiv {
-                css {
-                    position = Position.absolute
-                    left = 5.px
-                    top = 80.px
-                }
-                +ch
-            }
-        }
-    }
-
-    private val str = Strings { props.locale }
 }
 
+private fun ChildrenBuilder.checkedMark() {
+    img {
+        css {
+            position = Position.absolute
+            left = 130.px
+            top = (-10).px
+        }
+        src = "/icons/card-check.svg"
+        width = 32.0
+        height = 32.0
+    }
+}
 
-private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
+private fun ChildrenBuilder.assignedKeyHint(key: String) {
+    div {
+        css {
+            position = Position.absolute
+            left = 5.px
+            top = 80.px
+        }
+        +key
+    }
+}
+
+private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
 
     val keyTip by locWithParam<String>(
         Locale.En to { key -> "key $key" },
@@ -140,38 +126,36 @@ private class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
     )
 }
 
-private fun RBuilder.card(card: Card?, locale: Locale, builder: CardComponentProps.() -> Unit) =
-    child(CardComponent::class) {
-        attrs {
-            this.locale = locale
-            this.imageUrl = "/cards/" + when (card) {
-                null -> "faceDown.png"
-                is Card.Loco -> "loco.jpg"
-                is Card.Car -> when (card.color) {
-                    ticketToRide.CardColor.RED -> "red.jpg"
-                    ticketToRide.CardColor.GREEN -> "green.jpg"
-                    ticketToRide.CardColor.BLUE -> "blue.jpg"
-                    ticketToRide.CardColor.BLACK -> "black.jpg"
-                    ticketToRide.CardColor.WHITE -> "white.jpg"
-                    ticketToRide.CardColor.YELLOW -> "yellow.jpg"
-                    ticketToRide.CardColor.ORANGE -> "orange.jpg"
-                    ticketToRide.CardColor.MAGENTO -> "magento.jpg"
-                }
+private fun ChildrenBuilder.card(card: Card?, locale: Locale, builder: CardComponentProps.() -> Unit) =
+    CardComponent {
+        this.locale = locale
+        this.imageUrl = "/cards/" + when (card) {
+            null -> "faceDown.png"
+            is Card.Loco -> "loco.jpg"
+            is Card.Car -> when (card.color) {
+                ticketToRide.CardColor.RED -> "red.jpg"
+                ticketToRide.CardColor.GREEN -> "green.jpg"
+                ticketToRide.CardColor.BLUE -> "blue.jpg"
+                ticketToRide.CardColor.BLACK -> "black.jpg"
+                ticketToRide.CardColor.WHITE -> "white.jpg"
+                ticketToRide.CardColor.YELLOW -> "yellow.jpg"
+                ticketToRide.CardColor.ORANGE -> "orange.jpg"
+                ticketToRide.CardColor.MAGENTO -> "magento.jpg"
             }
-            this.color = when (card) {
-                null -> blackAlpha(0.1)
-                is Card.Loco -> Color.white
-                is Card.Car -> Color(card.color.rgb).withAlpha(0.5)
-            }
-            this.tooltip = card?.getName(locale)
-            builder()
         }
+        this.color = when (card) {
+            null -> rgba(red = 0, green = 0, blue = 0, alpha = 0.1)
+            is Card.Loco -> NamedColor.white
+            is Card.Car -> Color(card.color.rgb + "7F")
+        }
+        this.tooltip = card?.getName(locale)
+        builder()
     }
 
-fun RBuilder.openCardForObserver(card: Card, locale: Locale) =
+fun ChildrenBuilder.openCardForObserver(card: Card, locale: Locale) =
     card(card, locale) { observing = true }
 
-fun RBuilder.openCard(
+fun ChildrenBuilder.openCard(
     card: Card,
     locale: Locale,
     canPickCards: Boolean,
@@ -188,28 +172,26 @@ fun RBuilder.openCard(
         onClick = clickHandler
     }
 
-fun RBuilder.closedCardForObserver(locale: Locale) =
+fun ChildrenBuilder.closedCardForObserver(locale: Locale) =
     card(null, locale) {
         observing = true
     }
 
-fun RBuilder.closedCard(locale: Locale, disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
+fun ChildrenBuilder.closedCard(locale: Locale, disabledTooltip: String?, hasChosenCard: Boolean, clickHandler: () -> Unit) =
     card(null, locale) {
         assignedKey = "0"
         tooltip = disabledTooltip
-            ?: Strings { locale }.run { if (hasChosenCard) takeOneClosedCard else takeTwoClosedCards }
+            ?: strings(locale).run { if (hasChosenCard) takeOneClosedCard else takeTwoClosedCards }
         this.enabled = (disabledTooltip == null)
         onClick = clickHandler
     }
 
-fun RBuilder.ticketsCard(locale: Locale, disabledTooltip: String?, clickHandler: () -> Unit) =
-    child(CardComponent::class) {
-        attrs {
-            this.locale = locale
-            imageUrl = "/cards/routeFaceDown.png"
-            color = blackAlpha(0.1)
-            tooltip = disabledTooltip ?: Strings { locale }.takeTickets
-            enabled = (disabledTooltip == null)
-            onClick = clickHandler
-        }
+fun ChildrenBuilder.ticketsCard(locale: Locale, disabledTooltip: String?, clickHandler: () -> Unit) =
+    CardComponent {
+        this.locale = locale
+        imageUrl = "/cards/routeFaceDown.png"
+        color = rgba(red = 0, green = 0, blue = 0, alpha = 0.1)
+        tooltip = disabledTooltip ?: strings(locale).takeTickets
+        enabled = (disabledTooltip == null)
+        onClick = clickHandler
     }

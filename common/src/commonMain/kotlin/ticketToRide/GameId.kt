@@ -6,7 +6,7 @@ import kotlin.random.Random
 
 @JvmInline
 @Serializable
-value class GameId(override val value: String): IGameId {
+value class GameId(val value: String) {
     override fun toString() = "Game-$value"
 }
 

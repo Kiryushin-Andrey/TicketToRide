@@ -1,61 +1,51 @@
 package ticketToRide.components.map
 
-import pigeonMaps.MapProps
-import react.RBuilder
+import react.FC
+import react.useCallback
 import ticketToRide.City
 import ticketToRide.Segment
-import ticketToRide.components.ComponentBaseProps
+import ticketToRide.components.*
 import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.*
 
-external interface MapComponentProps : MapComponentBaseProps, ComponentBaseProps
+external interface MapComponentProps : MapComponentBaseProps, GameComponentProps
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class MapComponent(props: MapComponentProps) : MapComponentBase<MapComponentProps, MapComponentBaseState>(props) {
+val MapComponent = FC<MapComponentProps> { props ->
+    val gameState = props.gameState
+    val playerState = props.playerState
+    val me = props.gameState.me
 
-    private val gameState get() = props.gameState
-    private val playerState get() = props.playerState
-    private val players get() = gameState.players
-    private val me get() = players.find { it.name == gameState.myName }!!
+    val cityMarkerPropsBuilder = useCallback(props) { cityMarkerProps: MapCityMarkerProps, city: City ->
+        with (cityMarkerProps) {
+            myTurn = gameState.myTurn
+            selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.id)
+            hasOccupiedSegment = me.occupiedSegments.any { it.from == city.id || it.to == city.id }
+            isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.id || it.to == city.id }
+            onClick = { props.act { onCityClick(city.id) } }
+        }
+    }
 
-    private fun act(block: PlayerState.() -> PlayerState) = props.onAction(playerState.block())
+    val segmentPropsBuilder = useCallback(props) { segmentProps: MapSegmentProps, segment: Segment ->
+        with (segmentProps) {
+            myTurn = gameState.myTurn
+            occupiedBy = gameState.players.find { it.occupiedSegments.contains(segment) }
+            onClick = { props.act { onSegmentClick(segment) } }
+        }
+    }
 
-    override fun MapProps.fill() {
-        onClick = {
-            (playerState as? PlayerState.MyTurn)?.let {
-                if (playerState is PickedCity || playerState is BuildingSegment || playerState is BuildingStation) {
-                    act { Blank(it) }
-                }
+    val onMapClick: () -> Unit = useCallback(props) {
+        (playerState as? PlayerState.MyTurn)?.let {
+            if (playerState is PickedCity || playerState is BuildingSegment || playerState is BuildingStation) {
+                props.act { Blank(it) }
             }
         }
     }
 
-    override fun MapCityMarkerProps.fill(city: City) {
-        myTurn = gameState.myTurn
-        selected = (props.citiesToHighlight + playerState.citiesToHighlight).contains(city.id)
-        hasOccupiedSegment = me.occupiedSegments.any { it.from == city.id || it.to == city.id }
-        isTicketTarget = gameState.myTicketsOnHand.any { it.from == city.id || it.to == city.id }
-        onClick = { act { onCityClick(city.id) } }
-    }
+    MapComponentBase {
+        copyFrom(props)
 
-    override fun MapSegmentProps.fill(segment: Segment) {
-        myTurn = gameState.myTurn
-        occupiedBy = players.find { it.occupiedSegments.contains(segment) }
-        onClick = { act { onSegmentClick(segment) } }
-    }
-}
-
-fun RBuilder.gameMap(props: ComponentBaseProps, builder: MapComponentProps.() -> Unit) {
-    child(MapComponent::class) {
-        attrs {
-            this.locale = props.locale
-            this.connected = props.connected
-            this.gameMap = props.gameMap
-            this.gameState = props.gameState
-            this.playerState = props.playerState
-            this.onAction = props.onAction
-            builder()
-        }
+        this.onMapClick = onMapClick
+        this.cityMarkerPropsBuilder = cityMarkerPropsBuilder
+        this.segmentPropsBuilder = segmentPropsBuilder
     }
 }

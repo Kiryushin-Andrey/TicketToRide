@@ -1,15 +1,16 @@
 package ticketToRide.components.map
 
-import kotlinx.css.Color
-import kotlinx.css.Cursor
-import kotlinx.css.cursor
-import kotlinx.html.js.onClickFunction
+import csstype.Cursor
+import csstype.NamedColor
+import csstype.pct
+import emotion.react.css
 import pigeonMaps.PigeonProps
 import react.*
-import react.dom.attrs
-import react.dom.svg
-import styled.css
-import svg.*
+import react.dom.svg.ReactSVG.defs
+import react.dom.svg.ReactSVG.line
+import react.dom.svg.ReactSVG.pattern
+import react.dom.svg.ReactSVG.rect
+import react.dom.svg.ReactSVG.svg
 import ticketToRide.*
 import kotlin.math.PI
 import kotlin.math.acos
@@ -38,7 +39,7 @@ private fun MapSegmentProps.getPixels(): Pair<PigeonMapCoords, PigeonMapCoords> 
     return if (from.x < to.x) from to to else to to from
 }
 
-private val mapSegment = fc<MapSegmentProps> { props ->
+private val mapSegment = FC<MapSegmentProps> { props ->
     val (from, to) = props.getPixels()
     val distance = distance(from, to)
     val angle = acos((to.x - from.x) / distance) * (180 / PI) * (if (from.y < to.y) 1 else -1)
@@ -55,7 +56,7 @@ private val mapSegment = fc<MapSegmentProps> { props ->
     }
 }
 
-private fun RBuilder.freeSegment(
+private fun ChildrenBuilder.freeSegment(
     props: MapSegmentProps,
     from: PigeonMapCoords,
     distance: Double,
@@ -63,22 +64,22 @@ private fun RBuilder.freeSegment(
     lineHeight: Int,
     lineShift: Int
 ) {
-    fun block(x: Int, width: Int) = styledRect {
-        if (props.myTurn) {
-            css {
-                cursor = Cursor.pointer
+    fun block(x: Double, width: Int) {
+        rect {
+            if (props.myTurn) {
+                css {
+                    cursor = Cursor.pointer
+                }
             }
-        }
-        attrs {
             this.x = x
-            this.y = (from.y + lineShift - lineHeight / 2).toInt()
-            this.height = lineHeight
-            this.width = width
+            this.y = from.y + lineShift - lineHeight / 2
+            this.height = lineHeight.toDouble()
+            this.width = width.toDouble()
             fill = toSegmentRgb(props.color)
-            stroke = Color.black.value
-            strokeWidth = 1
+            stroke = "black"
+            strokeWidth = 1.0
             transform = "rotate ($angle ${from.x} ${from.y})"
-            onClickFunction = {
+            onClick = {
                 it.stopPropagation()
                 props.onClick()
             }
@@ -87,7 +88,7 @@ private fun RBuilder.freeSegment(
 
     if (distance < 40) {
         block(
-            x = from.x.toInt(),
+            x = from.x,
             width = distance.toInt()
         )
     } else {
@@ -98,14 +99,14 @@ private fun RBuilder.freeSegment(
         }
         for (i in 0 until props.points) {
             block(
-                x = ((i * distance / props.points) + from.x).toInt(),
+                x = (i * distance / props.points) + from.x,
                 width = (distance / props.points).toInt() - gap
             )
         }
     }
 }
 
-private fun RBuilder.occupiedSegment(
+private fun ChildrenBuilder.occupiedSegment(
     occupiedBy: PlayerId,
     from: PigeonMapCoords,
     distance: Double,
@@ -115,47 +116,44 @@ private fun RBuilder.occupiedSegment(
 ) {
     // rails
     fun horizontal(delta: Int) = line {
-        x1 = from.x.toInt()
-        x2 = (from.x + distance).toInt()
-        y1 = from.y.toInt() + lineShift - delta
-        y2 = from.y.toInt() + lineShift - delta
+        x1 = from.x
+        x2 = from.x + distance
+        y1 = from.y + lineShift - delta
+        y2 = from.y + lineShift - delta
         stroke = occupiedBy.color.rgb
-        strokeWidth = 2
+        strokeWidth = 2.0
         transform = "rotate ($angle ${from.x} ${from.y})"
     }
     horizontal(-2)
     horizontal(2)
 
     // sleepers
-    styledRect {
-        attrs {
-            x = from.x.toInt()
-            y = (from.y + lineShift - lineHeight / 2).toInt()
-            height = lineHeight
-            width = distance.toInt()
-            fill = "url(#sleepers)"
-            transform = "rotate ($angle ${from.x} ${from.y})"
-        }
+    rect {
+        x = from.x
+        y = from.y + lineShift - lineHeight / 2
+        height = lineHeight.toDouble()
+        width = distance
+        fill = "url(#sleepers)"
+        transform = "rotate ($angle ${from.x} ${from.y})"
     }
 }
 
-private fun RBuilder.mapSegment(
+private fun ChildrenBuilder.mapSegment(
     segment: Segment,
     cityById: Map<CityId, City>,
     currentIx: Int,
     totalCount: Int,
-    builder: MapSegmentProps.() -> Unit) {
-    child(mapSegment) {
-        attrs {
-            key = segment.hashCode().toString()
-            from = cityById[segment.from] ?: error("City ${segment.from} not present in game map")
-            to = cityById[segment.to] ?: error("City ${segment.to} not present in game map")
-            color = segment.color
-            points = segment.length
-            this.currentIx = currentIx
-            this.totalCount = totalCount
-            builder()
-        }
+    builder: MapSegmentProps.() -> Unit
+) {
+    mapSegment {
+        key = segment.hashCode().toString()
+        from = cityById[segment.from] ?: error("City ${segment.from} not present in game map")
+        to = cityById[segment.to] ?: error("City ${segment.to} not present in game map")
+        color = segment.color
+        points = segment.length
+        this.currentIx = currentIx
+        this.totalCount = totalCount
+        builder()
     }
 }
 
@@ -166,22 +164,23 @@ external interface RouteSegmentsProps : PigeonProps {
     var fillSegmentProps: (MapSegmentProps, Segment) -> Unit
 }
 
-val routeSegmentsComponent = fc<RouteSegmentsProps> { props ->
+val RouteSegmentsComponent = FC<RouteSegmentsProps> { props ->
     svg {
-        attrs["width"] = "100%"
-        attrs["height"] = "100%"
+        css {
+           width = 100.pct
+           height = 100.pct
+        }
 
         defs {
             pattern {
-                attrs {
-                    id = "sleepers"
-                    x = 0
-                    y = 0
-                    width = 10
-                    height = 10
-                    patternUnits = PatternUnits.userSpaceOnUse
-                }
-                line { x1 = 2; x2 = 2; y1 = 0; y2 = 10; stroke = Color.black.value; strokeWidth = 1 }
+                id = "sleepers"
+                x = 0.0
+                y = 0.0
+                width = 10.0
+                height = 10.0
+                patternUnits = "userSpaceOnUse"
+
+                line { x1 = 2.0; x2 = 2.0; y1 = 0.0; y2 = 10.0; stroke = "black"; strokeWidth = 1.0 }
             }
         }
 

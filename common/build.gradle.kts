@@ -3,8 +3,8 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val serializationVersion = "1.3.0"
-val kotestVersion = "4.5.0"
+val serializationVersion = "1.5.0"
+val kotestVersion = "5.5.5"
 
 repositories {
     mavenCentral()
@@ -22,7 +22,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serializationVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.4")

@@ -1,259 +1,263 @@
 package ticketToRide.screens
 
-import com.ccfraser.muirwik.components.*
+import csstype.*
+import emotion.react.css
+import hookstate.Hookstate
+import hookstate.useHookstate
 import kotlinx.browser.document
-import kotlinx.css.*
-import kotlinx.html.DIV
+import mui.material.Divider
+import mui.material.DividerVariant
+import mui.material.Typography
+import mui.material.styles.TypographyVariant
+import mui.system.sx
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import react.*
-import styled.*
+import react.dom.html.HTMLAttributes
+import react.dom.html.ReactHTML.div
 import ticketToRide.*
 import ticketToRide.components.*
-import ticketToRide.components.building.buildingSegment
-import ticketToRide.components.building.buildingStation
-import ticketToRide.components.building.pickedCity
-import ticketToRide.components.cards.cardsDeck
-import ticketToRide.components.cards.myCards
+import ticketToRide.components.building.BuildingSegmentComponent
+import ticketToRide.components.building.BuildingStationComponent
+import ticketToRide.components.building.PickedCityComponent
+import ticketToRide.components.cards.CardsDeckComponent
+import ticketToRide.components.cards.MyCardsComponent
 import ticketToRide.components.chat.chatMessages
 import ticketToRide.components.chat.chatSendMessageTextBox
-import ticketToRide.components.map.gameMap
-import ticketToRide.components.tickets.myTickets
+import ticketToRide.components.map.MapComponent
+import ticketToRide.components.tickets.MyTicketsComponent
 import ticketToRide.playerState.*
 import ticketToRide.playerState.PlayerState.MyTurn.*
+import web.html.HTMLDivElement
 
-external interface GameScreenProps : ComponentBaseProps {
-    var calculateScores: Boolean
-    var chatMessages: List<Response.ChatMessage>
+external interface GameScreenProps : GameComponentProps {
+    var chatMessages: Array<Response.ChatMessage>
     var onSendMessage: (String) -> Unit
 }
 
-external interface GameScreenState : State {
-    var citiesToHighlight: Set<CityId>
-    var searchText: String
-}
+val GameScreen = FC<GameScreenProps> { props ->
+    val str = useMemo(props.locale) { GameScreenStrings(props.locale) }
+    val citiesToHighlight: Hookstate<Set<CityId>> = useHookstate(emptySet<CityId>())
+    var searchText by useState("")
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class GameScreen : ComponentBase<GameScreenProps, GameScreenState>() {
+    val gameState = props.gameState
+    val playerState = props.playerState
 
-    override fun GameScreenState.init() {
-        citiesToHighlight = emptySet()
-        searchText = ""
-    }
-
-    override fun RBuilder.render() {
-        val areas = listOf(
-            "left header right",
-            "left map right",
-            "send map search",
-            "cards cards cards"
-        )
-
-        styledDiv {
-            gridLayout(areas)
-
-            when {
-                myTurn -> headerMessage(str.yourTurn, Color.lightGreen)
-                lastRound -> headerMessage(str.lastRound, Color.darkSalmon)
-                else -> headerMessage(str.playerXmoves(players[turn].name.value), Color.white)
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "left")
-                    +ComponentStyles.verticalPanel
-                    put("resize", "horizontal")
-                }
-
-                playersList(players, turn, props.calculateScores, props.locale)
-                horizontalDivider()
-                chatMessages(props.chatMessages)
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "send")
-                }
-                chatSendMessageTextBox(props.locale, props.onSendMessage)
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "map")
-                    width = 100.pct
-                    height = 100.pct
-                }
-                gameMap(props) {
-                    citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
-                    citiesWithStations = players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
-                    onCityMouseOver = { setState { citiesToHighlight += it } }
-                    onCityMouseOut = { setState { citiesToHighlight -= it } }
-                }
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "right")
-                    +ComponentStyles.verticalPanel
-                }
-
-                myCards(props)
-                horizontalDivider()
-
-                when (playerState) {
-                    is PickedCity -> {
-                        pickedCity(props)
-                        horizontalDivider()
-                    }
-                    is BuildingStation -> {
-                        buildingStation(props)
-                        horizontalDivider()
-                    }
-                    is BuildingSegment -> {
-                        buildingSegment(props)
-                        horizontalDivider()
-                    }
-                    else -> {}
-                }
-
-                myTickets(props) {
-                    citiesToHighlight = state.citiesToHighlight
-                    onTicketMouseOver = { setState { citiesToHighlight += listOf(it.from, it.to) } }
-                    onTicketMouseOut = { setState { citiesToHighlight -= listOf(it.from, it.to) } }
-                }
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "search")
-                    width = 96.pct
-                    marginLeft = 4.px
-                }
-                horizontalDivider()
-                searchTextBox(props.locale) {
-                    text = state.searchText
-                    onTextChanged = { setState { searchText = it } }
-                    onEnter = {
-                        getCitiesBySearchText().takeIf { it.size == 1 }?.let {
-                            act { onCityClick(it[0]) }
-                        }
-                    }
-                }
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "cards")
-                }
-                cardsDeck(props)
-            }
-        }
-    }
-
-    private fun getCitiesBySearchText() = state.searchText.let { input ->
-        if (input.isNotBlank())
-            props.gameMap.cities
-                .filter { it.id.localize(props.locale, props.gameMap).startsWith(input) }
-                .map { it.id }
-        else
-            emptyList()
-    }
-
-    object ComponentStyles : StyleSheet("GameScreen", isStatic = true) {
-        val verticalPanel by css {
-            display = Display.flex
-            flexDirection = FlexDirection.column
-            flexWrap = FlexWrap.nowrap
-            minWidth = 300.px
-            minHeight = LinearDimension.minContent
-            overflowY = Overflow.auto
-            marginLeft = 4.px
-            marginRight = 4.px
-        }
-    }
-
-    class Strings(getLocale: () -> Locale) : LocalizedStrings(getLocale) {
-
-        val yourTurn by loc(
-            Locale.En to "Your turn",
-            Locale.Ru to "Ваш ход"
-        )
-
-        val lastRound by loc(
-            Locale.En to "Last round",
-            Locale.Ru to "Последний круг"
-        )
-
-        val playerXmoves by locWithParam<String>(
-            Locale.En to { name -> "$name moves" },
-            Locale.Ru to { name -> "Ходит $name" }
-        )
-    }
-
-    private val str = Strings { props.locale }
-
-
-    override fun componentDidMount() {
-        document.addEventListener("keydown", onKeyPress)
-    }
-
-    override fun componentWillUnmount() {
-        document.removeEventListener("keydown", onKeyPress)
-    }
-
-    private val onKeyPress = { e: Event ->
+    val onKeyDown = useCallback(props.act) { e: Event ->
         if ((e as KeyboardEvent).key == "Escape") {
             (playerState as? PlayerState.MyTurn)?.apply {
-                act { Blank(gameMap, gameState, requests) }
+                props.act { Blank(props.gameMap, gameState, requests) }
             }
         }
     }
+    useEffect(onKeyDown) {
+        document.addEventListener("keydown", onKeyDown)
+        cleanup {
+            document.removeEventListener("keydown", onKeyDown)
+        }
+    }
 
+    val areas = listOf(
+        "left header right",
+        "left map right",
+        "send map search",
+        "cards cards cards"
+    )
 
-    companion object {
+    div {
+        gridLayout(areas)
 
-        fun RBuilder.headerMessage(text: String, color: Color) {
-            styledDiv {
-                css {
-                    put("grid-area", "header")
-                    width = 100.pct
-                    backgroundColor = color
+        when {
+            gameState.myTurn -> headerMessage(str.yourTurn, NamedColor.lightgreen)
+            gameState.lastRound -> headerMessage(str.lastRound, NamedColor.darksalmon)
+            else -> headerMessage(str.playerXmoves(gameState.players[gameState.turn].name.value), NamedColor.white)
+        }
+
+        div {
+            css {
+                gridArea = ident("left")
+                verticalPanelCss()
+                resize = Resize.horizontal
+            }
+
+            playersList(gameState.players, gameState.turn, props.locale)
+            horizontalDivider()
+            chatMessages(props.chatMessages)
+        }
+
+        div {
+            css {
+                gridArea = ident("send")
+            }
+            chatSendMessageTextBox(props.locale, props.onSendMessage)
+        }
+
+        div {
+            css {
+                gridArea = ident("map")
+                width = 100.pct
+                height = 100.pct
+            }
+            MapComponent {
+                copyFrom(props)
+                this.citiesToHighlight = citiesToHighlight.get() + getCitiesBySearchText(searchText, props.gameMap, props.locale)
+                citiesWithStations = gameState.players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
+                onCityMouseOver = { city -> citiesToHighlight.set { it + city } }
+                onCityMouseOut = { city -> citiesToHighlight.set { it - city } }
+            }
+        }
+
+        div {
+            css {
+                gridArea = ident("right")
+                verticalPanelCss()
+            }
+
+            MyCardsComponent {
+                copyFrom(props)
+            }
+            horizontalDivider()
+
+            when (playerState) {
+                is PickedCity -> {
+                    PickedCityComponent {
+                        copyFrom(props)
+                    }
+                    horizontalDivider()
                 }
-                mTypography(text, MTypographyVariant.h5) {
-                    css {
-                        fontStyle = FontStyle.italic
-                        textAlign = TextAlign.center
+
+                is BuildingStation -> {
+                    BuildingStationComponent {
+                        copyFrom(props)
+                    }
+                    horizontalDivider()
+                }
+
+                is BuildingSegment -> {
+                    BuildingSegmentComponent {
+                        copyFrom(props)
+                    }
+                    horizontalDivider()
+                }
+
+                else -> {}
+            }
+
+            MyTicketsComponent {
+                copyFrom(props)
+                this.citiesToHighlight = citiesToHighlight.get()
+                onTicketMouseOver = { ticket ->
+                    citiesToHighlight.set { it + ticket.from + ticket.to }
+                }
+                onTicketMouseOut = { ticket ->
+                    citiesToHighlight.set { it - ticket.from - ticket.to }
+                }
+            }
+        }
+
+        div {
+            css {
+                gridArea = ident("search")
+                width = 96.pct
+                marginLeft = 4.px
+            }
+            horizontalDivider()
+            CitySearchTextBox {
+                locale = props.locale
+                text = searchText
+                onTextChanged = { searchText = it }
+                onEnter = {
+                    getCitiesBySearchText(searchText, props.gameMap, props.locale).takeIf { it.size == 1 }?.let {
+                        props.act { props.playerState.onCityClick(it[0]) }
                     }
                 }
             }
         }
 
-        fun StyledDOMBuilder<DIV>.gridLayout(areas: List<String>) {
-            val rows = listOf(GridAutoRows(40.px), GridAutoRows.auto, GridAutoRows(65.px), GridAutoRows(120.px))
+        div {
             css {
-                height = 100.pct
-                width = 100.pct
-                display = Display.grid
-                gridTemplateColumns =
-                    GridTemplateColumns(GridAutoRows("0.2fr"), GridAutoRows.auto, GridAutoRows(360.px))
-                gridTemplateRows = GridTemplateRows(*rows.toTypedArray())
-                gridTemplateAreas = GridTemplateAreas(areas.joinToString(" ") { "\"$it\"" })
+                gridArea = ident("cards")
+            }
+            CardsDeckComponent {
+                copyFrom(props)
             }
         }
     }
 }
 
-fun RBuilder.horizontalDivider() {
-    mDivider(variant = MDividerVariant.fullWidth) {
+fun getCitiesBySearchText(input: String, gameMap: GameMap, locale: Locale): List<CityId> {
+    return if (input.isNotBlank())
+        gameMap.cities
+            .filter { it.id.localize(locale, gameMap).startsWith(input) }
+            .map { it.id }
+    else
+        emptyList()
+}
+
+fun ChildrenBuilder.headerMessage(text: String, color: BackgroundColor) {
+    div {
         css {
-            margin = 5.px.toString()
+            gridArea = ident("header")
+            width = 100.pct
+            backgroundColor = color
+        }
+        Typography {
+            variant = TypographyVariant.h5
+            sx {
+                fontStyle = FontStyle.italic
+                textAlign = TextAlign.center
+            }
+            +text
         }
     }
 }
 
-fun RBuilder.gameScreen(builder: GameScreenProps.() -> Unit) {
-    child(GameScreen::class) {
-        attrs(builder)
+fun HTMLAttributes<HTMLDivElement>.gridLayout(areas: List<String>) {
+    val rows = listOf(40.px, Auto.auto, 65.px, 120.px)
+    css {
+        height = 100.pct
+        width = 100.pct
+        display = Display.grid
+        gridTemplateColumns = array<GridTemplateColumns>(0.2.fr, Auto.auto, 360.px)
+        gridTemplateRows = array<GridTemplateRows>(*rows.toTypedArray())
+        gridTemplateAreas = GridTemplateAreas(*areas.map(::ident).toTypedArray())
     }
+}
+
+fun ChildrenBuilder.horizontalDivider() {
+    Divider {
+        variant = DividerVariant.fullWidth
+        sx {
+            margin = 5.px
+        }
+    }
+}
+
+fun PropertiesBuilder.verticalPanelCss() {
+    display = Display.flex
+    flexDirection = FlexDirection.column
+    flexWrap = FlexWrap.nowrap
+    minWidth = 300.px
+    minHeight = Length.minContent
+    overflowY = Auto.auto
+    marginLeft = 4.px
+    marginRight = 4.px
+}
+
+class GameScreenStrings(val locale: Locale) : LocalizedStrings({ locale }) {
+
+    val yourTurn by loc(
+        Locale.En to "Your turn",
+        Locale.Ru to "Ваш ход"
+    )
+
+    val lastRound by loc(
+        Locale.En to "Last round",
+        Locale.Ru to "Последний круг"
+    )
+
+    val playerXmoves by locWithParam<String>(
+        Locale.En to { name -> "$name moves" },
+        Locale.Ru to { name -> "Ходит $name" }
+    )
 }

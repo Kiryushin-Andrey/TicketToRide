@@ -1,12 +1,13 @@
 package ticketToRide.components.chat
 
-import com.ccfraser.muirwik.components.button.mIconButton
-import com.ccfraser.muirwik.components.form.*
-import com.ccfraser.muirwik.components.*
-import kotlinx.css.*
-import org.w3c.dom.HTMLInputElement
+import csstype.*
+import emotion.react.css
+import mui.icons.material.Send
+import mui.material.*
+import mui.material.Size
 import react.*
-import styled.*
+import react.dom.html.ReactHTML.div
+import react.dom.onChange
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
 
@@ -15,73 +16,55 @@ external interface ChatSendMessageTextBoxProps : Props {
     var onSendMessage: (String) -> Unit
 }
 
-external interface ChatSendMessageTextBoxState : State {
-    var messageText: String
+private val ChatSendMessageTextBox = FC<ChatSendMessageTextBoxProps> { props ->
+    val str = useMemo(props.locale) { strings(props.locale) }
+    var messageText by useState("")
+    val sendMessage = useCallback(messageText) {
+        if (messageText.isNotBlank()) {
+            props.onSendMessage(messageText)
+            messageText = ""
+        }
+    }
+
+    div {
+        css {
+            margin = 4.px
+            display = Display.flex
+            flexDirection = FlexDirection.row
+            justifyContent = JustifyContent.spaceBetween
+            alignItems = AlignItems.center
+            margin = 4.px
+        }
+
+        TextField {
+            label = ReactNode(str.sendMessage)
+            value = messageText
+            onChange = { e ->
+                messageText = e.target.asDynamic().value as String
+            }
+            onKeyDown = { e -> if (e.key == "Enter") sendMessage() }
+            size = Size.small
+            fullWidth = true
+            variant = FormControlVariant.outlined
+            margin = FormControlMargin.dense
+        }
+        IconButton {
+            Send()
+            onClick = { sendMessage() }
+        }
+    }
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class ChatSendMessageTextBox : RComponent<ChatSendMessageTextBoxProps, ChatSendMessageTextBoxState>() {
-
-    override fun ChatSendMessageTextBoxState.init(props: ChatSendMessageTextBoxProps) {
-        messageText = ""
-    }
-
-    override fun RBuilder.render() {
-        styledDiv {
-            css {
-                margin = 4.px.toString()
-                display = Display.flex
-                flexDirection = FlexDirection.row
-                justifyContent = JustifyContent.spaceBetween
-                alignItems = Align.center
-                margin = 4.px.toString()
-            }
-            mTextField(str.sendMessage) {
-                attrs {
-                    value = state.messageText
-                    onChange = { e ->
-                        val text = (e.target as HTMLInputElement).value
-                        setState { messageText = text }
-                    }
-                    onKeyDown = { e -> if (e.keyCode == 13) sendMessage() }
-                    asDynamic().size = "small"
-                    fullWidth = true
-                    variant = MFormControlVariant.outlined
-                    margin = MFormControlMargin.dense
-                }
-            }
-            mIconButton("send") {
-                attrs {
-                    onClick = { sendMessage() }
-                }
-            }
-        }
-    }
-
-    private fun sendMessage() {
-        if (state.messageText.isNotBlank()) {
-            props.onSendMessage(state.messageText)
-            setState { messageText = "" }
-        }
-    }
-
-    private inner class Strings : LocalizedStrings({ props.locale }) {
-
-        val sendMessage by loc(
-            Locale.En to "Send message",
-            Locale.Ru to "Отправить сообщение"
-        )
-    }
-
-    private val str = Strings()
+private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
+    val sendMessage by loc(
+        Locale.En to "Send message",
+        Locale.Ru to "Отправить сообщение"
+    )
 }
 
-fun RBuilder.chatSendMessageTextBox(locale: Locale, onSendMessage: (String) -> Unit) {
-    child(ChatSendMessageTextBox::class) {
-        attrs {
-            this.locale = locale
-            this.onSendMessage = onSendMessage
-        }
+fun ChildrenBuilder.chatSendMessageTextBox(locale: Locale, onSendMessage: (String) -> Unit) {
+    ChatSendMessageTextBox {
+        this.locale = locale
+        this.onSendMessage = onSendMessage
     }
 }

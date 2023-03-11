@@ -1,13 +1,11 @@
 package ticketToRide.components.cards
 
-import com.ccfraser.muirwik.components.mPaper
-import com.ccfraser.muirwik.components.mTooltip
-import kotlinx.css.*
-import react.RBuilder
-import react.RComponent
-import react.Props
-import react.State
-import styled.css
+import csstype.*
+import emotion.react.css
+import mui.material.Paper
+import mui.material.Tooltip
+import mui.system.sx
+import react.*
 import ticketToRide.Card
 import ticketToRide.Locale
 import ticketToRide.getName
@@ -17,40 +15,35 @@ external interface MyCardComponentProps : Props {
     var locale: Locale
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class MyCardComponent : RComponent<MyCardComponentProps, State>() {
+private val MyCardComponent = FC<MyCardComponentProps> { props ->
+    val card = props.card
+    Tooltip {
+        title = ReactNode(card.getName(props.locale))
 
-    override fun RBuilder.render() {
-        val card = props.card
-        mTooltip(card.getName(props.locale)) {
-            mPaper {
-                attrs {
-                    elevation = 4
-                }
-                css {
-                    padding = 12.px.toString()
-                    marginRight = 6.px
-                    height = 6.px
-                    borderColor = Color.black
-                    borderStyle = BorderStyle.solid
-                    borderWidth = 1.px
-                    if (card is Card.Car) {
-                        backgroundColor = Color(card.color.rgb)
-                    } else {
-                        background = "linear-gradient(to right, orange , yellow, green, cyan, blue, violet)"
-                    }
+        Paper {
+            elevation = 4
+            sx {
+                padding = 12.px
+                marginRight = 6.px
+                height = 6.px
+                borderColor = NamedColor.black
+                borderStyle = LineStyle.solid
+                borderWidth = 1.px
+                if (card is Card.Car) {
+                    backgroundColor = Color(card.color.rgb)
+                } else {
+                    background = linearGradient(
+                        NamedColor.orange, NamedColor.yellow, NamedColor.green, NamedColor.cyan, NamedColor.blue, NamedColor.violet
+                    )
                 }
             }
         }
     }
 }
 
-fun RBuilder.myCard(card: Card, locale: Locale) {
-    child(MyCardComponent::class) {
-        attrs {
-            this.card = card
-            this.locale = locale
-        }
+fun ChildrenBuilder.myCard(card: Card, locale: Locale) {
+    MyCardComponent {
+        this.card = card
+        this.locale = locale
     }
 }

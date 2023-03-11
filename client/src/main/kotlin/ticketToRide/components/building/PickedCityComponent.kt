@@ -1,80 +1,72 @@
 package ticketToRide.components.building
 
-import com.ccfraser.muirwik.components.MColor
-import com.ccfraser.muirwik.components.MTypographyVariant
-import com.ccfraser.muirwik.components.button.MButtonVariant
-import com.ccfraser.muirwik.components.button.mButton
-import com.ccfraser.muirwik.components.mTypography
-import kotlinx.css.*
+import csstype.*
+import emotion.react.css
+import mui.material.*
+import mui.material.styles.TypographyVariant
+import mui.system.sx
 import react.*
-import react.dom.attrs
-import styled.css
-import styled.styledDiv
-import styled.styledImg
+import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.img
 import ticketToRide.Locale
 import ticketToRide.LocalizedStrings
-import ticketToRide.components.ComponentBase
-import ticketToRide.components.ComponentBaseProps
-import ticketToRide.components.componentBase
+import ticketToRide.components.*
 import ticketToRide.localize
 import ticketToRide.playerState.PlayerState
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class PickedCityComponent : ComponentBase<ComponentBaseProps, State>() {
-    override fun RBuilder.render() {
-        styledDiv {
+val PickedCityComponent = FC<GameComponentProps> { props ->
+    val str = useMemo(props.locale) { strings(props.locale) }
+    val playerState = props.playerState as PlayerState.MyTurn.PickedCity
+
+    div {
+        css {
+            paddingLeft = 10.px
+            paddingRight = 10.px
+        }
+        div {
             css {
-                paddingLeft = 10.px
-                paddingRight = 10.px
+                display = Display.flex
+                flexDirection = FlexDirection.row
+                flexWrap = FlexWrap.nowrap
+                justifyContent = JustifyContent.spaceBetween
+                alignItems = AlignItems.center
             }
-            styledDiv {
+            img {
+                src = "/icons/building-segment.png"
+                height = 100.0
+            }
+            div {
                 css {
                     display = Display.flex
-                    flexDirection = FlexDirection.row
-                    flexWrap = FlexWrap.nowrap
+                    flexDirection = FlexDirection.column
                     justifyContent = JustifyContent.spaceBetween
-                    alignItems = Align.center
+                    height = 100.px
                 }
-                styledImg {
-                    attrs {
-                        src = "/icons/building-segment.png"
-                        height = 100.px.toString()
-                    }
-                }
-                styledDiv {
-                    css {
-                        display = Display.flex
-                        flexDirection = FlexDirection.column
-                        justifyContent = JustifyContent.spaceBetween
-                        height = 100.px
-                    }
-                    with(props.playerState as PlayerState.MyTurn.PickedCity) {
-                        mTypography(target.localize(props.locale, gameMap), MTypographyVariant.h6) {
-                            css {
-                                textAlign = TextAlign.right
-                                paddingRight = 16.px
-                            }
+                with(props.playerState as PlayerState.MyTurn.PickedCity) {
+                    Typography {
+                        +target.localize(props.locale, props.gameMap)
+                        variant = TypographyVariant.h6
+                        sx {
+                            textAlign = TextAlign.right
+                            paddingRight = 16.px
                         }
-                        mButton(str.station, MColor.primary, MButtonVariant.contained) {
-                            attrs {
-                                onClick = { act { buildStation() } }
-                            }
-                        }
+                    }
+                    Button {
+                        +str.station
+
+                        color = ButtonColor.primary
+                        variant = ButtonVariant.contained
+                        onClick = { props.act { playerState.buildStation() } }
                     }
                 }
             }
         }
     }
-
-    private inner class Strings : LocalizedStrings({ props.locale }) {
-        val station by loc(
-            Locale.En to "Station",
-            Locale.Ru to "Станция"
-        )
-    }
-
-    private val str = Strings()
 }
 
-fun RBuilder.pickedCity(props: ComponentBaseProps) = componentBase<PickedCityComponent, ComponentBaseProps>(props)
+private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
+    val station by loc(
+        Locale.En to "Station",
+        Locale.Ru to "Станция"
+    )
+}

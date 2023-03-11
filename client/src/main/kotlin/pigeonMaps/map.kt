@@ -2,6 +2,7 @@
 @file:JsNonModule
 package pigeonMaps
 
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.events.MouseEvent
 import react.*
 
@@ -161,5 +162,5 @@ external interface MapState: State {
 
 @JsName("Map")
 external open class Map(props: MapProps) : Component<MapProps, MapState> {
-    override fun render()
+    override fun render(): ReactNode?
 }

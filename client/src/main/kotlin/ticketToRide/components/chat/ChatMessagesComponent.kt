@@ -1,47 +1,43 @@
 package ticketToRide.components.chat
 
-import kotlinx.css.*
+import csstype.*
+import emotion.react.css
 import react.*
-import styled.*
+import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.span
 import ticketToRide.Response
 
 external interface ChatMessagesComponentProps : Props {
-    var messages: List<Response.ChatMessage>
+    var messages: Array<Response.ChatMessage>
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class ChatMessagesComponent : RComponent<ChatMessagesComponentProps, State>() {
-
-    override fun RBuilder.render() {
-        styledDiv {
-            css {
-                display = Display.flex
-                flexDirection = FlexDirection.columnReverse
-                margin = 4.px.toString()
-                overflowY = Overflow.auto
-            }
-            for (message in props.messages.asReversed()) {
-                styledDiv {
-                    css { marginBottom = 4.px }
-                    styledSpan {
-                        css {
-                            fontWeight = FontWeight.bold
-                            fontStyle = FontStyle.italic
-                        }
-                        +"${message.from.value}: "
+private val ChatMessagesComponent = FC<ChatMessagesComponentProps> { props ->
+    div {
+        css {
+            display = Display.flex
+            flexDirection = FlexDirection.columnReverse
+            margin = 4.px
+            overflowY = Auto.auto
+        }
+        props.messages.reversed().forEachIndexed { ix, message ->
+            div {
+                key = ix.toString()
+                css { marginBottom = 4.px }
+                span {
+                    css {
+                        fontWeight = FontWeight.bold
+                        fontStyle = FontStyle.italic
                     }
-                    +message.message
+                    +"${message.from.value}: "
                 }
+                +message.message
             }
         }
     }
 }
 
-fun RBuilder.chatMessages(messages: List<Response.ChatMessage>) {
-    child(ChatMessagesComponent::class) {
-        attrs {
-            this.messages = messages
-        }
+fun ChildrenBuilder.chatMessages(messages: Array<Response.ChatMessage>) {
+    ChatMessagesComponent {
+        this.messages = messages
     }
 }

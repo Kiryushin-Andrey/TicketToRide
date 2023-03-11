@@ -7,10 +7,8 @@ import java.util.*
 
 val appStartTimestamp = Calendar.getInstance().toInstant().toString()
 
-fun HTML.indexHtml(isLoopbackAddress: Boolean) {
-    val queryString =
-        if (isLoopbackAddress) "ver=${BuildConfig.version}&ts=${appStartTimestamp}"
-        else "ver=${BuildConfig.version}"
+fun HTML.indexHtml() {
+    val queryString = "ts=${appStartTimestamp}"
 
     head {
         title("Ticket to Ride!")

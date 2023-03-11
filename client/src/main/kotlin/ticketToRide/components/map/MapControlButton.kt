@@ -1,43 +1,43 @@
 package ticketToRide.components.map
 
-import com.ccfraser.muirwik.components.TooltipPlacement
-import com.ccfraser.muirwik.components.button.MIconButtonSize
-import com.ccfraser.muirwik.components.button.mIconButton
-import com.ccfraser.muirwik.components.mTooltip
-import kotlinx.css.*
+import csstype.*
+import emotion.react.css
+import mui.icons.material.SvgIconComponent
+import mui.material.*
+import mui.material.Size
+import mui.system.sx
 import pigeonMaps.PigeonProps
 import react.*
-import styled.css
 
 external interface MapControlButtonProps: PigeonProps {
     var tooltip: String
-    var icon: String
-    var topPosition: LinearDimension
+    var icon: SvgIconComponent
+    var topPosition: Top
     var onClick: () -> Unit
 }
 
-private val mapControlButton = fc<MapControlButtonProps> { props ->
-    mTooltip(props.tooltip, TooltipPlacement.right) {
-        mIconButton(props.icon, size = MIconButtonSize.small) {
-            attrs {
-                css {
-                    position = Position.absolute
-                    top = props.topPosition
-                    left = 10.px
-                    backgroundColor = Color.white
-                    borderColor = Color.black
-                    borderRadius = 2.px
-                    borderStyle = BorderStyle.solid
-                    borderWidth = 1.px
-                    hover {
-                        backgroundColor = Color.lightGray
-                    }
+val MapControlButton = FC<MapControlButtonProps> { props ->
+    Tooltip {
+        placement = TooltipPlacement.right
+        title = ReactNode(props.tooltip)
+
+        IconButton {
+            size = Size.small
+            sx {
+                position = Position.absolute
+                top = props.topPosition
+                left = 10.px
+                backgroundColor = NamedColor.white
+                borderColor = NamedColor.black
+                borderRadius = 2.px
+                borderStyle = LineStyle.solid
+                borderWidth = 1.px
+                hover {
+                    backgroundColor = NamedColor.lightgray
                 }
-                onClick = { props.onClick() }
             }
+            onClick = { props.onClick() }
+            +props.icon.create()
         }
     }
 }
-
-fun RBuilder.mapControlButton(block: MapControlButtonProps.() -> Unit) =
-    child(mapControlButton) { attrs(block) }

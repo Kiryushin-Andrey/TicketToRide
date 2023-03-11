@@ -2,12 +2,12 @@
 @file:JsNonModule
 package fscreen
 
-import org.w3c.dom.Element
+import web.html.HTMLElement
 
 external interface FScreen {
     val fullscreenEnabled: Boolean
-    val fullscreenElement: Element?
-    fun requestFullscreen(element: Element)
+    val fullscreenElement: HTMLElement?
+    fun requestFullscreen(element: HTMLElement)
     fun exitFullscreen()
 }
 

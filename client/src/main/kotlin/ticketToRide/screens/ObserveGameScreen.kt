@@ -1,120 +1,96 @@
 package ticketToRide.screens
 
-import kotlinx.css.*
-import react.RBuilder
-import react.RComponent
-import react.Props
-import react.setState
-import styled.css
-import styled.styledDiv
+import csstype.*
+import emotion.react.css
+import hookstate.Hookstate
+import hookstate.useHookstate
+import react.*
+import react.dom.html.ReactHTML.div
 import ticketToRide.*
+import ticketToRide.components.CitySearchTextBox
 import ticketToRide.components.cards.observeCardsDeck
 import ticketToRide.components.chat.chatMessages
 import ticketToRide.components.map.observeMap
 import ticketToRide.components.playersList
-import ticketToRide.components.searchTextBox
-import ticketToRide.screens.GameScreen.Companion.gridLayout
-import ticketToRide.screens.GameScreen.Companion.headerMessage
 
 external interface ObserveGameScreenProps : Props {
     var locale: Locale
     var connected: Boolean
     var gameMap: GameMap
     var gameState: GameStateForObserver
-    var calculateScores: Boolean
-    var chatMessages: List<Response.ChatMessage>
+    var chatMessages: Array<Response.ChatMessage>
 }
 
 @JsExport
 @Suppress("NON_EXPORTABLE_TYPE")
-class ObserveGameScreen : RComponent<ObserveGameScreenProps, GameScreenState>() {
+val ObserveGameScreen = FC<ObserveGameScreenProps> { props ->
+    val str = useMemo(props.locale) { GameScreenStrings(props.locale) }
+    val citiesToHighlight: Hookstate<Set<CityId>> = useHookstate(emptySet<CityId>())
+    var searchText by useState("")
 
-    override fun GameScreenState.init() {
-        citiesToHighlight = emptySet()
-        searchText = ""
-    }
+    val players = props.gameState.players
+    val turn = props.gameState.turn
+    val openCards = props.gameState.openCards
 
-    private val players get() = props.gameState.players
-    private val turn get() = props.gameState.turn
-    private val openCards get() = props.gameState.openCards
+    val areas = listOf(
+        "left header header",
+        "left map map",
+        "left map map",
+        "cards cards search"
+    )
 
-    override fun RBuilder.render() {
-        val areas = listOf(
-            "left header header",
-            "left map map",
-            "left map map",
-            "cards cards search"
-        )
+    div {
+        gridLayout(areas)
 
-        styledDiv {
-            gridLayout(areas)
+        var message = str.playerXmoves(players[turn].name.value)
+        if (props.gameState.lastRound)
+            message += " (${str.lastRound})"
+        headerMessage(message, NamedColor.white)
 
-            var message = str.playerXmoves(players[turn].name.value)
-            if (props.gameState.lastRound)
-                message += " (${str.lastRound})"
-            headerMessage(message, Color.white)
-
-            styledDiv {
-                css {
-                    put("grid-area", "left")
-                    +GameScreen.ComponentStyles.verticalPanel
-                    put("resize", "horizontal")
-                }
-                playersList(players, turn, props.calculateScores, props.locale)
-                horizontalDivider()
-                chatMessages(props.chatMessages)
+        div {
+            css {
+                gridArea = ident("left")
+                verticalPanelCss()
+                resize = Resize.horizontal
             }
+            playersList(players, turn, props.locale)
+            horizontalDivider()
+            chatMessages(props.chatMessages)
+        }
 
-            styledDiv {
-                css {
-                    put("grid-area", "map")
-                    width = 100.pct
-                    height = 100.pct
-                }
-                observeMap(props) {
-                    citiesToHighlight = state.citiesToHighlight + getCitiesBySearchText()
-                    citiesWithStations = players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
-                    onCityMouseOver = { setState { citiesToHighlight += it } }
-                    onCityMouseOut = { setState { citiesToHighlight -= it } }
-                }
+        div {
+            css {
+                gridArea = ident("map")
+                width = 100.pct
+                height = 100.pct
             }
-
-            styledDiv {
-                css {
-                    put("grid-area", "search")
-                    width = 96.pct
-                    marginLeft = 4.px
-                }
-                horizontalDivider()
-                searchTextBox(props.locale) {
-                    text = state.searchText
-                    onTextChanged = { setState { searchText = it } }
-                }
-            }
-
-            styledDiv {
-                css {
-                    put("grid-area", "cards")
-                }
-                observeCardsDeck(openCards, props.locale)
+            observeMap(props) {
+                this.citiesToHighlight = citiesToHighlight.get() + getCitiesBySearchText(searchText, props.gameMap, props.locale)
+                this.citiesWithStations = players.flatMap { p -> p.placedStations.map { it to p } }.associate { it }
+                this.onCityMouseOver = { city -> citiesToHighlight.set { it + city } }
+                this.onCityMouseOut = { city -> citiesToHighlight.set { it - city } }
             }
         }
-    }
 
-    private fun getCitiesBySearchText() = state.searchText.let { input ->
-        if (input.isNotBlank())
-            props.gameMap.cities
-                .filter { it.id.localize(props.locale, props.gameMap).startsWith(input) }
-                .map { it.id }
-        else
-            emptyList()
-    }
+        div {
+            css {
+                gridArea = ident("search")
+                width = 96.pct
+                marginLeft = 4.px
+            }
+            horizontalDivider()
+            CitySearchTextBox {
+                locale = props.locale
+                text = searchText
+                onTextChanged = { searchText = it }
+            }
+        }
 
-    private val str = GameScreen.Strings { props.locale }
-}
-
-fun RBuilder.observeGameScreen(builder: ObserveGameScreenProps.() -> Unit) {
-    child(ObserveGameScreen::class) {
-        attrs(builder)
+        div {
+            css {
+                gridArea = ident("cards")
+            }
+            observeCardsDeck(openCards, props.locale)
+        }
     }
 }

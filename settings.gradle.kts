@@ -3,12 +3,9 @@ pluginManagement {
         maven("https://plugins.gradle.org/m2/")
         mavenCentral()
     }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == "com.codingfeline.buildkonfig") {
-                useModule("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${requested.version}")
-            }
-        }
+    plugins {
+        val kotlinVersion = extra["kotlin.version"] as String
+        kotlin("js") version kotlinVersion
     }
 }
 

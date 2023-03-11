@@ -1,416 +1,414 @@
 package ticketToRide.screens
 
-import com.ccfraser.muirwik.components.*
-import com.ccfraser.muirwik.components.button.*
-import com.ccfraser.muirwik.components.dialog.*
-import com.ccfraser.muirwik.components.input.*
-import com.ccfraser.muirwik.components.menu.mMenuItem
+import csstype.*
+import emotion.react.css
+import js.core.jso
+import kotlinx.browser.window
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.css.*
-import kotlinx.html.InputType
-import org.w3c.dom.HTMLInputElement
+import mui.icons.material.Settings
+import mui.material.*
+import mui.material.styles.PaletteColor
+import mui.material.styles.ThemeProvider
+import mui.material.styles.TypographyVariant
+import mui.material.styles.createTheme
+import mui.system.sx
 import org.w3c.notifications.*
 import react.*
-import styled.StyleSheet
-import styled.css
-import styled.styledDiv
+import react.dom.html.ReactHTML.div
+import react.dom.onChange
 import ticketToRide.*
 import ticketToRide.components.welcomeScreen.*
 
-private val defaultMap = (kotlinext.js.require("default.map").default as String).let { GameMap.parse(it) }
-
 external interface WelcomeScreenProps : Props {
-    var gameIdBoxed: IGameId?
     var locale: Locale
     var onLocaleChanged: (Locale) -> Unit
     var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
-    var onJoinGame: (PlayerName, PlayerColor) -> Unit
-    var onJoinAsObserver: () -> Unit
-    var onReconnect: (PlayerName) -> Unit
-}
-val WelcomeScreenProps.gameId get() = gameIdBoxed?.unboxed
-
-external interface WelcomeScreenState : State {
-    var playerName: String
-    var playerColor: PlayerColor?
-    var otherPlayers: List<PlayerView>
-    var errorText: String?
-    var showSettings: Boolean
-    var carsNumber: Int
-    var calculateScoresInProcess: Boolean
-    var joinAsObserver: Boolean
-    var customMap: CustomGameMap?
-    var gameMapParseErrors: CustomGameMapParseErrors?
+    var onJoinGame: (GameId, PlayerName, PlayerColor) -> Unit
+    var onJoinAsObserver: (GameId) -> Unit
+    var onReconnect: (GameId, PlayerName) -> Unit
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class WelcomeScreen(props: WelcomeScreenProps) : RComponent<WelcomeScreenProps, WelcomeScreenState>(props) {
+data class WelcomeScreenState(
+    val playerName: String = "",
+    val playerColor: PlayerColor? = PlayerColor.values().first(),
+    val otherPlayers: List<PlayerView> = emptyList(),
+    val errorText: String? = null,
+    val showSettings: Boolean = false,
+    val carsNumber: Int = 45,
+    val calculateScoresInProcess: Boolean = false,
+    val joinAsObserver: Boolean = false,
+    val customMap: CustomGameMap? = null,
+    val gameMapParseErrors: CustomGameMapParseErrors? = null
+)
 
-    private val scope = CoroutineScope(Dispatchers.Default + Job())
-    private var peekPlayersConnection: ServerConnection<GameStateForObserver>? = null
+val WelcomeScreenState.availableColors get() =
+    otherPlayers.find { it.name.value == playerName }
+        ?.let {
+            // if a player is reconnecting back into the game under the same name
+            // she should keep the same color as before
+            listOf(it.color)
+        }
+        ?: PlayerColor.values().filter { c -> !otherPlayers.map { it.color }.contains(c) }
 
-    private val WelcomeScreenState.availableColors
-        get() =
-            otherPlayers.find { it.name.value == playerName }?.let {
-                // if a player is reconnecting back into the game under the same name
-                // she should keep the same color as before
-                listOf(it.color)
-            } ?: PlayerColor.values().filter { c -> !otherPlayers.map { it.color }.contains(c) }
+val gameId = window.location.pathname
+    .takeIf { it.startsWith("/game/") }
+    ?.let { GameId(it.substringAfterLast('/')) }
 
-    private val WelcomeScreenProps.startingNewGame get() = gameIdBoxed == null
+val startingNewGame = gameId == null
 
-    override fun WelcomeScreenState.init(props: WelcomeScreenProps) {
-        playerName = ""
-        playerColor = PlayerColor.values().first()
-        showSettings = false
-        carsNumber = 45
-        calculateScoresInProcess = false
-        otherPlayers = emptyList()
+val WelcomeScreen = FC<WelcomeScreenProps> { props ->
+    val str = useMemo(props.locale) { strings(props.locale) }
+    val (state, setState) = useState(WelcomeScreenState())
+
+    val processGameStateUpdate = useCallback(state, setState) { gameState: GameStateForObserver ->
+        setState(
+            state.copy(
+                otherPlayers = gameState.players,
+                playerColor = if (state.otherPlayers.map { it.color }.contains(state.playerColor))
+                    state.availableColors.firstOrNull()
+                else
+                    state.playerColor
+            )
+        )
     }
 
-    override fun componentDidMount() {
-        props.gameId?.let { observeGamePlayers(it) }
-    }
-
-    override fun componentWillUnmount() {
-        peekPlayersConnection?.close()
-        scope.cancel()
-    }
-
-    override fun RBuilder.render() {
-        mDialog {
-            css {
-                +ComponentStyles.welcomeDialog
-            }
-            attrs {
-                open = state.gameMapParseErrors == null
-                maxWidth = "sm"
-                fullWidth = true
-            }
-            mDialogContent {
-                if (!state.joinAsObserver) {
-                    playerName()
-                    playerColor()
-                }
-                if (!props.startingNewGame) {
-                    joinAsObserver()
-                }
-                if (state.showSettings) {
-                    settings()
-                }
-                if (Notification.permission == NotificationPermission.DEFAULT) {
-                    mTypography(variant = MTypographyVariant.body1) {
-                        +str.notificationNote
-                    }
+    useEffect(*emptyArray()) {
+        if (gameId != null) {
+            val scope = CoroutineScope(Dispatchers.Default + Job())
+            val peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
+                val response = connect(ConnectRequest.Observe)
+                if (response is ConnectResponse.ObserverConnected) {
+                    processGameStateUpdate(response.state)
+                    responses().collect(processGameStateUpdate)
                 }
             }
-            mDialogActions {
-                if (props.startingNewGame) {
-                    mTooltip(str.settings) {
-                        mIconButton("settings") {
-                            css { marginRight = 15.px }
-                            attrs {
-                                onClick = { setState { showSettings = !showSettings } }
-                            }
-                        }
-                    }
-                }
-                mSelect(props.locale.toString()) {
-                    css { marginRight = 15.px }
-                    attrs {
-                        onChange = { e, _ ->
-                            val value = e.target?.asDynamic().value
-                            props.onLocaleChanged(Locale.valueOf(value))
-                        }
-                    }
-                    Locale.values().forEach {
-                        mMenuItem {
-                            attrs {
-                                value = it.name
-                                selected = props.locale == it
-                            }
-                            +it.name
-                        }
-                    }
-                }
-
-                val btnTitle = if (props.startingNewGame) str.startGame else str.joinGame
-                mButton(btnTitle, MColor.primary, MButtonVariant.contained) {
-                    attrs {
-                        disabled = state.errorText != null
-                        onClick = { proceed() }
-                    }
-                }
-            }
-        }
-
-        state.gameMapParseErrors?.let {
-            gameMapParseErrorsDialog {
-                locale = props.locale
-                filename = it.filename
-                errors = it.errors
-                onClose = { setState { gameMapParseErrors = null } }
+            cleanup {
+                peekPlayersConnection.close()
             }
         }
     }
 
-    private fun RBuilder.playerName() {
-        mTextField(str.yourName, fullWidth = true) {
-            attrs {
-                error = state.errorText != null
-                helperText = state.errorText ?: ""
-                autoFocus = true
-                onChange = {
-                    val value = it.targetInputValue.trim()
-                    setState {
-                        playerName = value
-                        errorText = if (value.isBlank()) str.enterYourName else null
-                        otherPlayers.find { it.name.value == value }?.let {
-                            playerColor = it.color
-                        }
-                    }
-                }
-                onKeyDown = { e ->
-                    if (e.keyCode == 13) {
-                        val text = (e.target as HTMLInputElement).value
-                        setState({ it.apply { playerName = text } }, ::proceed)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun RBuilder.playerColor() {
-        mRadioGroup(state.playerColor?.name, row = true) {
-            css {
-                alignItems = Align.center
-            }
-            attrs {
-                onChange = { _, newValue -> setState { playerColor = PlayerColor.valueOf(newValue) } }
-            }
-            mInputLabel(str.yourColor)
-            state.availableColors.forEach {
-                mRadio(color = MOptionColor.default) {
-                    css {
-                        color = Color(it.rgb)
-                    }
-                    attrs { value = it.name }
-                }
-            }
-        }
-    }
-
-    private fun RBuilder.settings() {
-        mPaper {
-            css {
-                marginTop = 15.px
-                padding = 10.px.toString()
-            }
-            attrs { elevation = 2 }
-            mTypography(str.settings, MTypographyVariant.h5)
-            if (props.startingNewGame) {
-                initialCarsOnHand()
-                calculateScoresInProcess()
-                chooseGameMap()
-            }
-        }
-    }
-
-    private fun RBuilder.chooseGameMap() {
-        styledDiv {
-            css { marginTop = 15.px }
-            chooseGameMap(props.locale) {
-                customMap = state.customMap
-                onCustomMapChanged = { map -> setState { customMap = map } }
-                onShowParseErrors = { err -> setState { gameMapParseErrors = err } }
-            }
-        }
-    }
-
-    private fun RBuilder.initialCarsOnHand() {
-        mInputLabel(str.numberOfCarsOnHand) {
-            css {
-                marginTop = 15.px
-                color = Color.black
-            }
-            mInput {
-                css {
-                    marginLeft = 10.px
-                    width = 40.px
-                }
-                attrs {
-                    type = InputType.number
-                    value = state.carsNumber.toString()
-                    asDynamic().min = 5
-                    asDynamic().max = 60
-                    onChange = { e ->
-                        e.targetInputValue.trim().toIntOrNull()?.let {
-                            setState { carsNumber = it }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun RBuilder.calculateScoresInProcess() {
-        mCheckboxWithLabel(str.calculateScoresInProcess, state.calculateScoresInProcess, MOptionColor.primary) {
-            attrs {
-                onChange = { _, value -> setState { calculateScoresInProcess = value } }
-            }
-        }
-    }
-
-    private fun RBuilder.joinAsObserver() {
-        mCheckboxWithLabel(str.joinAsObserver, state.joinAsObserver, MOptionColor.primary) {
-            attrs {
-                onChange = { _, value -> setState { joinAsObserver = value } }
-            }
-        }
-    }
-
-    private fun proceed() {
-        if (state.joinAsObserver) {
-            props.onJoinAsObserver()
-            return
-        }
-
-        if (state.playerName.isBlank()) {
-            setState { errorText = str.enterYourName }
-            return
-        }
-        if (state.playerColor == null) {
-            setState { errorText = str.chooseYourColor }
-            return
-        }
-        Notification.requestPermission()
-        val playerName = PlayerName(state.playerName)
-        when {
-            props.startingNewGame -> {
-                val map = state.customMap?.map ?: (defaultMap as? Try.Success)?.value
-                if (map != null) {
-                    for (entry in map.segments.groupingBy { it.color }
-                        .fold(0) { acc, segment -> acc + segment.length }) {
-                        console.log("${entry.key} - ${entry.value}")
-                    }
-                    props.onStartGame(
-                        map,
-                        playerName,
-                        state.playerColor!!,
-                        state.carsNumber,
-                        state.calculateScoresInProcess
-                    )
-                } else {
-                    setState { errorText = str.noMapSelected }
-                }
-            }
-
-            state.otherPlayers.any { it.name == playerName } ->
-                props.onReconnect(playerName)
-
-            else ->
-                props.onJoinGame(playerName, state.playerColor!!)
-        }
-    }
-
-    private fun observeGamePlayers(gameId: GameId) {
-        peekPlayersConnection = ServerConnection(scope, gameId.webSocketUrl, GameStateForObserver.serializer()) {
-            val response = connect(ConnectRequest.Observe)
-            if (response is ConnectResponse.ObserverConnected) {
-                processGameState(response.state)
-                responses().collect(::processGameState)
-            }
-        }
-    }
-
-    private fun processGameState(gameState: GameStateForObserver) {
-        setState {
-            otherPlayers = gameState.players
-            if (otherPlayers.map { it.color }.contains(playerColor)) {
-                playerColor = availableColors.firstOrNull()
-            }
-        }
-    }
-
-    object ComponentStyles : StyleSheet("Welcome", isStatic = true) {
-        val welcomeDialog by css {
+    Dialog {
+        sx {
             width = 100.pct
-            margin = "0"
+            margin = 0.px
+        }
+        open = state.gameMapParseErrors == null
+        maxWidth = "sm"
+        fullWidth = true
+
+        DialogContent {
+            if (!state.joinAsObserver) {
+                playerName(gameId, props, state, setState, str)
+                playerColor(state, setState, str)
+            }
+            if (!startingNewGame) {
+                joinAsObserver(state, setState, str)
+            }
+            if (state.showSettings) {
+                settings(state, setState, startingNewGame, str)
+            }
+            if (Notification.permission == NotificationPermission.DEFAULT) {
+                Typography {
+                    variant = TypographyVariant.body1
+                    +str.notificationNote
+                }
+            }
+        }
+        DialogActions {
+            if (startingNewGame) {
+                Tooltip {
+                    title = ReactNode(str.settings)
+
+                    IconButton {
+                        onClick = { setState(state.copy(showSettings = !state.showSettings)) }
+                        Settings()
+                    }
+                }
+            }
+
+            Select {
+                variant = SelectVariant.standard
+                sx {
+                    marginLeft = 15.px
+                    marginRight = 15.px
+                }
+
+                value = props.locale.toString()
+                onChange = { e, _ ->
+                    val value = e.target.asDynamic().value as String
+                    props.onLocaleChanged(Locale.valueOf(value))
+                }
+                Locale.values().forEach {
+                    MenuItem {
+                        value = it.name
+                        selected = props.locale == it
+                        +it.name
+                    }
+                }
+            }
+
+            Button {
+                +(if (startingNewGame) str.startGame else str.joinGame)
+
+                color = ButtonColor.primary
+                variant = ButtonVariant.contained
+                disabled = state.errorText != null
+                onClick = { proceed(gameId, props, state, setState, str) }
+            }
         }
     }
 
-    private inner class Strings : LocalizedStrings({ props.locale }) {
-
-        val yourName by loc(
-            Locale.En to "Your name is",
-            Locale.Ru to "Ваше имя"
-        )
-
-        val enterYourName by loc(
-            Locale.En to "Enter your name",
-            Locale.Ru to "Введите ваше имя"
-        )
-
-        val yourColor by loc(
-            Locale.En to "Your color",
-            Locale.Ru to "Ваш цвет"
-        )
-
-        val chooseYourColor by loc(
-            Locale.En to "Choose your color",
-            Locale.Ru to "Выберите ваш цвет"
-        )
-
-        val settings by loc(
-            Locale.En to "Settings",
-            Locale.Ru to "Настройки"
-        )
-
-        val numberOfCarsOnHand by loc(
-            Locale.En to "Initial number of cars on hand",
-            Locale.Ru to "Количество вагонов в начале игры"
-        )
-
-        val calculateScoresInProcess by loc(
-            Locale.En to "Calculate scores during the game",
-            Locale.Ru to "Подсчет очков в процессе игры"
-        )
-
-        val joinAsObserver by loc(
-            Locale.En to "I'm an observer",
-            Locale.Ru to "Наблюдать за игрой"
-        )
-
-        val notificationNote by loc(
-            Locale.En to "Allow notifications to be notified when it's your turn to move even if the browser tab is inactive",
-            Locale.Ru to "Уведомления подскажут, когда до вас дошла очередь ходить"
-        )
-
-        val noMapSelected by loc(
-            Locale.En to "Please load game map file (see \"${settings}\" section)",
-            Locale.Ru to "Загрузите файл с картой для игры (в разделе \"${settings}\")"
-        )
-
-        val startGame by loc(
-            Locale.En to "Start game!",
-            Locale.Ru to "Начать игру!"
-        )
-
-        val joinGame by loc(
-            Locale.En to "Join game!",
-            Locale.Ru to "Присоединиться к игре!"
-        )
-    }
-
-    private val str = Strings()
-}
-
-fun RBuilder.welcomeScreen(builder: WelcomeScreenProps.() -> Unit) {
-    child(WelcomeScreen::class) {
-        attrs {
-            builder()
+    state.gameMapParseErrors?.let {
+        GameMapParseErrorsDialog {
+            locale = props.locale
+            filename = it.filename
+            errors = it.errors
+            onClose = { setState(state.copy(gameMapParseErrors = null)) }
         }
     }
 }
+
+private fun ChildrenBuilder.playerName(gameId: GameId?, props: WelcomeScreenProps, state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    TextField {
+        placeholder = str.yourName
+        fullWidth = true
+        error = state.errorText != null
+        helperText = ReactNode(state.errorText ?: "")
+        autoFocus = true
+        onChange = { e ->
+            val value = e.target.asDynamic().value.unsafeCast<String>()
+            setState {
+                state.copy(
+                    playerName = value,
+                    errorText = if (value.isBlank()) str.enterYourName else null,
+                    playerColor = state.otherPlayers.find { it.name.value == value }?.color ?: state.playerColor
+                )
+            }
+        }
+        onKeyDown = { e ->
+            if (e.key == "Enter") {
+                val text = e.target.asDynamic().value.unsafeCast<String>()
+                val newState = state.copy(playerName = text)
+                setState(newState)
+                proceed(gameId, props, newState, setState, str)
+            }
+        }
+    }
+}
+
+val radioButtonThemes = PlayerColor.values().associateWith {
+    createTheme(
+        jso {
+            palette = jso {
+                primary = jso<PaletteColor> { main = Color(it.rgb) }
+                text = jso { secondary = Color(it.rgb) }
+            }
+        }
+    )
+}
+
+private fun ChildrenBuilder.playerColor(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    RadioGroup {
+        sx {
+            alignItems = AlignItems.center
+        }
+
+        value = state.playerColor?.name
+        row = true
+        onChange = { _, newValue ->
+            setState(state.copy(playerColor = PlayerColor.valueOf(newValue)))
+        }
+
+        InputLabel {
+            +str.yourColor
+        }
+        state.availableColors.forEach {
+            ThemeProvider {
+                theme = radioButtonThemes[it]
+                Radio { value = it.name }
+            }
+        }
+    }
+}
+
+private fun ChildrenBuilder.settings(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, startingNewGame: Boolean, str: WelcomeScreenStrings) {
+    Paper {
+        sx {
+            marginTop = 15.px
+            padding = 10.px
+        }
+        elevation = 2
+        Typography {
+            variant = TypographyVariant.h5
+            +str.settings
+        }
+        if (startingNewGame) {
+            initialCarsOnHand(state, setState, str)
+            calculateScoresInProcess(state, setState, str)
+            chooseGameMap(state, setState, str)
+        }
+    }
+}
+
+private fun ChildrenBuilder.chooseGameMap(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    div {
+        css { marginTop = 15.px }
+        ChooseGameMapComponent {
+            locale = str.locale
+            customMap = state.customMap
+            onCustomMapChanged = { map -> setState(state.copy(customMap = map)) }
+            onShowParseErrors = { err -> setState(state.copy(gameMapParseErrors = err)) }
+        }
+    }
+}
+
+private fun ChildrenBuilder.initialCarsOnHand(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    InputLabel {
+        sx {
+            marginTop = 15.px
+            color = NamedColor.black
+        }
+
+        +str.numberOfCarsOnHand
+        Input {
+            sx {
+                marginLeft = 10.px
+                width = 40.px
+            }
+            type = "number"
+            value = state.carsNumber.toString()
+            asDynamic().min = 5
+            asDynamic().max = 60
+            onChange = { e ->
+                e.target.asDynamic().value.unsafeCast<String>().toIntOrNull()?.let {
+                    setState(state.copy(carsNumber = it))
+                }
+            }
+        }
+    }
+}
+
+private fun ChildrenBuilder.calculateScoresInProcess(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    FormControlLabel {
+        label = ReactNode(str.calculateScoresInProcess)
+        checked = state.calculateScoresInProcess
+        control = Checkbox.create {
+            checked = state.calculateScoresInProcess
+            color = CheckboxColor.primary
+            onChange = { _, value -> setState(state.copy(calculateScoresInProcess = value)) }
+        }
+    }
+}
+
+private fun ChildrenBuilder.joinAsObserver(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    FormControlLabel {
+        label = ReactNode(str.joinAsObserver)
+        checked = state.joinAsObserver
+        control = Checkbox.create {
+            checked = state.joinAsObserver
+            color = CheckboxColor.primary
+            onChange = { _, value -> setState(state.copy(joinAsObserver = value)) }
+        }
+    }
+}
+
+private fun proceed(gameId: GameId?, props: WelcomeScreenProps, state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
+    if (state.joinAsObserver && gameId != null) {
+        props.onJoinAsObserver(gameId)
+        return
+    }
+
+    if (state.playerName.isBlank()) {
+        setState(state.copy(errorText = str.enterYourName))
+        return
+    }
+    if (state.playerColor == null) {
+        setState(state.copy(errorText = str.chooseYourColor))
+        return
+    }
+    Notification.requestPermission()
+    val playerName = PlayerName(state.playerName)
+    when {
+        gameId == null -> {
+            val map = state.customMap?.map ?: defaultMap
+            for (entry in map.segments.groupingBy { it.color }
+                .fold(0) { acc, segment -> acc + segment.length }) {
+                console.log("${entry.key} - ${entry.value}")
+            }
+            props.onStartGame(
+                map,
+                playerName,
+                state.playerColor,
+                state.carsNumber,
+                state.calculateScoresInProcess
+            )
+        }
+
+        state.otherPlayers.any { it.name == playerName } ->
+            props.onReconnect(gameId, playerName)
+
+        else ->
+            props.onJoinGame(gameId, playerName, state.playerColor)
+    }
+}
+
+private class WelcomeScreenStrings(val locale: Locale) : LocalizedStrings({ locale }) {
+
+    val yourName by loc(
+        Locale.En to "Your name is",
+        Locale.Ru to "Ваше имя"
+    )
+
+    val enterYourName by loc(
+        Locale.En to "Enter your name",
+        Locale.Ru to "Введите ваше имя"
+    )
+
+    val yourColor by loc(
+        Locale.En to "Your color",
+        Locale.Ru to "Ваш цвет"
+    )
+
+    val chooseYourColor by loc(
+        Locale.En to "Choose your color",
+        Locale.Ru to "Выберите ваш цвет"
+    )
+
+    val settings by loc(
+        Locale.En to "Settings",
+        Locale.Ru to "Настройки"
+    )
+
+    val numberOfCarsOnHand by loc(
+        Locale.En to "Initial number of cars on hand",
+        Locale.Ru to "Количество вагонов в начале игры"
+    )
+
+    val calculateScoresInProcess by loc(
+        Locale.En to "Calculate scores during the game",
+        Locale.Ru to "Подсчет очков в процессе игры"
+    )
+
+    val joinAsObserver by loc(
+        Locale.En to "I'm an observer",
+        Locale.Ru to "Наблюдать за игрой"
+    )
+
+    val notificationNote by loc(
+        Locale.En to "Allow notifications to be notified when it's your turn to move even if the browser tab is inactive",
+        Locale.Ru to "Уведомления подскажут, когда до вас дошла очередь ходить"
+    )
+
+    val startGame by loc(
+        Locale.En to "Start game!",
+        Locale.Ru to "Начать игру!"
+    )
+
+    val joinGame by loc(
+        Locale.En to "Join game!",
+        Locale.Ru to "Присоединиться к игре!"
+    )
+}
+
+private fun strings(locale: Locale) = WelcomeScreenStrings(locale)

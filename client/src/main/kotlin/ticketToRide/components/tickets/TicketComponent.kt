@@ -1,10 +1,13 @@
 package ticketToRide.components.tickets
 
-import com.ccfraser.muirwik.components.*
-import kotlinx.css.*
+import csstype.*
+import emotion.react.css
+import mui.material.*
+import mui.material.styles.TypographyVariant
+import mui.system.sx
 import react.*
-import react.dom.label
-import styled.*
+import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.label
 import ticketToRide.GameMap
 import ticketToRide.Locale
 import ticketToRide.Ticket
@@ -24,71 +27,64 @@ external interface TicketComponentProps : Props {
     var onMouseOut: () -> Unit
 }
 
-@JsExport
-@Suppress("NON_EXPORTABLE_TYPE")
-class TicketComponent : RComponent<TicketComponentProps, State>() {
+private val TicketComponent = FC<TicketComponentProps> { props ->
+    Paper {
+        elevation = if (props.highlighted) 6 else 2
+        onMouseOver = { props.onMouseOver() }
+        onMouseOut = { props.onMouseOut() }
+        sx {
+            borderRadius = 4.px
+            margin = 4.px
+            paddingLeft = 12.px
+            paddingRight = 12.px
+            backgroundColor = if (props.fulfilled && !props.finalScreen) NamedColor.lightgreen else NamedColor.linen
+        }
+        label {
+            div {
+                css {
+                    minHeight = 40.px
+                    display = Display.flex
+                    alignItems = AlignItems.center
+                    flexDirection = FlexDirection.row
+                    justifyContent = JustifyContent.spaceBetween
+                    if (props.checkbox != null) {
+                        cursor = Cursor.pointer
+                    }
+                }
+                Typography {
+                    variant = TypographyVariant.body2
 
-    override fun RBuilder.render() {
-        mPaper {
-            attrs {
-                elevation = if (props.highlighted) 6 else 2
-                onMouseOver = { props.onMouseOver() }
-                onMouseOut = { props.onMouseOut() }
-            }
-            css {
-                borderRadius = 4.px
-                margin = 4.px.toString()
-                paddingLeft = 12.px
-                paddingRight = 12.px
-                backgroundColor = if (props.fulfilled && !props.finalScreen) Color.lightGreen else Color.linen
-            }
-            label {
-                styledDiv {
-                    css {
-                        minHeight = 40.px
-                        display = Display.flex
-                        alignItems = Align.center
-                        flexDirection = FlexDirection.row
-                        justifyContent = JustifyContent.spaceBetween
-                        if (props.checkbox != null) {
-                            cursor = Cursor.pointer
+                    props.checkbox?.let {
+                        Checkbox {
+                            color = CheckboxColor.primary
+                            checked = it.checked
+                            onChange = { _, _ -> it.onChange() }
                         }
                     }
-                    mTypography(variant = MTypographyVariant.body2) {
-                        props.checkbox?.let {
-                            mCheckbox {
-                                attrs {
-                                    color = MOptionColor.primary
-                                    checked = it.checked
-                                    onChange = { _, _ -> it.onChange() }
-                                }
-                            }
-                        }
-                        val from = props.ticket.from.localize(props.locale, props.gameMap)
-                        val to = props.ticket.to.localize(props.locale, props.gameMap)
-                        +"$from - $to"
-                    }
-                    when {
-                        props.finalScreen && props.fulfilled ->
-                            pointsLabel("+${props.ticket.points}", Color.lightGreen)
-                        props.finalScreen && !props.fulfilled ->
-                            pointsLabel("-${props.ticket.points}", Color.lightCoral)
-                        else ->
-                            pointsLabel(props.ticket.points, Color.orange)
-                    }
+                    val from = props.ticket.from.localize(props.locale, props.gameMap)
+                    val to = props.ticket.to.localize(props.locale, props.gameMap)
+                    +"$from - $to"
+                }
+                when {
+                    props.finalScreen && props.fulfilled ->
+                        pointsLabel("+${props.ticket.points}", NamedColor.lightgreen)
+
+                    props.finalScreen && !props.fulfilled ->
+                        pointsLabel("-${props.ticket.points}", NamedColor.lightcoral)
+
+                    else ->
+                        pointsLabel(props.ticket.points, NamedColor.orange)
                 }
             }
         }
     }
 }
 
-fun RBuilder.ticket(ticket: Ticket, gameMap: GameMap, locale: Locale, builder: TicketComponentProps.() -> Unit) {
-    child(TicketComponent::class) {
-        attrs {
-            this.ticket = ticket
-            this.gameMap = gameMap
-            this.locale = locale
-            builder()
-        }
+fun ChildrenBuilder.ticket(ticket: Ticket, gameMap: GameMap, locale: Locale, builder: TicketComponentProps.() -> Unit) {
+    TicketComponent {
+        this.ticket = ticket
+        this.gameMap = gameMap
+        this.locale = locale
+        builder()
     }
 }

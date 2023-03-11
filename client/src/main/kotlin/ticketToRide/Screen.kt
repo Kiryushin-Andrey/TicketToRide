@@ -32,14 +32,12 @@ sealed class Screen {
 
     class GameOver(
         override val gameId: GameId,
-        val gameMap: GameMap,
         val observing: Boolean,
         val players: List<Pair<PlayerView, List<Ticket>>>
     ) : Screen(), InGame
 
     interface InGame {
         val gameId: GameId
-        val me: PlayerView?
-            get() = null
+        val me: PlayerView? get() = null
     }
 }
