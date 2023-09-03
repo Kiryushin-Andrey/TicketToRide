@@ -7,19 +7,23 @@ sealed class ConnectRequest {
 
     @Serializable
     class Start(
-        val playerName: PlayerName,
+        override val playerName: PlayerName,
         val playerColor: PlayerColor,
         val map: GameMap,
         val carsCount: Int,
         val calculateScoresInProcess: Boolean
-    ) : ConnectRequest()
+    ) : ConnectRequest(), AsPlayer
 
     @Serializable
-    class Join(val playerName: PlayerName, val playerColor: PlayerColor) : ConnectRequest()
+    class Join(override val playerName: PlayerName, val playerColor: PlayerColor) : ConnectRequest(), AsPlayer
+
+    interface AsPlayer {
+        val playerName: PlayerName
+    }
 
     @Serializable
     class Reconnect(val playerName: PlayerName) : ConnectRequest()
 
     @Serializable
-    object Observe : ConnectRequest()
+    data object Observe : ConnectRequest()
 }

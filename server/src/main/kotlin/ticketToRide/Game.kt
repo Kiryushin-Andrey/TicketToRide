@@ -1,13 +1,12 @@
 package ticketToRide
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import mu.KotlinLogging
 
 data class GameFlowValue(val state: GameState, val responses: List<SendResponse>)
 
-//@FlowPreview
 class Game private constructor(
     initialState: GameState,
     val map: GameMap,
@@ -186,6 +185,7 @@ class Game private constructor(
     }
 
     private fun GameState.forObservers(action: PlayerAction?) = GameStateForObserver(
+        startedBy,
         players.map { it.toPlayerView(true, isAway(it.name)) },
         if (endsOnPlayer == turn) players.map { it.ticketsOnHand } else emptyList(),
         openCards,
@@ -208,7 +208,7 @@ class Game private constructor(
     private suspend fun send(playerName: PlayerName, resp: Response) {
         players[playerName]?.let { player ->
             try {
-                player.send(resp, Response.serializer())
+                player.send(resp)
             } catch (e: CancellationException) {
                 leave(player)
                 process(LeaveGameRequest, player)
@@ -219,7 +219,7 @@ class Game private constructor(
     private suspend fun sendToAllPlayers(resp: (PlayerName) -> Response) = with(players.iterator()) {
         forEach {
             try {
-                it.value.send(resp(it.value.name), Response.serializer())
+                it.value.send(resp(it.value.name))
             } catch (e: CancellationException) {
                 remove()
                 process(LeaveGameRequest, it.value)
@@ -232,7 +232,7 @@ class Game private constructor(
             forEach {
                 if (it.key != playerName) {
                     try {
-                        it.value.send(resp(it.value.name), Response.serializer())
+                        it.value.send(resp(it.value.name))
                     } catch (e: CancellationException) {
                         remove()
                         process(LeaveGameRequest, it.value)
@@ -244,7 +244,7 @@ class Game private constructor(
     private suspend fun sendToAllObservers(resp: GameStateForObserver) = with(observers.iterator()) {
         forEach {
             try {
-                it.send(resp, GameStateForObserver.serializer())
+                it.send(resp)
             } catch (e: CancellationException) {
                 remove()
             }

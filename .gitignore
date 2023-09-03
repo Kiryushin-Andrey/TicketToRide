@@ -3,3 +3,5 @@
 build/
 coursier
 scip-java
+.jdeploy/
+.jdeploy-bundle/

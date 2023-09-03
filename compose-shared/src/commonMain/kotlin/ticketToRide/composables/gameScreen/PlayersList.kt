@@ -1,0 +1,71 @@
+package ticketToRide.composables.gameScreen
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import ticketToRide.PlayerView
+import ticketToRide.color
+
+@Composable
+fun PlayersList(players: List<PlayerView>, whoseTurnIx: Int, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        players.forEachIndexed { ix, player ->
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = player.color.color.copy(alpha = 0.3f)
+                ),
+                modifier = Modifier.padding(4.dp)
+                    .run {
+                        if (ix == whoseTurnIx) {
+                            border(2.dp, Color.Red, CardDefaults.shape)
+                        } else
+                            this
+                    }
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(player.name.value)
+                    Row {
+                        ArtifactOnHand(
+                            painterResource("icons/railway-car.png"),
+                            player.carsLeft,
+                            "Cars on hand"
+                        )
+                        ArtifactOnHand(
+                            painterResource("icons/station.png"),
+                            player.carsLeft,
+                            "Stations on hand"
+                        )
+                        ArtifactOnHand(
+                            painterResource("icons/cards-deck.png"),
+                            player.carsLeft,
+                            "Cards on hand"
+                        )
+                        ArtifactOnHand(
+                            painterResource("icons/ticket.png"),
+                            player.carsLeft,
+                            "Tickets on hand"
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtifactOnHand(painter: Painter, count: Int, name: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.padding(end = 24.dp)) {
+        Icon(painter, name, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(count.toString())
+    }
+}

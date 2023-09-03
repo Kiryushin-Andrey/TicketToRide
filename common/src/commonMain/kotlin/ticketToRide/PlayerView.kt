@@ -28,3 +28,12 @@ data class PlayerView(
     val placedStations: List<CityId> = emptyList(),
     val pendingTicketsChoice: PendingTicketsChoiceState
 ) : PlayerId
+
+fun List<PlayerView>.getNotUsedColors(playerName: String) =
+    find { it.name.value == playerName }
+        ?.let {
+            // if a player is reconnecting back into the game under the same name
+            // she should keep the same color as before
+            listOf(it.color)
+        }
+        ?: PlayerColor.entries.filter { c -> !map { it.color }.contains(c) }

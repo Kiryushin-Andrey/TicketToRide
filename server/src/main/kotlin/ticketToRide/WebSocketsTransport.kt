@@ -1,29 +1,32 @@
 package ticketToRide
 
-import io.ktor.application.*
-import io.ktor.http.cio.websocket.*
-import io.ktor.routing.*
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.serialization.*
+import io.ktor.serialization.kotlinx.*
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.serialization.SerializationStrategy
-import mu.KotlinLogging
+import ticketToRide.serialization.json
+import java.time.Duration
 
 private val logger = KotlinLogging.logger("Server")
 
 fun Application.webSocketGameTransport(
     path: String,
     rootScope: CoroutineScope,
-    formatter: Formatter,
     redis: RedisStorage?
 ) {
-    install(WebSockets)
+    install(WebSockets) {
+        pingPeriod = Duration.ofSeconds(10)
+        contentConverter = KotlinxWebsocketSerializationConverter(json)
+    }
     routing {
-        webSocket(path, formatter.type.name) {
+        webSocket(path) {
 
             val gameId = call.parameters["id"]?.let { GameId(it) }
                 ?: throw Error("No game id specified for WebSocket connection")
@@ -41,37 +44,27 @@ fun Application.webSocketGameTransport(
                 }
             }
 
-            // handle ping requests with pong responses
-            suspend fun WebSocketSession.handlePing(msg: Frame): Boolean {
-                return if ((msg as? Frame.Text)?.readText() != Request.Ping) true
-                else {
-                    send(Response.Pong); false
-                }
-            }
-
             // initial handshake
-            when (val outcome = establishConnection(gameId, rootScope, formatter, redis)) {
+            when (val outcome = establishConnection(gameId, rootScope, redis)) {
 
                 // if handshake resulted in game launch,
                 // then start consuming incoming requests from the connected client as a flow
                 // flow completion means the underlying websocket connection has been closed
                 is ConnectionOutcome.PlayerConnected -> outcome.apply {
-                    incoming.consumeAsFlow()
-                        .filter { handlePing(it) }
-                        .collect { msg ->
-                            kotlin.runCatching { formatter.deserialize(msg, Request.serializer()) }.fold(
-                                onSuccess = { req ->
-                                    game.process(req, connection)
-                                    if (req is LeaveGameRequest)
-                                        close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
-                                },
-                                onFailure = { e ->
-                                    // request deserialization error - kick out the client, something is wrong with it
-                                    logger.warn(e) { "Failed to deserialize request: $msg" }
-                                    close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
-                                    game.process(LeaveGameRequest, connection)
-                                })
-                        }
+                    incoming.consumeAsFlow().collect { msg ->
+                        kotlin.runCatching { converter!!.deserialize<Request>(msg) }.fold(
+                            onSuccess = { req ->
+                                game.process(req, connection)
+                                if (req is LeaveGameRequest)
+                                    close(CloseReason(CloseReason.Codes.NORMAL, "Exit game"))
+                            },
+                            onFailure = { e ->
+                                // request deserialization error - kick out the client, something is wrong with it
+                                logger.warn(e) { "Failed to deserialize request: $msg" }
+                                close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Bad request"))
+                                game.process(LeaveGameRequest, connection)
+                            })
+                    }
                     logger.info { "$connection disconnected" }
                     game.leave(connection)
                     endIfNoOneLeft(game)
@@ -79,7 +72,8 @@ fun Application.webSocketGameTransport(
 
                 // this is observing connection, just send out all game state updates to it, no requests expected
                 is ConnectionOutcome.ObserverConnected -> outcome.apply {
-                    incoming.consumeAsFlow().collect { handlePing(it) }
+                    // suspend until connection is closed
+                    incoming.consumeAsFlow().collect {}
                     game.leave(connection)
                     endIfNoOneLeft(game)
                 }
@@ -93,71 +87,66 @@ fun Application.webSocketGameTransport(
 }
 
 // connection handshake
-private suspend fun WebSocketSession.establishConnection(
+private suspend fun WebSocketServerSession.establishConnection(
     gameId: GameId,
     rootScope: CoroutineScope,
-    formatter: Formatter,
     redis: RedisStorage?
 ): ConnectionOutcome {
-    val outcome = when (val req = formatter.deserialize(incoming.receive(), ConnectRequest.serializer())) {
+    val outcome = when (val req = converter!!.deserialize<ConnectRequest>(incoming.receive())) {
         is ConnectRequest.Start ->
             if (!gameExists(gameId, redis)) {
-                val initialState = GameState.initial(gameId, req.carsCount, req.calculateScoresInProcess, req.map)
+                val initialState = GameState.initial(gameId, req.playerName.value, req.carsCount, req.calculateScoresInProcess, req.map)
                 val game = Game.start(rootScope, initialState, req.map, redis)
                 games[gameId] = game
                 redis?.saveMap(gameId, req.map)
-                val conn = Connection.Player(req.playerName, this, formatter)
+                val conn = ClientConnection.Player(req.playerName, this)
                 game.joinPlayer(conn, req.playerColor)
             } else
                 ConnectionOutcome.Failure(ConnectResponse.Failure.GameIdTaken)
 
         is ConnectRequest.Join ->
             loadGame(gameId, redis) {
-                val conn = Connection.Player(req.playerName, this, formatter)
+                val conn = ClientConnection.Player(req.playerName, this)
                 it.joinPlayer(conn, req.playerColor)
             }
 
         is ConnectRequest.Reconnect ->
             loadGame(gameId, redis) {
-                it.reconnectPlayer(Connection.Player(req.playerName, this, formatter))
+                it.reconnectPlayer(ClientConnection.Player(req.playerName, this))
             }
 
         is ConnectRequest.Observe ->
             loadGame(gameId, redis) {
-                val conn = Connection.Observer(this, formatter)
+                val conn = ClientConnection.Observer(this)
                 it.joinObserver(conn)
                 val response = ConnectResponse.ObserverConnected(gameId, it.map, it.currentStateForObservers)
                 ConnectionOutcome.ObserverConnected(it, conn, response)
             }
     }
 
-    formatter.send(this, outcome.response, ConnectResponse.serializer())
+    sendSerialized(outcome.response)
 
     return outcome
 }
 
-private sealed class Connection(
-    private val webSocket: WebSocketSession,
-    private val formatter: Formatter
-) : ClientConnection {
-    override suspend fun <T> send(msg: T, serializer: SerializationStrategy<T>) =
-        formatter.send(webSocket, msg, serializer)
+sealed class ClientConnection(val webSocket: WebSocketServerSession) {
+    suspend inline fun <reified T> send(msg: T) =
+        webSocket.sendSerialized(msg)
 
-    override suspend fun isConnected() = try {
+    suspend fun isConnected() = try {
         webSocket.send(Response.Pong); true
     } catch (e: CancellationException) {
         false
     }
 
-    class Player(override val name: PlayerName, webSocket: WebSocketSession, formatter: Formatter) :
-        Connection(webSocket, formatter),
-        PlayerConnection {
+    class Player(val name: PlayerName, webSocket: WebSocketServerSession) : ClientConnection(webSocket) {
         override fun toString() = name.value
     }
 
-    class Observer(webSocket: WebSocketSession, formatter: Formatter) :
-        Connection(webSocket, formatter),
-        ObserverConnection {
+    class Observer(webSocket: WebSocketServerSession) : ClientConnection(webSocket) {
         override fun toString() = "anonymous observer"
     }
 }
+
+typealias PlayerConnection = ClientConnection.Player
+typealias ObserverConnection = ClientConnection.Observer

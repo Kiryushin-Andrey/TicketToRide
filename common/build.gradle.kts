@@ -22,10 +22,10 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$serializationVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.4")
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.serialization.protobuf)
+                implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5")
             }
         }
         val jvmTest by getting {
@@ -48,5 +48,4 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
     }
-
 }
