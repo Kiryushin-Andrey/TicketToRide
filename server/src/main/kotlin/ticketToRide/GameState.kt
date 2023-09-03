@@ -40,6 +40,7 @@ data class Player(
 @Serializable
 data class GameState(
     val id: GameId,
+    val startedBy: String,
     val players: List<Player> = emptyList(),
     val openCards: List<Card> = emptyList(),
     val turn: Int,
@@ -48,15 +49,16 @@ data class GameState(
     val calculateScoresInProcess: Boolean
 ) {
     companion object {
-        fun initial(id: GameId, initialCarsCount: Int, calculateScoresInProcess: Boolean, map: GameMap) =
+        fun initial(id: GameId, startedBy: String, initialCarsCount: Int, calculateScoresInProcess: Boolean, map: GameMap) =
             GameState(
-                id,
-                emptyList(),
-                (1..OpenCardsCount).map { Card.random(map) },
-                0,
-                null,
-                initialCarsCount,
-                calculateScoresInProcess
+                id = id,
+                startedBy = startedBy,
+                players = emptyList(),
+                openCards = (1..OpenCardsCount).map { Card.random(map) },
+                turn = 0,
+                endsOnPlayer = null,
+                initialCarsCount = initialCarsCount,
+                calculateScoresInProcess = calculateScoresInProcess
             )
     }
 

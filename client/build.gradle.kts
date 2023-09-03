@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
-    kotlin("js")
+    kotlin("multiplatform")
 }
 
 group = "ticket-to-ride"
@@ -17,16 +17,6 @@ val kotlinWrappersVersion = "1.0.0-pre.508"
 fun kotlinw(target: String): String =
     "org.jetbrains.kotlin-wrappers:kotlin-$target"
 
-dependencies {
-    implementation(enforcedPlatform(kotlinw("wrappers-bom:$kotlinWrappersVersion")))
-    implementation(kotlinw("react"))
-    implementation(kotlinw("react-dom"))
-    implementation(kotlinw("extensions"))
-    implementation(kotlinw("mui"))
-    implementation(kotlinw("mui-icons"))
-    implementation(kotlinw("emotion"))
-}
-
 kotlin {
     js(IR) {
         browser()
@@ -35,9 +25,22 @@ kotlin {
     }
 
     sourceSets {
-        val main by getting {
+        val jsMain by getting {
             dependencies {
                 implementation(project(":common"))
+                implementation(project(":client-shared"))
+
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.websockets)
+
+                implementation(enforcedPlatform(kotlinw("wrappers-bom:$kotlinWrappersVersion")))
+                implementation(kotlinw("react"))
+                implementation(kotlinw("react-dom"))
+                implementation(kotlinw("extensions"))
+                implementation(kotlinw("mui"))
+                implementation(kotlinw("mui-icons"))
+                implementation(kotlinw("emotion"))
+
                 implementation(npm("pigeon-maps", "0.19.7"))
                 implementation(npm("fscreen", "1.2.0"))
                 implementation(npm("@hookstate/core", "4.0.0"))
@@ -53,17 +56,21 @@ kotlin {
 }
 
 tasks {
-    val devJs by named<KotlinWebpack>("browserDevelopmentWebpack")
-    val prodJs by named<KotlinWebpack>("browserProductionWebpack")
+    val devJs by named<KotlinWebpack>("jsBrowserDevelopmentWebpack")
+    val prodJs by named<KotlinWebpack>("jsBrowserProductionWebpack")
+
+    val jsProductionExecutableCompileSync by named("jsProductionExecutableCompileSync") {
+        dependsOn(devJs)
+    }
 
     val generatedJs by configurations.creating {
         isCanBeConsumed = true
         isCanBeResolved = false
-        extendsFrom(configurations["implementation"], configurations["runtimeOnly"])
+        extendsFrom(configurations["jsMainImplementation"], configurations["jsMainRuntimeOnly"])
     }
 
     artifacts {
-        add("generatedJs", devJs.outputFile) {
+        add("generatedJs", devJs.mainOutputFile) {
             builtBy(devJs)
         }
     }

@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class GameStateForObserver(
+    val gameStartedBy: String,
     val players: List<PlayerView> = emptyList(),
     val tickets: List<List<Ticket>> = emptyList(),
     val openCards: List<Card> = emptyList(),

@@ -1,14 +1,17 @@
 package ticketToRide
 
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.html.*
 import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.serialization.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.html.*
+import io.ktor.server.http.content.*
+import io.ktor.server.plugins.cachingheaders.*
+import io.ktor.server.plugins.compression.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -16,6 +19,7 @@ import java.net.URLDecoder
 import java.nio.file.*
 import kotlin.io.path.name
 
+import ticketToRide.serialization.json
 
 val games = mutableMapOf<GameId, Game>()
 
@@ -23,6 +27,7 @@ private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
+@Suppress("unused")
 fun Application.module() {
     val redis = environment.config.propertyOrNull("redis.host")?.let {
         RedisStorage(
@@ -31,8 +36,6 @@ fun Application.module() {
             environment.config.propertyOrNull("redis.password")?.getString()
         )
     }
-    val useProtobuf = environment.config.propertyOrNull("use-protobuf") != null
-    val formatter = if (useProtobuf) ProtobufFormatter() else JsonFormatter()
 
     install(Compression) {
         gzip {
@@ -40,11 +43,11 @@ fun Application.module() {
         }
     }
     install(ContentNegotiation) {
-        json(ticketToRide.serialization.json)
+        json(json)
     }
     install(CachingHeaders) {
-        options { outgoingContent ->
-            outgoingContent.contentType?.withoutParameters()?.let {
+        options { _, content ->
+            content.contentType?.withoutParameters()?.let {
                 if (it == ContentType.Application.JavaScript || it.contentType == ContentType.Image.Any.contentType)
                     CachingOptions(
                         CacheControl.MaxAge(
@@ -62,10 +65,10 @@ fun Application.module() {
             resource("client.js")
             resource("favicon.ico")
         }
-        static("icons") { resources("icons") }
-        static("cards") { resources("cards") }
-        static("images") { resources("images") }
-        static(".well-known") { resources("wellknown") }
+        staticResources("/icons", "icons")
+        staticResources("/cards", "cards")
+        staticResources("/images", "images")
+        staticResources("/.well-known", "wellknown")
 
         get("/") {
             call.respondHtml { indexHtml() }
@@ -73,6 +76,17 @@ fun Application.module() {
 
         get("/game/{id}") {
             call.respondHtml { indexHtml() }
+        }
+        get("/game-exists/{id}") {
+            val gameId = call.parameters["id"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, "id is required")
+                return@get
+            }
+            val game = games[GameId(gameId)] ?: run {
+                call.respond(HttpStatusCode.NotFound, "Game not found")
+                return@get
+            }
+            call.respond(HttpStatusCode.OK, game.currentState.startedBy)
         }
 
         get("/maps/{...}") {
@@ -104,7 +118,7 @@ fun Application.module() {
             }
         }
     }
-    webSocketGameTransport("game/{id}/ws", rootScope, formatter, redis)
+    webSocketGameTransport("game/{id}/ws", rootScope, redis)
 }
 
 val mapsTree by lazy {
