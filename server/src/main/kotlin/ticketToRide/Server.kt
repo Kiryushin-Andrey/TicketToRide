@@ -60,6 +60,7 @@ fun Application.module() {
         static("icons") { resources("icons") }
         static("cards") { resources("cards") }
         static("images") { resources("images") }
+        static(".well-known") { resources("wellknown") }
 
         get("/") {
             call.respondHtml { indexHtml() }

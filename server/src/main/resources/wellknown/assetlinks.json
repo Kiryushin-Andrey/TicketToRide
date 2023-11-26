@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "org.akir.ticketToRide",
+    "sha256_cert_fingerprints":
+    ["DE:0B:21:9F:19:BB:6E:5A:5B:61:27:75:F0:F6:AC:86:5F:C0:9E:5D:3E:98:57:37:E5:5A:77:82:59:06:C1:D3"]
+  }
+}]
