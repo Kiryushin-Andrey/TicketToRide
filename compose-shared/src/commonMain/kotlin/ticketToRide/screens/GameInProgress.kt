@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ticketToRide.AppState
-import ticketToRide.PlayerState
 import ticketToRide.Screen
 import ticketToRide.WindowSizeClass
 import ticketToRide.composables.gameScreen.*
@@ -87,6 +86,11 @@ private fun GameInProgressScreenLarge(vm: GameInProgressVM, modifier: Modifier =
 
 @Composable
 private fun GameInProgressScreenCompact(vm: GameInProgressVM, modifier: Modifier = Modifier) {
+    val str = remember(vm.locale) { GameScreenStrings(vm.locale) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        GameMap(modifier = Modifier.fillMaxSize())
+
+    }
 }
 
 @Composable
