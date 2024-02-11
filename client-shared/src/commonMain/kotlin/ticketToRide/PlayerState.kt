@@ -6,41 +6,19 @@ sealed class PlayerState {
 
     companion object {
         fun initial(gameMap: GameMap, gameState: GameStateView) =
-            gameState.myPendingTicketsChoice
-                ?.run {
-                    ChoosingTickets(tickets.map { TicketChoice(it) }, minCountToKeep)
-                }
-                ?: if (gameState.myTurn) Blank(gameMap, gameState)
-                else None
+            when {
+                gameState.myPendingTicketsChoice != null ->
+                    ChoosingTickets
+                gameState.myTurn ->
+                    Blank(gameMap, gameState)
+                else ->
+                    None
+            }
     }
 
     data object None : PlayerState()
 
-    data class TicketChoice(val ticket: Ticket, val keep: Boolean = false)
-
-    class ChoosingTickets internal constructor(
-        val items: List<TicketChoice>,
-        val minCountToKeep: Int
-    ) : PlayerState() {
-
-        fun toggleTicket(ticket: Ticket) =
-            ChoosingTickets(
-                items.map { if (it.ticket == ticket) it.copy(keep = !it.keep) else it },
-                minCountToKeep
-            )
-
-        val isValid
-            get() = items.count { it.keep } >= minCountToKeep
-
-        fun confirm() =
-            if (isValid) {
-                sendToServer(ConfirmTicketsChoiceRequest(ticketsToKeep))
-                None
-            } else this
-
-        private val ticketsToKeep
-            get() = items.filter { it.keep }.map { it.ticket }
-    }
+    data object ChoosingTickets : PlayerState()
 
     sealed class MyTurn(
         internal val gameMap: GameMap,
