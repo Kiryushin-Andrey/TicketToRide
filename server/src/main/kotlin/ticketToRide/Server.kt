@@ -13,6 +13,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import ticketToRide.common.MR
 import ticketToRide.serialization.json
 
 val games = mutableMapOf<GameId, Game>()
@@ -56,7 +57,6 @@ fun Application.module() {
         static {
             resource("client.js")
             resource("favicon.ico")
-            resource("default.map")
         }
         staticResources("/icons", "icons")
         staticResources("/cards", "cards")
@@ -65,6 +65,13 @@ fun Application.module() {
 
         get("/") {
             call.respondHtml { indexHtml() }
+        }
+        get("/default.map") {
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, "default.map").toString()
+            )
+            call.respondText { MR.files.defaultMap.readText() }
         }
         get("/game/{id}") {
             call.respondHtml { indexHtml() }

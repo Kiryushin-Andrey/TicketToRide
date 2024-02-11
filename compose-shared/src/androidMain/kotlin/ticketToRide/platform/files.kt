@@ -32,7 +32,7 @@ actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) 
 }
 
 @Composable
-actual fun FileSaveDialog(getMapFileContent: suspend () -> ByteArray, close: () -> Unit) {
+actual fun FileSaveDialog(content: String, close: () -> Unit) {
     val contentResolver = LocalContext.current.contentResolver
     val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("*/*")) { uri ->
@@ -41,7 +41,7 @@ actual fun FileSaveDialog(getMapFileContent: suspend () -> ByteArray, close: () 
                 val outputStream = contentResolver.openOutputStream(uri)
                 if (outputStream != null) {
                     try {
-                        outputStream.write(getMapFileContent())
+                        outputStream.write(content.toByteArray(Charsets.UTF_8))
                     } finally {
                         outputStream.close()
                     }

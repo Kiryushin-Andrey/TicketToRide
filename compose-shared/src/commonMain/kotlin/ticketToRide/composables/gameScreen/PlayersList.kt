@@ -10,10 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import dev.icerock.moko.resources.compose.painterResource
 import ticketToRide.PlayerView
 import ticketToRide.color
+import ticketToRide.MR
 
 @Composable
 fun PlayersList(players: List<PlayerView>, whoseTurnIx: Int, modifier: Modifier = Modifier) {
@@ -35,22 +36,22 @@ fun PlayersList(players: List<PlayerView>, whoseTurnIx: Int, modifier: Modifier 
                     Text(player.name.value)
                     Row {
                         ArtifactOnHand(
-                            painterResource("icons/railway-car.png"),
+                            painterResource(MR.images.railwayCar),
                             player.carsLeft,
                             "Cars on hand"
                         )
                         ArtifactOnHand(
-                            painterResource("icons/station.png"),
+                            painterResource(MR.images.station),
                             player.carsLeft,
                             "Stations on hand"
                         )
                         ArtifactOnHand(
-                            painterResource("icons/cards-deck.png"),
+                            painterResource(MR.images.cardsDeck),
                             player.carsLeft,
                             "Cards on hand"
                         )
                         ArtifactOnHand(
-                            painterResource("icons/ticket.png"),
+                            painterResource(MR.images.ticket),
                             player.carsLeft,
                             "Tickets on hand"
                         )

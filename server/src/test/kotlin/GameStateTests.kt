@@ -3,7 +3,7 @@ package ticketToRide
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.*
 
-val map = java.io.File("../common/src/commonMain/resources/default.map").readText().let {
+val map = java.io.File("../common/src/commonMain/resources/MR/files/defaultMap").readText().let {
     (GameMap.parse(it) as Try.Success).value
 }
 
@@ -64,10 +64,11 @@ class GameStateTests : StringSpec({
 fun createGameState(playersCount: Int) =
     GameState(
         GameId("gameId"),
+        "1",
         (1..playersCount).map {
             Player(
                 PlayerName(it.toString()),
-                PlayerColor.values().random(),
+                PlayerColor.entries.toTypedArray().random(),
                 null,
                 45,
                 3,

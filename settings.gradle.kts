@@ -8,6 +8,7 @@ pluginManagement {
         val kotlinVersion = extra["kotlin.version"] as String
         val agpVersion = extra["agp.version"] as String
         val composeVersion = extra["compose.version"] as String
+        val mokoVersion = extra["moko.version"] as String
 
         kotlin("jvm") version kotlinVersion
         kotlin("multiplatform") version kotlinVersion
@@ -16,8 +17,9 @@ pluginManagement {
         id("com.android.base") version agpVersion
         id("com.android.application") version agpVersion
         id("com.android.library") version agpVersion
-        id("org.jetbrains.compose").version(composeVersion)
+        id("org.jetbrains.compose") version composeVersion
         id("com.codingfeline.buildkonfig") version "0.14.0"
+        id("dev.icerock.mobile.multiplatform-resources") version mokoVersion
     }
 }
 
@@ -27,6 +29,7 @@ dependencyResolutionManagement {
             version("kotlinx.serialization", "1.6.0")
             version("kotlinx.coroutines", "1.7.3")
             version("ktor", "2.3.3")
+            version("moko", extra["moko.version"] as String)
 
             library("kotlinx.coroutines.core", "org.jetbrains.kotlinx", "kotlinx-coroutines-core").versionRef("kotlinx.coroutines")
             library("kotlinx.serialization.core", "org.jetbrains.kotlinx", "kotlinx-serialization-core").versionRef("kotlinx.serialization")
@@ -49,6 +52,9 @@ dependencyResolutionManagement {
 
             library("oshai.kotlin.logging", "io.github.oshai", "kotlin-logging-jvm").version("6.0.2")
             library("slf4j", "org.slf4j", "slf4j-simple").version("2.0.11")
+
+            library("moko.resources", "dev.icerock.moko", "resources").versionRef("moko")
+            library("moko.resources.compose", "dev.icerock.moko", "resources-compose").versionRef("moko")
         }
     }
 }

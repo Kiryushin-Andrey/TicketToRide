@@ -25,7 +25,7 @@ external interface AppProps: Props {
 
 private const val ERROR_MESSAGE_TIMEOUT_SECS = 4
 
-val defaultMap = (kotlinext.js.require("default.map").default as String)
+val defaultMap = (kotlinext.js.require("defaultMap.map").default as String)
     .let { GameMap.parse(it) as Try.Success }
     .value
 

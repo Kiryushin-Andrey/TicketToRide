@@ -21,13 +21,13 @@ actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) 
 }
 
 @Composable
-actual fun FileSaveDialog(getMapFileContent: suspend () -> ByteArray, close: () -> Unit) {
-    LaunchedEffect(getMapFileContent, close) {
+actual fun FileSaveDialog(content: String, close: () -> Unit) {
+    LaunchedEffect(close) {
         FileDialog(ComposeWindow(), "Download game map", FileDialog.SAVE).apply {
             file = "default.map"
             isVisible = true
             if (file != null) {
-                Files.write(Path.of(directory, file), getMapFileContent())
+                Files.writeString(Path.of(directory, file), content)
             }
             close()
         }
