@@ -6,16 +6,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.*
-import org.jetbrains.compose.resources.*
+import dev.icerock.moko.resources.compose.painterResource
+import dev.icerock.moko.resources.compose.readTextAsState
 import ticketToRide.*
 import ticketToRide.platform.*
 
-
 @Composable
-@OptIn(ExperimentalResourceApi::class)
 fun NewGameSettings(vm: NewGameVM) {
     var saveFileDialogVisible by remember { mutableStateOf(false) }
     var uploadFileDialogVisible by remember { mutableStateOf(false) }
+    val defaultMap by ticketToRide.common.MR.files.defaultMap.readTextAsState()
 
     Column {
         OutlinedTextField(
@@ -56,7 +56,7 @@ fun NewGameSettings(vm: NewGameVM) {
                 }
 //                if (LocalWindowSizeClass.current == WindowSizeClass.Large) {
                     Icon(
-                        painter = painterResource("icons/download.xml"),
+                        painter = painterResource(MR.images.download),
                         contentDescription = "Download",
                         modifier = Modifier
                             .padding(start = 8.dp)
@@ -69,7 +69,7 @@ fun NewGameSettings(vm: NewGameVM) {
                 onClick = { uploadFileDialogVisible = true },
             ) {
                 Icon(
-                    painter = painterResource("icons/upload.xml"),
+                    painter = painterResource(MR.images.upload),
                     contentDescription = "Upload my map"
                 )
                 if (LocalWindowSizeClass.current == WindowSizeClass.Large) {
@@ -83,8 +83,8 @@ fun NewGameSettings(vm: NewGameVM) {
         )
     }
 
-    if (saveFileDialogVisible) {
-        FileSaveDialog(getMapFileContent = { resource("default.map").readBytes() }) {
+    if (saveFileDialogVisible && defaultMap != null) {
+        FileSaveDialog(defaultMap!!) {
             saveFileDialogVisible = false
         }
     }

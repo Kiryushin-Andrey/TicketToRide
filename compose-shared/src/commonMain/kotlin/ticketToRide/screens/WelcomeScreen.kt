@@ -2,14 +2,18 @@ package ticketToRide.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
+import dev.icerock.moko.resources.compose.painterResource
 import ticketToRide.*
 import ticketToRide.composables.welcomeScreen.*
 import ticketToRide.localization.AppStrings
@@ -99,11 +103,10 @@ fun ShowGameIdScreen(serverHost: String, appState: AppState, screenState: Screen
 }
 
 @Composable
-@OptIn(ExperimentalResourceApi::class)
 private fun WelcomeScreen(appState: AppState, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(modifier.fillMaxSize()) {
         Image(
-            painter = painterResource("background.jpg"),
+            painter = painterResource(MR.images.background),
             contentDescription = "Background",
             Modifier.fillMaxSize(),
             Alignment.Center,

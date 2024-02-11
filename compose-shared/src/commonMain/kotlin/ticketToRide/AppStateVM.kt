@@ -3,16 +3,8 @@ package ticketToRide
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.resource
-import java.io.Serializable
-import java.nio.charset.Charset
-import java.util.logging.Logger
 
-class AppStateVM(rootScope: CoroutineScope, override val serverHost: String) : AppState {
+class AppStateVM(override val serverHost: String, private val defaultMap: String) : AppState {
 
     private val state = object {
         val locale = mutableStateOf(Locale.En)
@@ -20,19 +12,8 @@ class AppStateVM(rootScope: CoroutineScope, override val serverHost: String) : A
         val errorMessage = mutableStateOf("")
         val showErrorMessage = mutableStateOf(false)
         val screen = mutableStateOf<Screen>(Screen.Welcome)
-        val map = mutableStateOf<GameMap?>(null)
+        val map = mutableStateOf((GameMap.parse(defaultMap) as Try.Success).value)
         val chatMessages = mutableStateListOf<Response.ChatMessage>()
-    }
-
-    @OptIn(ExperimentalResourceApi::class)
-    private val loadDefaultMapJob = rootScope.async {
-        resource("default.map").readBytes().toString(Charset.defaultCharset())
-            .let { (GameMap.parse(it) as Try.Success).value }
-            .also {
-                if (state.map.value == null) {
-                    state.map.value = it
-                }
-            }
     }
 
     override val screen: Screen
@@ -41,9 +22,8 @@ class AppStateVM(rootScope: CoroutineScope, override val serverHost: String) : A
     override val locale: Locale
         get() = state.locale.value
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override val map: GameMap
-        get() = state.map.value ?: loadDefaultMapJob.getCompleted()
+        get() = state.map.value
 
     override val chatMessages: Collection<Response.ChatMessage>
         get() = state.chatMessages

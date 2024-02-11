@@ -18,7 +18,6 @@ import kotlinx.coroutines.Job
 import java.net.URLDecoder
 import java.nio.file.*
 import kotlin.io.path.name
-
 import ticketToRide.serialization.json
 
 val games = mutableMapOf<GameId, Game>()
@@ -73,7 +72,6 @@ fun Application.module() {
         get("/") {
             call.respondHtml { indexHtml() }
         }
-
         get("/game/{id}") {
             call.respondHtml { indexHtml() }
         }
