@@ -40,5 +40,5 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(project(":client-shared"))
     implementation(project(":compose-shared"))
-    implementation("androidx.compose.ui:ui-tooling-preview-android:1.5.4")
+    implementation("androidx.compose.ui:ui-tooling-preview-android:1.6.3")
 }

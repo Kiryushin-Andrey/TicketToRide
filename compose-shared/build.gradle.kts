@@ -33,6 +33,9 @@ kotlin {
                 api("androidx.core:core-ktx:1.12.0")
 
                 implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
+                implementation("androidx.compose.ui:ui-tooling:1.6.3")
+                implementation("androidx.compose.ui:ui-tooling-preview:1.6.3")
             }
         }
 
@@ -63,4 +66,7 @@ android {
     defaultConfig {
         minSdk = 28
     }
+}
+dependencies {
+    implementation("androidx.compose.material3:material3-android:1.2.1")
 }

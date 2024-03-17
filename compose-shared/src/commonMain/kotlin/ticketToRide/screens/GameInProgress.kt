@@ -1,19 +1,44 @@
 package ticketToRide.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.icerock.moko.resources.ImageResource
+import dev.icerock.moko.resources.compose.painterResource
 import ticketToRide.AppState
+import ticketToRide.MR
 import ticketToRide.Screen
 import ticketToRide.WindowSizeClass
-import ticketToRide.composables.gameScreen.*
+import ticketToRide.composables.gameScreen.CardsDeck
+import ticketToRide.composables.gameScreen.CardsOnHand
+import ticketToRide.composables.gameScreen.GameMap
+import ticketToRide.composables.gameScreen.PlayersList
+import ticketToRide.composables.gameScreen.TicketsOnHand
 import ticketToRide.localization.GameScreenStrings
 
 @Composable
@@ -84,18 +109,95 @@ private fun GameInProgressScreenLarge(vm: GameInProgressVM, modifier: Modifier =
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GameInProgressScreenCompact(vm: GameInProgressVM, modifier: Modifier = Modifier) {
     val str = remember(vm.locale) { GameScreenStrings(vm.locale) }
-    Box(modifier = Modifier.fillMaxSize()) {
-        GameMap(modifier = Modifier.fillMaxSize())
+    val selectedNavItem = remember { mutableStateOf<SelectedNavItem?>(null) }
 
+    Box(modifier = modifier.background(Color.White).fillMaxSize()) {
+        GameMap(modifier = Modifier.fillMaxSize())
+        NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
+            navBarItem(SelectedNavItem.Players, selectedNavItem)
+            navBarItem(SelectedNavItem.MyHand, selectedNavItem)
+        }
+    }
+
+    if (selectedNavItem.value != null) {
+        val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+        ModalBottomSheet(
+            onDismissRequest = {
+                selectedNavItem.value = null
+            }
+        ) {
+            Column(modifier = Modifier.padding(bottom = bottomPadding)) {
+                when (selectedNavItem.value) {
+                    SelectedNavItem.Players ->
+                        PlayersList(
+                            vm.gameState.players,
+                            vm.gameState.turn,
+                            modifier = Modifier.padding(8.dp).fillMaxWidth()
+                        )
+
+                    SelectedNavItem.MyHand ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            TicketsOnHand(vm.gameState, modifier = Modifier.fillMaxWidth())
+                            CardsOnHand(
+                                vm.gameState.myCards,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                    else -> {}
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun GameStatusMessage(message: String, color: Color) {
-    Box(modifier = Modifier.background(color).fillMaxWidth()) {
+private fun RowScope.navBarItem(item: SelectedNavItem, selectedNavItem: MutableState<SelectedNavItem?>) {
+    NavigationBarItem(
+        selected = selectedNavItem.value == item,
+        onClick = {
+            selectedNavItem.value = item.takeUnless { selectedNavItem.value == item }
+        },
+        icon = {
+            Icon(
+                painterResource(item.icon),
+                contentDescription = item.contentDescription,
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        alwaysShowLabel = true,
+        label = { Text(item.title) },
+    )
+}
+
+private enum class SelectedNavItem {
+    Players {
+        override val title = "Players"
+        override val contentDescription = "Player Rankings"
+        override val icon = MR.images.ranking
+    },
+    MyHand {
+        override val title = "My Hand"
+        override val contentDescription = "My Hand"
+        override val icon = MR.images.myHand
+    };
+
+    abstract val title: String
+    abstract val contentDescription: String
+    abstract val icon: ImageResource
+}
+
+@Composable
+private fun GameStatusMessage(message: String, color: Color, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.background(color).fillMaxWidth()) {
         Text(
             message,
             style = MaterialTheme.typography.titleMedium,
