@@ -52,6 +52,6 @@ actual fun FileSaveDialog(content: String, close: () -> Unit) {
     }
     
     LaunchedEffect(launcher) {
-        launcher.launch("default.map")
+        launcher.launch("default_map")
     }
 }
