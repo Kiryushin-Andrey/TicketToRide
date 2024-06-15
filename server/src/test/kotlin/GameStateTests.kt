@@ -3,7 +3,7 @@ package ticketToRide
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.*
 
-val map = java.io.File("../common/src/commonMain/resources/default.map").readText().let {
+val map = java.io.File("../maps/default.map").readText().let {
     (GameMap.parse(it) as Try.Success).value
 }
 

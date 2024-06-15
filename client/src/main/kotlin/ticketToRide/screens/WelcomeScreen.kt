@@ -22,7 +22,7 @@ import ticketToRide.components.welcomeScreen.*
 external interface WelcomeScreenProps : Props {
     var locale: Locale
     var onLocaleChanged: (Locale) -> Unit
-    var onStartGame: (GameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
+    var onStartGame: (ConnectRequest.StartGameMap, PlayerName, PlayerColor, Int, Boolean) -> Unit
     var onJoinGame: (GameId, PlayerName, PlayerColor) -> Unit
     var onJoinAsObserver: (GameId) -> Unit
     var onReconnect: (GameId, PlayerName) -> Unit
@@ -37,7 +37,7 @@ data class WelcomeScreenState(
     val carsNumber: Int = 45,
     val calculateScoresInProcess: Boolean = false,
     val joinAsObserver: Boolean = false,
-    val customMap: CustomGameMap? = null,
+    val map: ConnectRequest.StartGameMap? = ConnectRequest.StartGameMap.BuiltIn(listOf("default")),
     val gameMapParseErrors: CustomGameMapParseErrors? = null
 )
 
@@ -105,6 +105,7 @@ val WelcomeScreen = FC<WelcomeScreenProps> { props ->
             if (!startingNewGame) {
                 joinAsObserver(state, setState, str)
             }
+            chooseGameMap(state, setState, str)
             if (state.showSettings) {
                 settings(state, setState, startingNewGame, str)
             }
@@ -246,20 +247,16 @@ private fun ChildrenBuilder.settings(state: WelcomeScreenState, setState: StateS
         if (startingNewGame) {
             initialCarsOnHand(state, setState, str)
             calculateScoresInProcess(state, setState, str)
-            chooseGameMap(state, setState, str)
         }
     }
 }
 
 private fun ChildrenBuilder.chooseGameMap(state: WelcomeScreenState, setState: StateSetter<WelcomeScreenState>, str: WelcomeScreenStrings) {
-    div {
-        css { marginTop = 15.px }
-        ChooseGameMapComponent {
-            locale = str.locale
-            customMap = state.customMap
-            onCustomMapChanged = { map -> setState(state.copy(customMap = map)) }
-            onShowParseErrors = { err -> setState(state.copy(gameMapParseErrors = err)) }
-        }
+    ChooseGameMapComponent {
+        locale = str.locale
+        map = state.map
+        onMapChanged = { map -> setState(state.copy(map = map)) }
+        onShowParseErrors = { err -> setState(state.copy(gameMapParseErrors = err)) }
     }
 }
 
@@ -327,17 +324,16 @@ private fun proceed(gameId: GameId?, props: WelcomeScreenProps, state: WelcomeSc
         setState(state.copy(errorText = str.chooseYourColor))
         return
     }
+    if (state.map == null) {
+        setState(state.copy(errorText = str.chooseGameMap))
+        return
+    }
     Notification.requestPermission()
     val playerName = PlayerName(state.playerName)
     when {
         gameId == null -> {
-            val map = state.customMap?.map ?: defaultMap
-            for (entry in map.segments.groupingBy { it.color }
-                .fold(0) { acc, segment -> acc + segment.length }) {
-                console.log("${entry.key} - ${entry.value}")
-            }
             props.onStartGame(
-                map,
+                state.map,
                 playerName,
                 state.playerColor,
                 state.carsNumber,
@@ -373,6 +369,11 @@ private class WelcomeScreenStrings(val locale: Locale) : LocalizedStrings({ loca
     val chooseYourColor by loc(
         Locale.En to "Choose your color",
         Locale.Ru to "Выберите ваш цвет"
+    )
+
+    val chooseGameMap by loc(
+        Locale.En to "Choose game map",
+        Locale.Ru to "Выберите карту для игры"
     )
 
     val settings by loc(

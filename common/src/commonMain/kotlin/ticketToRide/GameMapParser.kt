@@ -36,7 +36,7 @@ sealed class GameMapParseError(val line: String, val lineNumber: Int) {
     class UnknownProperty(line: String, lineNumber: Int, val propName: String) : GameMapParseError(line, lineNumber)
 }
 
-fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>> {
+fun GameMap.Companion.parse(mapContents: String): Try<GameMap, List<GameMapParseError>> {
 
     data class ParsingState(
         val mapCenter: LatLong? = null,
@@ -124,7 +124,7 @@ fun GameMap.Companion.parse(file: String): Try<GameMap, List<GameMapParseError>>
 
     fun String.tryParseDouble() = replace(',', '.').toDoubleOrNull() ?: replace('.', ',').toDoubleOrNull()
 
-    return file.splitToSequence('\n').map { it.trim() }
+    return mapContents.splitToSequence('\n').map { it.trim() }
         .foldIndexed(ParsingState()) { ix, acc, line ->
             acc.run {
                 val lineNumber = ix + 2

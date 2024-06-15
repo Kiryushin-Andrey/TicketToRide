@@ -1,7 +1,6 @@
 package ticketToRide
 
 import csstype.*
-import emotion.react.css
 import hookstate.Hookstate
 import hookstate.HookstateRoot
 import hookstate.getNoProxy
@@ -34,10 +33,6 @@ private val rootScope = CoroutineScope(Dispatchers.Default + Job())
 private val requests = Channel<Request>(Channel.CONFLATED)
 private var connection: IServerConnection? = null
 
-val defaultMap = (kotlinext.js.require("default.map").default as String)
-    .let { GameMap.parse(it) as Try.Success }
-    .value
-
 external interface AppState : HookstateRoot<AppStateValue> {
     var screen: Hookstate<Screen>
     var locale: Hookstate<Locale>
@@ -46,7 +41,6 @@ external interface AppState : HookstateRoot<AppStateValue> {
     var connectionState: Hookstate<ConnectionState>
     var errorMessage: Hookstate<String>
     var showErrorMessage: Hookstate<Boolean>
-    var onGameStarted: Hookstate<() -> Unit>
 }
 
 external interface AppStateValue {
@@ -54,8 +48,8 @@ external interface AppStateValue {
     var locale: Locale
     var map: GameMap
     var chatMessages: Array<Response.ChatMessage>
-    var errorMessage: String
     var connectionState: ConnectionState
+    var errorMessage: String
     var showErrorMessage: Boolean
     var onGameStarted: () -> Unit
 }
@@ -64,7 +58,6 @@ val App = FC<AppProps> { props ->
     val appState: AppState = useHookstate(jso<AppStateValue> {
         screen = Screen.Welcome
         locale = Locale.En
-        map = defaultMap
         connectionState = NotConnected
         errorMessage = ""
         chatMessages = emptyArray()
@@ -160,7 +153,7 @@ val App = FC<AppProps> { props ->
 }
 
 private fun startGame(
-    map: GameMap,
+    map: ConnectRequest.StartGameMap,
     playerName: PlayerName,
     playerColor: PlayerColor,
     carsCount: Int,

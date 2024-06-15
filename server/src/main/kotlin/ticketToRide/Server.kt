@@ -5,13 +5,17 @@ import io.ktor.features.*
 import io.ktor.html.*
 import io.ktor.http.*
 import io.ktor.http.content.*
+import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.serialization.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import ticketToRide.serialization.json
-import java.net.InetAddress
+import java.net.URLDecoder
+import java.nio.file.*
+import kotlin.io.path.name
+
 
 val games = mutableMapOf<GameId, Game>()
 
@@ -35,7 +39,9 @@ fun Application.module() {
             matchContentType(ContentType.parse("*/javascript"))
         }
     }
-    install(ContentNegotiation) { json }
+    install(ContentNegotiation) {
+        json(ticketToRide.serialization.json)
+    }
     install(CachingHeaders) {
         options { outgoingContent ->
             outgoingContent.contentType?.withoutParameters()?.let {
@@ -55,7 +61,6 @@ fun Application.module() {
         static {
             resource("client.js")
             resource("favicon.ico")
-            resource("default.map")
         }
         static("icons") { resources("icons") }
         static("cards") { resources("cards") }
@@ -65,8 +70,25 @@ fun Application.module() {
         get("/") {
             call.respondHtml { indexHtml() }
         }
+
         get("/game/{id}") {
             call.respondHtml { indexHtml() }
+        }
+
+        get("/maps/{...}") {
+            val mapPath = URLDecoder.decode(call.request.path().removePrefix("/maps").trimStart('/'), Charsets.UTF_8)
+            if (mapPath.isBlank()) {
+                mapsTree?.let { call.respond(it) }
+                    ?: call.respond(HttpStatusCode.NotFound, "Not found")
+            } else {
+                Game::class.java.classLoader.getResourceAsStream("maps/$mapPath")
+                    ?.let {
+                        call.respondBytes(ContentType.parse("application/text")) {
+                            it.readAllBytes()
+                        }
+                    }
+                    ?: call.respond(HttpStatusCode.NotFound, "Not found")
+            }
         }
 
         route("/internal") {
@@ -83,6 +105,40 @@ fun Application.module() {
         }
     }
     webSocketGameTransport("game/{id}/ws", rootScope, formatter, redis)
+}
+
+val mapsTree by lazy {
+    val resourceFolder = "maps"
+    val resourceUri = Game::class.java.classLoader.getResource(resourceFolder)?.toURI()
+        ?: return@lazy null
+
+    if (resourceUri.scheme == "jar") {
+        FileSystems.newFileSystem(resourceUri, emptyMap<String, Any>()).use { fileSystem ->
+            val resourcePath = fileSystem.getPath(resourceFolder)
+            buildMapsFolder("root", resourcePath)
+        }
+    } else {
+        val resourcePath = Paths.get(resourceUri)
+        buildMapsFolder("root", resourcePath)
+    }
+}
+
+fun buildMapsFolder(name: String, path: Path): MapsTreeItem.Folder {
+    return MapsTreeItem.Folder(name, buildList {
+        Files.newDirectoryStream(path).use { stream ->
+            for (entry in stream) {
+                if (Files.isDirectory(entry))
+                    add(buildMapsFolder(entry.name, entry))
+                else
+                    add(MapsTreeItem.Map(entry.name.removeSuffix(".map")))
+            }
+        }
+    }.sortedBy {
+        when (it) {
+            is MapsTreeItem.Folder -> it.name
+            is MapsTreeItem.Map -> it.name
+        }
+    })
 }
 
 fun gameExists(id: GameId, redis: RedisStorage?) = redis?.hasGame(id) ?: games.containsKey(id)

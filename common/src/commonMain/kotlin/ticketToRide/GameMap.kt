@@ -17,7 +17,7 @@ value class CityId(val value: String) {
 data class City(val id: CityId, val locales: Map<Locale, String>, val latLng: LatLong)
 
 @Serializable
-class Segment constructor(val from: CityId, val to: CityId, val color: CardColor? = null, val length: Int) {
+class Segment(val from: CityId, val to: CityId, val color: CardColor? = null, val length: Int) {
     override fun equals(other: Any?) =
         if (other is Segment)
             ((from == other.from && to == other.to) || (from == other.to && to == other.from))

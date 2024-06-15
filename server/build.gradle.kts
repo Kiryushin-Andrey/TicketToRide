@@ -60,3 +60,10 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.named<Copy>("processResources") {
+    from("../maps") {
+        include("**/*.map")
+        into("maps")
+    }
+}

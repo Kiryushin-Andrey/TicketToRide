@@ -3,12 +3,17 @@ package ticketToRide.components.welcomeScreen
 import csstype.*
 import emotion.react.css
 import js.core.get
-import mui.icons.material.CloudDownload
-import mui.icons.material.CloudUpload
+import js.uri.encodeURIComponent
+import kotlinx.browser.window
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.*
+import mui.base.ClickAwayListener
+import mui.icons.material.*
 import mui.material.*
 import mui.material.Size
 import mui.material.styles.TypographyVariant
 import mui.system.sx
+import popper.core.Placement
 import react.*
 import react.dom.html.ReactHTML.a
 import react.dom.html.ReactHTML.div
@@ -16,16 +21,15 @@ import react.dom.html.ReactHTML.input
 import react.dom.html.ReactHTML.label
 import ticketToRide.*
 import web.file.FileReader
-import web.html.HTMLInputElement
+import web.html.HTMLElement
 import web.html.InputType
 
-data class CustomGameMap(val filename: String, val map: GameMap)
 data class CustomGameMapParseErrors(val filename: String, val errors: List<GameMapParseError>)
 
 external interface ChooseGameMapComponentProps : Props {
     var locale: Locale
-    var customMap: CustomGameMap?
-    var onCustomMapChanged: (CustomGameMap?) -> Unit
+    var map: ConnectRequest.StartGameMap?
+    var onMapChanged: (ConnectRequest.StartGameMap?) -> Unit
     var onShowParseErrors: (CustomGameMapParseErrors) -> Unit
 }
 
@@ -34,39 +38,150 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
     var fileTooLarge by useState(false)
     var errors by useState<CustomGameMapParseErrors?>(null)
 
+    var isChooseMapMenuOpen by useState(false)
+    val chooseMapButtonRef = useRef<HTMLElement>()
+    var selectedMap by useState { listOf("default") }
+    var mapsTree by useState<MapsTreeItem.Folder?> { null }
+    var currentFolder by useState<List<MapsTreeItem.Folder>?> { null }
+    useEffect(Unit) {
+        window.fetch("/maps").then { response ->
+            if (response.ok) {
+                response.text().then { json ->
+                    Json.decodeFromString<MapsTreeItem.Folder>(json).let {
+                        mapsTree = it
+                        currentFolder = listOf(it)
+                    }
+                }
+            }
+        }
+    }
+
+    InputLabel {
+        +str.gameMap
+    }
+
     div {
         css {
             display = Display.flex
             flexDirection = FlexDirection.row
             justifyContent = JustifyContent.spaceBetween
             alignItems = AlignItems.center
+            marginBottom = 8.px
         }
         label {
             css {
                 cursor = Cursor.pointer
                 display = Display.inlineFlex
                 alignItems = AlignItems.center
-                marginLeft = (-11).px
-            }
-            Radio {
-                color = RadioColor.primary
-                size = Size.small
-                checked = props.customMap == null
-                onChange = { _, value -> if (value) props.onCustomMapChanged(null) }
             }
             Typography {
                 variant = TypographyVariant.body1
+                if (props.map == null) {
+                    asDynamic().color = "text.error"
+                }
                 sx { paddingRight = 8.px }
-                +str.builtinMap
+                +(when (val map = props.map) {
+                    is ConnectRequest.StartGameMap.BuiltIn -> map.path.last()
+                    is ConnectRequest.StartGameMap.Custom -> map.filename
+                    null -> "not selected"
+                })
             }
+
+            mapsTree?.takeUnless { it.children.isEmpty() }?.let { mapsTree ->
+                Tooltip {
+                    title = ReactNode(str.chooseMap)
+                    a {
+                        css { paddingRight = 8.px }
+                        ref = chooseMapButtonRef
+                        onClick = { e ->
+                            e.preventDefault()
+                            isChooseMapMenuOpen = true
+                            currentFolder = listOf(mapsTree)
+                        }
+                        FolderOpen()
+                    }
+                }
+
+                Popper {
+                    open = isChooseMapMenuOpen
+                    anchorEl = chooseMapButtonRef.current
+                    placement = Placement.rightStart
+                    sx { zIndex = integer(1600) }
+
+                    Paper {
+                        sx {
+                            height = 420.px
+                            width = 360.px
+                            overflow = Auto.auto
+                        }
+
+                        ClickAwayListener {
+                            onClickAway = { isChooseMapMenuOpen = false }
+
+                            MenuList {
+                                if ((currentFolder?.size ?: 0) > 1) {
+                                    MenuItem {
+                                        divider = true
+                                        onClick = {
+                                            currentFolder = currentFolder.orEmpty().dropLast(1)
+                                        }
+                                        ListItemIcon {
+                                            ChevronLeft()
+                                        }
+                                        ListItemText {
+                                            primary = ReactNode(str.back)
+                                        }
+                                    }
+                                }
+                                currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Folder>()
+                                    ?.forEach { folder ->
+                                        MenuItem {
+                                            onClick = {
+                                                currentFolder = currentFolder.orEmpty() + folder
+                                            }
+
+                                            ListItemIcon { Folder() }
+                                            ListItemText {
+                                                primary = ReactNode(folder.name)
+                                            }
+                                            ListItemIcon {
+                                                sx { justifyContent = JustifyContent.end }
+                                                ChevronRight()
+                                            }
+                                        }
+                                    }
+
+                                currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Map>()
+                                    ?.forEach { map ->
+                                        MenuItem {
+                                            onClick = {
+                                                isChooseMapMenuOpen = false
+                                                (currentFolder!!.drop(1).map { it.name } + map.name).let {
+                                                    selectedMap = it
+                                                    props.onMapChanged(ConnectRequest.StartGameMap.BuiltIn(it))
+                                                }
+                                            }
+                                            ListItemIcon { Map() }
+                                            ListItemText {
+                                                primary = ReactNode(map.name)
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+
             Tooltip {
                 title = ReactNode(str.downloadSample)
                 a {
-                    href = "/default.map"
-                    CloudDownload()
+                    href = "/maps/${selectedMap.joinToString("/") { encodeURIComponent(it) }}"
+                    Download()
                 }
             }
         }
+
         input {
             type = InputType.file
             id = "map-file-input"
@@ -82,13 +197,13 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
                                 (e.target.asDynamic().result as? String)?.let {
                                     when (val map = GameMap.parse(it)) {
                                         is Try.Success -> {
-                                            props.onCustomMapChanged(CustomGameMap(file.name, map.value))
+                                            props.onMapChanged(ConnectRequest.StartGameMap.Custom(file.name, map.value))
                                             fileTooLarge = false
                                             errors = null
                                         }
 
                                         is Try.Error -> {
-                                            props.onCustomMapChanged(null)
+                                            props.onMapChanged(null)
                                             fileTooLarge = false
                                             errors = CustomGameMapParseErrors(file.name, map.errors)
                                         }
@@ -108,23 +223,10 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
                 flexDirection = FlexDirection.row
                 alignItems = AlignItems.center
             }
-            props.customMap?.let {
-                label {
-                    Radio {
-                        color = RadioColor.primary
-                        size = Size.small
-                        checked = true
-                    }
-                    +it.filename
-                }
-                IconButton {
-                    asDynamic().component = "span"
-                    CloudUpload()
-                }
-            } ?: Button {
+            Button {
                 +str.uploadMap
                 color = ButtonColor.primary
-                variant = ButtonVariant.contained
+                variant = ButtonVariant.outlined
                 size = Size.small
                 asDynamic().component = "span"
                 startIcon = createElement(CloudUpload)
@@ -170,13 +272,23 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
     }
 }
 
-private val maxFileSizeBytes = 1024 * 1024
+private const val maxFileSizeBytes = 1024 * 1024
 
 private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
 
-    val builtinMap by loc(
-        Locale.En to "Built-in map of Russia",
-        Locale.Ru to "Карта России"
+    val gameMap by loc(
+        Locale.En to "Game map",
+        Locale.Ru to "Карта для игры"
+    )
+
+    val chooseMap by loc(
+        Locale.En to "Choose another game map",
+        Locale.Ru to "Выбрать карту для игры"
+    )
+
+    val back by loc(
+        Locale.En to "Back",
+        Locale.Ru to "Назад"
     )
 
     val downloadSample by loc(

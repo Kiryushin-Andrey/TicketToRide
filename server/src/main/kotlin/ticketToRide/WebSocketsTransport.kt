@@ -7,7 +7,6 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.serialization.SerializationStrategy
@@ -102,10 +101,16 @@ private suspend fun WebSocketSession.establishConnection(
     val outcome = when (val req = formatter.deserialize(incoming.receive(), ConnectRequest.serializer())) {
         is ConnectRequest.Start ->
             if (!gameExists(gameId, redis)) {
-                val initialState = GameState.initial(gameId, req.carsCount, req.calculateScoresInProcess, req.map)
-                val game = Game.start(rootScope, initialState, req.map, redis)
+                val gameMap = when (val map = req.map) {
+                    is ConnectRequest.StartGameMap.Custom ->
+                        map.map
+                    is ConnectRequest.StartGameMap.BuiltIn ->
+                        loadBuiltInMap(map.path.joinToString("/"))
+                }
+                val initialState = GameState.initial(gameId, req.carsCount, req.calculateScoresInProcess, gameMap)
+                val game = Game.start(rootScope, initialState, gameMap, redis)
                 games[gameId] = game
-                redis?.saveMap(gameId, req.map)
+                redis?.saveMap(gameId, gameMap)
                 val conn = Connection.Player(req.playerName, this, formatter)
                 game.joinPlayer(conn, req.playerColor)
             } else
@@ -160,4 +165,15 @@ private sealed class Connection(
         ObserverConnection {
         override fun toString() = "anonymous observer"
     }
+}
+
+private fun loadBuiltInMap(path: String): GameMap {
+    return Game::class.java.classLoader.getResourceAsStream("maps/${path.trimStart('/')}.map")?.use { stream ->
+        when (val result = GameMap.parse(String(stream.readAllBytes()))) {
+            is Try.Success ->
+                result.value
+            is Try.Error ->
+                error("Could not parse built-in map at path \"$path\"")
+        }
+    } ?: throw Error("Could not load built-in map by path \"$path\"")
 }
