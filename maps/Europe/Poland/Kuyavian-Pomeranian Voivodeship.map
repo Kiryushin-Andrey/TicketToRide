@@ -3,13 +3,13 @@ map-zoom: 4
 
 Kowalewo Pomorskie; 53.163826; 18.8691
 || Wąbrzeźno; 2
-|| Toruń Główny; 4
+|| Toruń; 4
 || Nawra; 5
 | Czernikowo; 5
 Maksymilianowo; 53.21456; 18.029459
 || Pruszcz Pomorski; 3
 || Wierzchucin; 6
-|| Bydgoszcz Główna; 2
+|| Bydgoszcz; 2
 || Przyłubie; 5
 || Nawra; 5
 Osie; 53.593704; 18.347162
@@ -27,14 +27,14 @@ Mogilno; 52.658592; 17.946175
 | Nowa Wieś Wielka; 6
 Gniewkowo; 52.88807; 18.403948
 || Inowrocław; 3
-|| Toruń Główny; 3
+|| Toruń; 3
 Jadwiżyn; 53.12392; 17.3718
 || Nakło nad Notecią; 3
 Wierzchucin; 53.548145; 18.112835
 || Tuchola; 3
 | Laskowice Pomorskie; 4
 | Szlachta; 4
-Bydgoszcz Główna; 53.135292; 17.991602
+Bydgoszcz; 53.135292; 17.991602
 || Nowa Wieś Wielka; 4
 || Przyłubie; 4
 || Zielonczyn; 2
@@ -46,7 +46,7 @@ Nieszawa Waganiec; 52.803013; 18.870195
 Kaliska Kujawskie; 52.41199; 19.123922
 || Czerniewice; 2
 Aleksandrów Kujawski; 52.875866; 18.696392
-|| Toruń Główny; 3
+|| Toruń; 3
 Rypin; 53.06859; 19.427626
 Piotrków Kujawski; 52.537773; 18.51947
 | Inowrocław; 6
@@ -65,7 +65,7 @@ Gorzuchowo Chełmińskie; 53.350735; 18.69345
 || Nawra; 4
 Twarda Góra; 53.682476; 18.67152
 Nawra; 53.2032; 18.484894
-|| Toruń Główny; 4
+|| Toruń; 4
 Wąbrzeźno; 53.26524; 18.982122
 || Jabłonowo Pomorskie; 3
 Grudziądz; 53.481976; 18.761547
@@ -78,7 +78,7 @@ Nowa Wieś Wielka; 52.968506; 18.096539
 || Inowrocław; 4
 Inowrocław; 52.80519; 18.243942
 Pruszcz Pomorski; 53.334118; 18.198544
-Toruń Główny; 53.000107; 18.61463
+Toruń; 53.000107; 18.61463
 || Przyłubie; 4
 || Czernikowo; 4
 Czerniewice; 52.508923; 19.089342

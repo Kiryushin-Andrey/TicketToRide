@@ -5,14 +5,14 @@ Altamura; 40.837955; 16.551537
 || Taranto; 4
 || Spinazzola; 3
 | Fesca-San Girolamo; 2
-| Barletta Centrale; 4
+| Barletta; 4
 | Polignano a Mare; 4
 Carovigno; 40.73732; 17.683764
 | Taranto; 3
 | Lecce; 4
 | Polignano a Mare; 3
 Taranto; 40.483692; 17.224215
-| Potenza Centrale; 6
+| Potenza; 6
 || Policoro-Tursi; 3
 | Lecce; 5
 | Polignano a Mare; 4
@@ -20,10 +20,10 @@ Taranto; 40.483692; 17.224215
 Roccella Jonica; 38.322033; 16.406889
 | Melito di Porto Salvo; 4
 | Cropani; 5
-| Lamezia Terme Centrale; 4
+| Lamezia Terme; 4
 Fesca-San Girolamo; 41.129704; 16.823627
 || Polignano a Mare; 2
-|| Barletta Centrale; 3
+|| Barletta; 3
 Pescara Tribunale; 42.4489; 14.219968
 || Sulmona; 3
 || Termoli; 5
@@ -33,21 +33,21 @@ Praja-Ajeta-Tortora; 39.900814; 15.780514
 || Cetraro; 3
 Porto d'Ascoli; 42.91272; 13.896805
 Salerno; 40.675495; 14.772621
-| Napoli Centrale; 3
+| Napoli; 3
 | Benevento; 3
 Foggia; 41.465946; 15.555882
 | Benevento; 6
 | Mulino di Mare; 4
-|| Barletta Centrale; 4
+|| Barletta; 4
 || Termoli; 5
 | Spinazzola; 6
 || Rocchetta Sant'Antonio-Lacedonia; 3
 Castiglione Cosentino; 39.355618; 16.244282
-| Lamezia Terme Centrale; 3
+| Lamezia Terme; 3
 | Cetraro; 2
 Policoro-Tursi; 40.207256; 16.688854
 || Sibari; 3
-|| Potenza Centrale; 6
+|| Potenza; 6
 Termoli; 42.000652; 14.99271
 | Benevento; 6
 | Mulino di Mare; 5
@@ -62,35 +62,35 @@ Benevento; 41.141754; 14.770122
 | Vairano-Caianello; 4
 || Rocchetta Sant'Antonio-Lacedonia; 4
 | Bojano; 3
-| Napoli Centrale; 3
+| Napoli; 3
 Gagliano-Leuca; 39.850536; 18.359488
 | Lecce; 4
 Cropani; 38.921963; 16.813566
-|| Lamezia Terme Centrale; 3
-Napoli Centrale; 40.853024; 14.27314
+|| Lamezia Terme; 3
+Napoli; 40.853024; 14.27314
 | Vairano-Caianello; 3
-Potenza Centrale; 40.629467; 15.806791
+Potenza; 40.629467; 15.806791
 || Rocchetta Sant'Antonio-Lacedonia; 3
 || Vallo della Lucania-Castelnuovo; 4
 Cetraro; 39.51251; 15.939204
-|| Lamezia Terme Centrale; 4
+|| Lamezia Terme; 4
 Melito di Porto Salvo; 37.916706; 15.781461
 | Villa San Giovanni; 2
 Villa San Giovanni; 38.21666; 15.634553
 || Rosarno; 3
 Spinazzola; 40.953434; 16.087225
 || Rocchetta Sant'Antonio-Lacedonia; 3
-| Barletta Centrale; 3
+| Barletta; 3
 Rocchetta Sant'Antonio-Lacedonia; 41.07905; 15.550576
 Lecce; 40.34568; 18.165722
 Bojano; 41.48784; 14.4744835
 | Vairano-Caianello; 2
-Lamezia Terme Centrale; 38.921318; 16.255527
+Lamezia Terme; 38.921318; 16.255527
 || Rosarno; 3
 Rosarno; 38.4887; 15.970101
 Sibari; 39.74926; 16.456537
 Vairano-Caianello; 41.317596; 14.10389
 Mulino di Mare; 41.93251; 15.918087
-Barletta Centrale; 41.31535; 16.278612
+Barletta; 41.31535; 16.278612
 Vallo della Lucania-Castelnuovo; 40.22947; 15.158137
 Polignano a Mare; 40.990955; 17.218704

@@ -5,92 +5,92 @@ Vlissingen; 51.444054; 3.595722
 || Roosendaal; 5
 Dordrecht; 51.807533; 4.667748
 | Breda; 2
-| Rotterdam Centraal; 2
+| Rotterdam; 2
 | Geldermalsen; 4
 | Roosendaal; 3
 Roosendaal; 51.54033; 4.4584703
 || Breda; 2
-| Rotterdam Centraal; 4
+| Rotterdam; 4
 Zutphen; 52.14463; 6.1942654
 || Zwolle; 4
 | Hengelo; 4
-|| Arnhem Centraal; 2
+|| Arnhem; 2
 | Aalten; 3
-| Amersfoort Centraal; 5
+| Amersfoort; 5
 | Mariënberg; 4
 Weert; 51.248695; 5.704134
 | Sittard; 3
-|| Eindhoven Centraal; 2
+|| Eindhoven; 2
 | Venlo; 3
 Breda; 51.595142; 4.780023
 || Geldermalsen; 4
 | 's-Hertogenbosch; 3
-| Eindhoven Centraal; 4
+| Eindhoven; 4
 Zwolle; 52.50501; 6.091237
 || Hoogeveen; 3
-|| Amersfoort Centraal; 5
+|| Amersfoort; 5
 || Mariënberg; 3
 || Lelystad Centrum; 4
 || Wolvega; 4
-Eindhoven Centraal; 51.442963; 5.4795265
+Eindhoven; 51.442963; 5.4795265
 || 's-Hertogenbosch; 3
 | Venlo; 4
 Boxmeer; 51.644432; 5.939522
 || Venlo; 3
-|| Arnhem Centraal; 3
+|| Arnhem; 3
 | 's-Hertogenbosch; 4
 Mariënberg; 52.509026; 6.574227
 | Hengelo; 3
 || Emmen; 3
 Venlo; 51.36505; 6.171433
 | Sittard; 4
-Arnhem Centraal; 51.984432; 5.90116
-| Amersfoort Centraal; 4
+Arnhem; 51.984432; 5.90116
+| Amersfoort; 4
 | Geldermalsen; 4
 | Aalten; 4
 | 's-Hertogenbosch; 4
 Den Helder Zuid; 52.932617; 4.7641525
 | Alkmaar; 3
-| Den Haag Centraal; 5
+| Den Haag; 5
 | Lelystad Centrum; 5
 Winschoten; 53.139153; 7.0356097
 | Loppersum; 3
 | Assen; 3
 | Zuidhorn; 4
-Utrecht Centraal; 52.089394; 5.109821
-| Rotterdam Centraal; 4
-|| Amersfoort Centraal; 2
+Utrecht; 52.089394; 5.109821
+| Rotterdam; 4
+|| Amersfoort; 2
 || Geldermalsen; 2
-| Amsterdam Centraal; 3
-| Leiden Centraal; 4
+| Amsterdam; 3
+| Leiden; 4
 Assen; 52.992264; 6.5712457
 || Hoogeveen; 3
 || Zuidhorn; 3
 Emmen; 52.79063; 6.8997207
-Amersfoort Centraal; 52.153896; 5.374098
+Amersfoort; 52.153896; 5.374098
 | Lelystad Centrum; 3
 || Geldermalsen; 3
-| Amsterdam Centraal; 4
+| Amsterdam; 4
 Geldermalsen; 51.882557; 5.271479
 || 's-Hertogenbosch; 2
-| Rotterdam Centraal; 5
+| Rotterdam; 5
 Maastricht; 50.850178; 5.7052503
 || Sittard; 2
 Hengelo; 52.261776; 6.7949085
 Wolvega; 52.88024; 6.0047674
 || Leeuwarden; 3
 | Hoogeveen; 3
-Rotterdam Centraal; 51.925056; 4.4692287
-| Leiden Centraal; 2
-| Den Haag Centraal; 2
+Rotterdam; 51.925056; 4.4692287
+| Leiden; 2
+| Den Haag; 2
 Hoogeveen; 52.7335; 6.472967
 's-Hertogenbosch; 51.690517; 5.293709
 Alkmaar; 52.63813; 4.740698
-| Amsterdam Centraal; 3
-| Leiden Centraal; 5
+| Amsterdam; 3
+| Leiden; 5
 | Lelystad Centrum; 4
 Lelystad Centrum; 52.507935; 5.4727187
-|| Amsterdam Centraal; 4
+|| Amsterdam; 4
 Sittard; 51.002003; 5.8588915
 Workum; 52.972054; 5.4565134
 || Leeuwarden; 3
@@ -99,9 +99,9 @@ Leeuwarden; 53.196476; 5.792985
 Zuidhorn; 53.248146; 6.4067454
 | Loppersum; 2
 Aalten; 51.92134; 6.5787106
-Leiden Centraal; 52.16632; 4.482286
-| Den Haag Centraal; 1
-| Amsterdam Centraal; 3
-Den Haag Centraal; 52.080845; 4.3245487
+Leiden; 52.16632; 4.482286
+| Den Haag; 1
+| Amsterdam; 3
+Den Haag; 52.080845; 4.3245487
 Loppersum; 53.334793; 6.7474513
-Amsterdam Centraal; 52.378902; 4.9005804
+Amsterdam; 52.378902; 4.9005804

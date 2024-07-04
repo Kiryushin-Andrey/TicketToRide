@@ -1,7 +1,7 @@
 map-center: 50.70247 4.4554734
 map-zoom: 4
 
-Bruxelles-Midi - Brussel-Zuid; 50.835674; 4.3362417
+Bruxelles; 50.835674; 4.3362417
 || Ottignies; 2
 | Dendermonde; 2
 || Leuven; 2
@@ -50,7 +50,7 @@ Welkenraedt; 50.659657; 5.97549
 Mons; 50.454044; 3.9419653
 | Braine-le-Comte; 2
 | Geraardsbergen; 3
-| Charleroi-Central; 3
+| Charleroi; 3
 | Tournai; 4
 Brugge; 51.19698; 3.2172408
 || Oostende; 2
@@ -71,7 +71,7 @@ Libramont; 49.920235; 5.3792715
 || Namur; 6
 | Rochefort-Jemelle; 3
 Mariembourg; 50.095737; 4.524461
-|| Charleroi-Central; 3
+|| Charleroi; 3
 Lichtervelde; 51.02522; 3.126806
 || De Panne; 3
 || Gent-Sint-Pieters; 4
@@ -82,12 +82,12 @@ Tournai; 50.612778; 3.3967614
 | Geraardsbergen; 3
 Braine-le-Comte; 50.60576; 4.1382246
 | Ottignies; 3
-|| Charleroi-Central; 3
+|| Charleroi; 3
 || Geraardsbergen; 2
 Namur; 50.468575; 4.8625445
 || Ottignies; 3
 | Leuven; 4
-|| Charleroi-Central; 3
+|| Charleroi; 3
 | Rochefort-Jemelle; 4
 Arlon; 49.680416; 5.809531
 De Panne; 51.077274; 2.6021636
@@ -95,7 +95,7 @@ Hasselt; 50.930935; 5.32755
 | Landen; 2
 | Leuven; 4
 Rochefort-Jemelle; 50.159977; 5.2671585
-Charleroi-Central; 50.404736; 4.438781
+Charleroi; 50.404736; 4.438781
 | Ottignies; 3
 Poperinge; 50.85435; 2.7368605
 Landen; 50.74797; 5.0800986

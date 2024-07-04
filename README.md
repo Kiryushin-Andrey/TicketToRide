@@ -9,3 +9,5 @@ This is a web version of the [Ticket to Ride](https://www.daysofwonder.com/ticke
 
 The game is hosted at https://ticket-to-ride.onrender.com.
 Check out my writings on what I've learned in this project here - https://medium.com/@kiryushin.andrey.
+
+The included set of game maps has been generated using the https://gitlab.com/CHfCGS/osm-tickettoride/-/tree/main project.

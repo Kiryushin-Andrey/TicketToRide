@@ -6,25 +6,25 @@ Westbury; 51.266327; -2.1997297
 | Exeter St Davids; 3
 | Portsmouth Harbour; 3
 || Reading; 3
-| Cardiff Central; 2
+| Cardiff; 2
 Stonehaven; 56.96686; -2.225283
 | Edinburgh Waverley; 4
 | Inverness; 4
-London Waterloo; 51.50284; -0.112801
+London; 51.50284; -0.112801
 | Ramsgate; 3
 | Colchester; 3
-|| Milton Keynes Central; 2
+|| Milton Keynes; 2
 | Brighton; 2
 | Peterborough; 4
 | Cambridge; 2
 | Portsmouth Harbour; 3
 || Reading; 2
-Birmingham New Street; 52.477646; -1.898694
+Birmingham; 52.477646; -1.898694
 | Reading; 4
-| Liverpool Lime Street; 4
-| Milton Keynes Central; 3
+| Liverpool; 4
+| Milton Keynes; 3
 | Nottingham; 2
-|| Manchester Piccadilly; 3
+|| Manchester; 3
 || Hereford; 2
 Kilwinning; 55.656185; -4.709539
 || Carlisle; 4
@@ -33,10 +33,10 @@ Kilwinning; 55.656185; -4.709539
 Exeter St Davids; 50.729214; -3.5435703
 | Upwey; 2
 || Plymouth; 2
-|| Cardiff Central; 3
-Liverpool Lime Street; 53.407608; -2.9775853
+|| Cardiff; 3
+Liverpool; 53.407608; -2.9775853
 | Cyffordd Dyfi / Dovey Junction; 3
-| Manchester Piccadilly; 2
+| Manchester; 2
 | Holyhead; 3
 || Lancaster; 2
 || Hereford; 5
@@ -46,7 +46,7 @@ Edinburgh Waverley; 55.9519; -3.19042
 | Newcastle; 6
 || Inverness; 6
 || Carlisle; 4
-Milton Keynes Central; 52.0342; -0.7748261
+Milton Keynes; 52.0342; -0.7748261
 | Reading; 2
 || Nottingham; 3
 | Peterborough; 2
@@ -56,7 +56,7 @@ Cyffordd Dyfi / Dovey Junction; 52.564762; -3.923792
 Brighton; 50.82886; -0.1407393
 | Portsmouth Harbour; 2
 | Ramsgate; 4
-Manchester Piccadilly; 53.47722; -2.2301402
+Manchester; 53.47722; -2.2301402
 | Nottingham; 3
 || Lancaster; 2
 || Leeds; 2
@@ -90,7 +90,7 @@ Carlisle; 54.890583; -2.9329195
 || Leeds; 5
 Reading; 51.459198; -0.9723236
 | Hereford; 4
-Cardiff Central; 51.475548; -3.1797657
+Cardiff; 51.475548; -3.1797657
 | Clunderwen; 4
 || Hereford; 2
 Clunderwen; 51.840107; -4.7310195

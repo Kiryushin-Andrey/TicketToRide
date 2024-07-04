@@ -3,36 +3,36 @@ map-zoom: 4
 
 Fridley; 45.078854; -93.27103
 || Winnipeg; 2
-|| Toronto Union Station; 4
+|| Toronto; 4
 | Union Station; 5
 || Havre; 5
 || Newton; 3
-|| Chicago Union Station; 2
-| Salt Lake Central; 6
-Toronto Union Station; 43.644535; -79.38038
-|| Gare centrale de Montréal; 2
-| Pittsburgh Union Station; 1
+|| Chicago; 2
+| Salt Lake City; 6
+Toronto; 43.644535; -79.38038
+|| Montréal; 2
+| Pittsburgh; 1
 || Oba; 3
 | Grand Central Terminal; 2
-| Chicago Union Station; 3
-Los Angeles Union Station; 34.055862; -118.23428
-| Salt Lake Central; 4
-| San Francisco 4th & King Street; 2
+| Chicago; 3
+Los Angeles; 34.055862; -118.23428
+| Salt Lake City; 4
+| San Francisco; 2
 | Winnemucca; 3
 | El Paso; 5
 | Union Station; 5
 Maysville; 38.65213; -83.77113
 | Hamlet; 2
-| Chicago Union Station; 2
+| Chicago; 2
 || Poplar Bluff; 2
-|| Pittsburgh Union Station; 2
+|| Pittsburgh; 2
 | Atlanta; 2
-| Washington Union Station; 2
+| Washington; 2
 Estación Salina Cruz; 16.182081; -95.19637
 | Estación Izamal; 3
 | Buenavista; 2
 Cedarvale; 55.021004; -128.3229
-| Vancouver Pacific Central; 3
+| Vancouver; 3
 | Evansburg; 4
 New Orleans; 29.946167; -90.078445
 || Atlanta; 3
@@ -44,49 +44,49 @@ Estación Izamal; 20.936094; -89.08554
 | Buenavista; 4
 | Los Aldama; 5
 Winnemucca; 40.968845; -117.73231
-| San Francisco 4th & King Street; 2
-| Portland Union Station; 3
-|| Salt Lake Central; 2
-Portland Union Station; 45.52897; -122.67701
-| San Francisco 4th & King Street; 3
-|| Vancouver Pacific Central; 2
+| San Francisco; 2
+| Portland; 3
+|| Salt Lake City; 2
+Portland; 45.52897; -122.67701
+| San Francisco; 3
+|| Vancouver; 2
 | Havre; 4
-|| Salt Lake Central; 4
+|| Salt Lake City; 4
 Evansburg; 53.594494; -115.00874
 || Winnipeg; 5
 | Lamprey; 5
-| Vancouver Pacific Central; 3
+| Vancouver; 3
 Sanford (Auto Train); 28.808767; -81.29137
-| Boston South Station; 6
+| Boston; 6
 | Atlanta; 3
 | Hamlet; 3
-Vancouver Pacific Central; 49.273746; -123.09786
+Vancouver; 49.273746; -123.09786
 | Havre; 4
-Pittsburgh Union Station; 40.444576; -79.99164
+Pittsburgh; 40.444576; -79.99164
 | Grand Central Terminal; 2
-| Washington Union Station; 1
-| Chicago Union Station; 3
+| Washington; 1
+| Chicago; 3
 El Paso; 31.757374; -106.49592
 | Los Aldama; 4
-| Fort Worth Central; 3
-Fort Worth Central; 32.752636; -97.32656
+| Fort Worth; 3
+Fort Worth; 32.752636; -97.32656
 | Beaumont; 2
 || Union Station; 4
 || Los Aldama; 3
 || Newton; 2
 | Poplar Bluff; 3
-Salt Lake Central; 40.761593; -111.90899
+Salt Lake City; 40.761593; -111.90899
 || Union Station; 2
-Chicago Union Station; 41.87864; -87.63909
+Chicago; 41.87864; -87.63909
 | Newton; 4
 || Poplar Bluff; 2
 Beaumont; 30.076345; -94.127625
 | Los Aldama; 3
 || Poplar Bluff; 3
 Sackville; 45.890213; -64.36742
-| Boston South Station; 3
-| Gare centrale de Montréal; 3
-San Francisco 4th & King Street; 37.776363; -122.394936
+| Boston; 3
+| Montréal; 3
+San Francisco; 37.776363; -122.394936
 Atlanta; 33.79937; -84.39265
 || Hamlet; 2
 | Poplar Bluff; 3
@@ -99,19 +99,19 @@ Newton; 38.04706; -97.34446
 Havre; 48.55461; -109.67828
 | Winnipeg; 4
 Grand Central Terminal; 40.752808; -73.97718
-| Gare centrale de Montréal; 2
-| Washington Union Station; 1
-|| Boston South Station; 1
+| Montréal; 2
+| Washington; 1
+|| Boston; 1
 Lamprey; 58.316406; -94.15796
 | Winnipeg; 4
 Hamlet; 34.883625; -79.698944
-|| Washington Union Station; 2
+|| Washington; 2
 Winnipeg; 49.88897; -97.13426
 | Oba; 4
-Gare centrale de Montréal; 45.500286; -73.56716
-| Boston South Station; 2
+Montréal; 45.500286; -73.56716
+| Boston; 2
 Oba; 49.057816; -84.10448
-Washington Union Station; 38.89837; -77.00586
+Washington; 38.89837; -77.00586
 Buenavista; 19.44738; -99.15201
 Poplar Bluff; 36.753902; -90.39343
-Boston South Station; 42.351547; -71.05515
+Boston; 42.351547; -71.05515

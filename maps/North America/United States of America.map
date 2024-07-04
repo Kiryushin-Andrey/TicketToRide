@@ -2,11 +2,11 @@ map-center: 37.63466 -96.51713
 map-zoom: 4
 
 Hamlet; 34.883625; -79.698944
-| Washington Union Station; 3
+| Washington; 3
 | Savannah; 2
 | Spartanburg; 1
 Creston; 41.056976; -94.36142
-|| Chicago Union Station; 3
+|| Chicago; 3
 | Union Station; 5
 || Newton; 2
 | Poplar Bluff; 3
@@ -14,13 +14,13 @@ Creston; 41.056976; -94.36142
 Grand Central Terminal; 40.752808; -73.97718
 | Connellsville; 3
 | Erie; 3
-| Washington Union Station; 2
-| Boston South Station; 2
-Washington Union Station; 38.89837; -77.00586
+| Washington; 2
+| Boston; 2
+Washington; 38.89837; -77.00586
 | Connellsville; 1
 | Spartanburg; 3
 | Maysville; 3
-Chicago Union Station; 41.87864; -87.63909
+Chicago; 41.87864; -87.63909
 | Poplar Bluff; 3
 | Erie; 3
 || Fridley; 3
@@ -29,12 +29,12 @@ Union Station; 39.75363; -105.00075
 | South Capitol; 2
 || Newton; 4
 | Fridley; 5
-|| Salt Lake Central; 3
-Boston South Station; 42.351547; -71.05515
+|| Salt Lake City; 3
+Boston; 42.351547; -71.05515
 | Erie; 4
 Whitefish; 48.41355; -114.335724
 || Malta; 3
-|| Portland Union Station; 4
+|| Portland; 4
 Fridley; 45.078854; -93.27103
 | Erie; 5
 || Minot; 4
@@ -48,19 +48,19 @@ Savannah; 32.083645; -81.14844
 MiamiCentral; 25.777653; -80.195724
 | Sanford (Auto Train); 2
 Winslow; 35.020836; -110.69466
-| Fort Worth Central; 5
+| Fort Worth; 5
 | Winnemucca; 5
 || South Capitol; 2
 || Needles, CA (NDL); 2
 Needles, CA (NDL); 34.840748; -114.605865
 | El Paso; 4
 | Winnemucca; 4
-| San Francisco 4th & King Street; 4
-| Los Angeles Union Station; 2
+| San Francisco; 4
+| Los Angeles; 2
 South Capitol; 35.67273; -105.95747
-| Salt Lake Central; 4
+| Salt Lake City; 4
 || Newton; 4
-| Fort Worth Central; 4
+| Fort Worth; 4
 New Orleans; 29.946167; -90.078445
 | Texarkana; 3
 | Poplar Bluff; 4
@@ -69,40 +69,40 @@ New Orleans; 29.946167; -90.078445
 | Sanford (Auto Train); 5
 Sanford (Auto Train); 28.808767; -81.29137
 | Atlanta; 3
-Portland Union Station; 45.52897; -122.67701
+Portland; 45.52897; -122.67701
 || Klamath Falls; 2
 Minot; 48.236088; -101.29875
 Winnemucca; 40.968845; -117.73231
-| San Francisco 4th & King Street; 3
-|| Salt Lake Central; 3
+| San Francisco; 3
+|| Salt Lake City; 3
 | Klamath Falls; 2
 Newton; 38.04706; -97.34446
 || Poplar Bluff; 3
 | Texarkana; 3
-| Fort Worth Central; 3
+| Fort Worth; 3
 Poplar Bluff; 36.753902; -90.39343
 || Texarkana; 3
 || Atlanta; 3
 || Maysville; 3
-Salt Lake Central; 40.761593; -111.90899
+Salt Lake City; 40.761593; -111.90899
 || Klamath Falls; 4
 El Paso; 31.757374; -106.49592
-| Fort Worth Central; 5
-| Los Angeles Union Station; 5
+| Fort Worth; 5
+| Los Angeles; 5
 | Del Rio; 3
 Spartanburg; 34.953526; -81.93753
 || Atlanta; 1
 || Maysville; 2
 Klamath Falls; 42.22548; -121.77181
-| San Francisco 4th & King Street; 3
+| San Francisco; 3
 Texarkana; 33.420105; -94.04256
-|| Fort Worth Central; 2
+|| Fort Worth; 2
 | Beaumont; 2
-Fort Worth Central; 32.752636; -97.32656
+Fort Worth; 32.752636; -97.32656
 | Beaumont; 2
 | Del Rio; 3
-Los Angeles Union Station; 34.055862; -118.23428
-| San Francisco 4th & King Street; 3
+Los Angeles; 34.055862; -118.23428
+| San Francisco; 3
 Atlanta; 33.79937; -84.39265
 | Maysville; 3
 Maysville; 38.65213; -83.77113
@@ -111,7 +111,7 @@ Maysville; 38.65213; -83.77113
 Connellsville; 40.020206; -79.59284
 | Erie; 1
 Erie; 42.12056; -80.082054
-San Francisco 4th & King Street; 37.776363; -122.394936
+San Francisco; 37.776363; -122.394936
 Beaumont; 30.076345; -94.127625
 | Del Rio; 4
 Del Rio; 29.362352; -100.90267

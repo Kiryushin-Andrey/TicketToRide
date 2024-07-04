@@ -6,10 +6,10 @@ Bremen-Oslebshausen; 53.13518; 8.741344
 | Bremen-Oberneuland; 6
 || Bremen-Burg; 6
 Bremen Neustadt; 53.076153; 8.7860775
-| Bremen Hauptbahnhof; 6
+| Bremen; 6
 | Bremen-Walle; 6
 Bremen-Sebaldsbrück; 53.06122; 8.887823
-|| Bremen Hauptbahnhof; 6
+|| Bremen; 6
 || AW Sebaldsbrück; 6
 Bremen-Kreinsloger; 53.18872; 8.558007
 || Bremen Mühlenstraße; 3
@@ -20,14 +20,14 @@ Bremen-Aumund; 53.18511; 8.617608
 Bremen-Farge; 53.20515; 8.516505
 || Bremen Turnerstraße; 6
 Bremen-Walle; 53.103485; 8.786553
-|| Bremen Hauptbahnhof; 6
+|| Bremen; 6
 Bremen-Burg; 53.160034; 8.70479
 || Bremen-Lesum; 6
 Bremen-Blumenthal; 53.183655; 8.581415
 || Bremen Mühlenstraße; 2
 || Klinikum Bremen-Nord/Beckedorf; 3
 Bremen-Oberneuland; 53.086876; 8.939074
-| Bremen Hauptbahnhof; 6
+| Bremen; 6
 Bremen Turnerstraße; 53.19321; 8.545445
 Bremen-Mahndorf; 53.039787; 8.944487
 || AW Sebaldsbrück; 6
@@ -41,4 +41,4 @@ Bremen-Schönebeck; 53.17281; 8.64933
 || Bremen-Vegesack; 4
 Klinikum Bremen-Nord/Beckedorf; 53.185265; 8.595045
 Bremen-Vegesack; 53.169815; 8.629978
-Bremen Hauptbahnhof; 53.083298; 8.813758
+Bremen; 53.083298; 8.813758

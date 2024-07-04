@@ -102,10 +102,11 @@ val WelcomeScreen = FC<WelcomeScreenProps> { props ->
                 playerName(gameId, props, state, setState, str)
                 playerColor(state, setState, str)
             }
-            if (!startingNewGame) {
+            if (startingNewGame) {
+                chooseGameMap(state, setState, str)
+            } else {
                 joinAsObserver(state, setState, str)
             }
-            chooseGameMap(state, setState, str)
             if (state.showSettings) {
                 settings(state, setState, startingNewGame, str)
             }

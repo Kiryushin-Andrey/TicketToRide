@@ -12,15 +12,15 @@ Stare Bojanowo; 51.99598; 16.58497
 || Czempiń; 2
 Siedlisko Czarnkowskie; 52.98364; 16.398577
 || Krzyż; 3
-| Piła Główna; 3
+| Piła; 3
 Spławie; 52.257713; 18.091072
 || Września; 4
 Pobiedziska; 52.4793; 17.277851
-|| Poznań Główny; 3
+|| Poznań; 3
 | Września; 3
 | Gniezno; 3
 Wolsztyn; 52.111454; 16.108309
-| Poznań Główny; 6
+| Poznań; 6
 | Zbąszyń; 3
 | Leszno; 5
 | Czempiń; 5
@@ -39,12 +39,12 @@ Jarocin; 51.96831; 17.494719
 || Środa Wielkopolska; 4
 || Września; 5
 Środa Wielkopolska; 52.21833; 17.274195
-|| Poznań Główny; 4
+|| Poznań; 4
 | Czempiń; 4
 Leszno; 51.845966; 16.565472
 Wydartowo; 52.61105; 17.903824
 || Gniezno; 3
-Poznań Główny; 52.401627; 16.91158
+Poznań; 52.401627; 16.91158
 || Września; 5
 || Murowana Goślina; 2
 || Pęckowo; 5
@@ -52,7 +52,7 @@ Poznań Główny; 52.401627; 16.91158
 || Czempiń; 4
 Chodzież; 52.993935; 16.909542
 || Rogoźno Wielkopolskie; 3
-|| Piła Główna; 2
+|| Piła; 2
 Sośnie Ostrowskie; 51.47154; 17.639454
 Nowy Tomyśl; 52.304123; 16.133038
 || Opalenica; 2
@@ -69,7 +69,7 @@ Kalisz; 51.74283; 18.071365
 || Skalmierz; 3
 Krzyż; 52.877644; 16.019423
 Skalmierz; 51.697285; 18.43026
-Piła Główna; 53.143074; 16.744802
+Piła; 53.143074; 16.744802
 || Złotów; 4
 || Wyrzysk Osiek; 4
 || Lotyń; 6

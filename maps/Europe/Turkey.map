@@ -2,14 +2,14 @@ map-center: 39.25402 34.395367
 map-zoom: 4
 
 Kayaş; 39.913513; 32.965683
-|| Biçer İstasyonu; 3
+|| Biçer; 3
 || Yerköy; 4
 | Konya Gar; 5
 | Yamukören; 3
 Gökçayır Gar; 38.42614; 31.35834
 || Konya Gar; 3
 | Eskişehir; 4
-|| Karakuyu İstasyonu; 3
+|| Karakuyu; 3
 Fevzipaşa; 37.09884; 36.63869
 || Çelik; 3
 Halkalı; 41.01837; 28.76653
@@ -17,42 +17,42 @@ Halkalı; 41.01837; 28.76653
 || Gebze; 2
 Elazığ; 38.66509; 39.222782
 || Malatya; 2
-|| Genç İstasyonu; 3
+|| Genç; 3
 | Km.11+000; 3
 Sefercik; 41.568516; 32.03983
 || Yamukören; 4
-Genç İstasyonu; 38.751797; 40.55771
+Genç; 38.751797; 40.55771
 Köprüköy; 39.96853; 41.868237
 || Kars Garı; 3
-|| Karasu İstasyonu; 3
+|| Karasu; 3
 Ulukışla Gar; 37.545864; 34.48045
 | Yerköy; 5
 | Kayseri; 4
 || Şehitlik; 2
 || Karaman; 3
-|| Çetinkaya İstasyonu; 5
+|| Çetinkaya; 5
 Malatya; 38.352455; 38.283295
 || Çelik; 3
 || Km.11+000; 5
-|| Çetinkaya İstasyonu; 3
+|| Çetinkaya; 3
 Balıkesir Tren Garı; 39.646942; 27.888506
 | Alsancak Gar; 4
 | -; 3
-| Karakuyu İstasyonu; 5
+| Karakuyu; 5
 | Horsunlu Istasyon; 5
 || Eskişehir; 5
 Yahşiler; 39.53723; 38.752117
-|| Çetinkaya İstasyonu; 3
-|| Karasu İstasyonu; 4
+|| Çetinkaya; 3
+|| Karasu; 4
 Kayseri; 38.730675; 35.477722
-|| Çetinkaya İstasyonu; 5
-|| Zile İstasyonu; 5
+|| Çetinkaya; 5
+|| Zile; 5
 | Sivas; 5
 || Yerköy; 4
 Πύθιο; 41.3697; 26.6216
 || Çayırdere; 3
 -; 39.489708; 29.197603
-| Karakuyu İstasyonu; 5
+| Karakuyu; 5
 | Eskişehir; 3
 Kars Garı; 40.605064; 43.10665
 Gebze; 40.783867; 29.41078
@@ -62,28 +62,28 @@ Yerköy; 39.6384; 34.470707
 | Karaman; 5
 Horsunlu Istasyon; 37.91477; 28.5911
 | Alsancak Gar; 4
-|| Karakuyu İstasyonu; 4
+|| Karakuyu; 4
 Yamukören; 40.82181; 33.358227
 Km 0+700; 41.28082; 36.349335
-|| Zile İstasyonu; 3
+|| Zile; 3
 Km.11+000; 37.85319; 40.23649
 || Km 139+500; 3
-Karakuyu İstasyonu; 38.077698; 30.208374
+Karakuyu; 38.077698; 30.208374
 | Eskişehir; 5
 Alsancak Gar; 38.438633; 27.148115
-Karasu İstasyonu; 39.932625; 40.350197
+Karasu; 39.932625; 40.350197
 Karaman; 37.193546; 33.215443
 || Konya Gar; 3
 Şehitlik; 36.997982; 35.244125
 Çelik; 37.70036; 37.50863
 Konya Gar; 37.866615; 32.476112
-| Biçer İstasyonu; 5
-Çetinkaya İstasyonu; 39.249207; 37.60776
+| Biçer; 5
+Çetinkaya; 39.249207; 37.60776
 || Sivas; 2
-Zile İstasyonu; 40.281483; 35.931347
+Zile; 40.281483; 35.931347
 | Sivas; 3
 Km 139+500; 37.951504; 41.571667
-Biçer İstasyonu; 39.69451; 31.6948
+Biçer; 39.69451; 31.6948
 || Eskişehir; 3
 Eskişehir; 39.779774; 30.505846
 Çayırdere; 41.259968; 28.121742

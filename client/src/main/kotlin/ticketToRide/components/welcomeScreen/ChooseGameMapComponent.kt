@@ -19,6 +19,7 @@ import react.dom.html.ReactHTML.a
 import react.dom.html.ReactHTML.div
 import react.dom.html.ReactHTML.input
 import react.dom.html.ReactHTML.label
+import react.dom.html.ReactHTML.span
 import ticketToRide.*
 import web.file.FileReader
 import web.html.HTMLElement
@@ -74,34 +75,45 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
                 display = Display.inlineFlex
                 alignItems = AlignItems.center
             }
-            Typography {
-                variant = TypographyVariant.body1
-                if (props.map == null) {
-                    asDynamic().color = "text.error"
-                }
-                sx { paddingRight = 8.px }
-                +(when (val map = props.map) {
-                    is ConnectRequest.StartGameMap.BuiltIn -> map.path.last()
-                    is ConnectRequest.StartGameMap.Custom -> map.filename
-                    null -> "not selected"
-                })
-            }
 
-            mapsTree?.takeUnless { it.children.isEmpty() }?.let { mapsTree ->
-                Tooltip {
-                    title = ReactNode(str.chooseMap)
-                    a {
-                        css { paddingRight = 8.px }
-                        ref = chooseMapButtonRef
-                        onClick = { e ->
-                            e.preventDefault()
-                            isChooseMapMenuOpen = true
-                            currentFolder = listOf(mapsTree)
+            a {
+                css { display = Display.flex }
+                title = str.chooseMap
+
+                onClick = { e ->
+                    e.preventDefault()
+                    if (mapsTree != null) {
+                        isChooseMapMenuOpen = true
+                        currentFolder = selectedMap.dropLast(1).fold(listOf(mapsTree!!)) { list, item ->
+                            list + list.last().children.filterIsInstance<MapsTreeItem.Folder>()
+                                .first { it.name == item }
                         }
-                        FolderOpen()
                     }
                 }
 
+                Typography {
+                    variant = TypographyVariant.body1
+                    if (props.map == null) {
+                        asDynamic().color = "text.error"
+                    }
+                    sx { paddingRight = 8.px }
+                    +(when (val map = props.map) {
+                        is ConnectRequest.StartGameMap.BuiltIn -> map.path.last()
+                        is ConnectRequest.StartGameMap.Custom -> map.filename
+                        null -> "not selected"
+                    })
+                }
+
+                mapsTree?.takeUnless { it.children.isEmpty() }?.let { mapsTree ->
+                    span {
+                        css { paddingRight = 8.px }
+                        ref = chooseMapButtonRef
+                        FolderOpen()
+                    }
+                }
+            }
+
+            mapsTree?.takeUnless { it.children.isEmpty() }?.let { mapsTree ->
                 Popper {
                     open = isChooseMapMenuOpen
                     anchorEl = chooseMapButtonRef.current

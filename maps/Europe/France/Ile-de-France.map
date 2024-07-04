@@ -31,7 +31,7 @@ Coulommiers; 48.807705; 3.0819817
 Massy-TGV; 48.72584; 2.2613435
 || Viroflay Rive Gauche; 2
 || Villeneuve-Saint-Georges; 3
-| Gare de Paris-Saint-Lazare; 3
+| Paris; 3
 || Brétigny-sur-Orge; 3
 | Saint-Quentin-en-Yvelines; 3
 Mantes-la-Jolie; 48.9894; 1.703099
@@ -56,7 +56,7 @@ Ermont - Eaubonne; 48.980694; 2.2714016
 || Pontoise; 3
 | Viroflay Rive Gauche; 4
 || Villiers-le-Bel - Gonesse - Arnouville; 2
-|| Gare de Paris-Saint-Lazare; 2
+|| Paris; 2
 | Poissy; 3
 Souppes - Château-Landon; 48.18176; 2.7349627
 Brétigny-sur-Orge; 48.606815; 2.3019977
@@ -70,7 +70,7 @@ Pontoise; 49.046726; 2.095196
 | Poissy; 3
 || Chars; 3
 Viroflay Rive Gauche; 48.800655; 2.1715927
-| Gare de Paris-Saint-Lazare; 3
+| Paris; 3
 || Poissy; 3
 Corbeil-Essonnes; 48.614002; 2.4736052
 || Melun; 3
@@ -78,7 +78,7 @@ Corbeil-Essonnes; 48.614002; 2.4736052
 Étampes; 48.436966; 2.1594696
 Rambouillet; 48.64375; 1.8321042
 Buno - Gironville; 48.37074; 2.3870666
-Gare de Paris-Saint-Lazare; 48.87653; 2.3252375
+Paris; 48.87653; 2.3252375
 | Le Chénay Gagny; 3
 || Villeneuve-Saint-Georges; 4
 | Villiers-le-Bel - Gonesse - Arnouville; 3

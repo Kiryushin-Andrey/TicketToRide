@@ -4,7 +4,7 @@ map-zoom: 4
 Margaux; 45.03585; -0.6854735
 || Marcheprime; 5
 || Pauillac; 3
-|| Bordeaux-Saint-Jean; 3
+|| Bordeaux; 3
 Morcenx; 44.033543; -0.9085124
 || Ychoux; 4
 || Dax; 5
@@ -27,7 +27,7 @@ Vélines; 44.852013; 0.1036584
 || Gardonne; 2
 Marcheprime; 44.690422; -0.8537008
 | Arcachon; 3
-|| Bordeaux-Saint-Jean; 4
+|| Bordeaux; 4
 || Ychoux; 5
 Buissière-Galant; 45.607647; 1.0261531
 || Négrondes; 4
@@ -41,7 +41,7 @@ Puyoô; 43.524654; -0.9108189
 Dax; 43.720604; -1.0503078
 || Saint-Vincent-de-Tyrosse; 3
 Gauriaguet; 45.054375; -0.3992247
-| Bordeaux-Saint-Jean; 4
+| Bordeaux; 4
 | Montpon-Ménestérol; 6
 Saint-Jean-Pied-de-Port; 43.167904; -1.2380368
 || Bayonne; 5
@@ -55,7 +55,7 @@ Port-Sainte-Marie; 44.250484; 0.3905621
 || Marmande; 4
 || Penne; 5
 Penne; 44.379932; 0.8029791
-Bordeaux-Saint-Jean; 44.825657; -0.5555868
+Bordeaux; 44.825657; -0.5555868
 || Preignac; 4
 || Montpon-Ménestérol; 6
 Bayonne; 43.497; -1.4703615

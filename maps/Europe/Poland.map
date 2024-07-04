@@ -1,16 +1,16 @@
 map-center: 52.045197 18.9278
 map-zoom: 4
 
-Wrocław Główny; 51.097916; 17.03795
+Wrocław; 51.097916; 17.03795
 | Ostrów Wielkopolski; 2
 | Lichkov; 3
 || Legnica; 2
 || Kędzierzyn-Koźle; 3
 | Kluczbork; 2
 || Leszno; 3
-Lublin Główny; 51.231293; 22.568964
+Lublin; 51.231293; 22.568964
 || Skarżysko-Kamienna; 3
-| Rzeszów Główny; 4
+| Rzeszów; 4
 | Chełm; 2
 | Łuków; 2
 Trakiszki; 54.239452; 23.20801
@@ -24,25 +24,25 @@ Kędzierzyn-Koźle; 50.34506; 18.204607
 Chełm; 51.141315; 23.4942
 | Łuków; 3
 Sierpc; 52.847954; 19.653765
-|| Toruń Główny; 2
+|| Toruń; 2
 || Prabuty; 3
-| Olsztyn Główny; 3
-|| Warszawa Wschodnia; 3
+| Olsztyn; 3
+|| Warszawa; 3
 || Łódź Kaliska; 4
-Kraków Główny; 50.068665; 19.947802
+Kraków; 50.068665; 19.947802
 | Český Těšín (Czeski Cieszyn); 3
 | Częstochowa; 3
-| Rzeszów Główny; 4
+| Rzeszów; 4
 | Skarżysko-Kamienna; 4
 | Katowice; 2
 Skarżysko-Kamienna; 51.11617; 20.882195
-| Rzeszów Główny; 4
-| Warszawa Wschodnia; 4
+| Rzeszów; 4
+| Warszawa; 4
 | Łódź Kaliska; 4
 | Łuków; 4
 || Częstochowa; 4
 Zbąszynek; 52.24261; 15.818176
-| Poznań Główny; 2
+| Poznań; 2
 | Frankfurt (Oder); 3
 | Gorzów Wielkopolski; 2
 | Żagań; 2
@@ -52,14 +52,14 @@ Katowice; 50.257607; 19.017145
 | Český Těšín (Czeski Cieszyn); 2
 Słupsk; 54.467815; 17.016325
 | Chojnice; 3
-| Piła Główna; 4
-| Gdynia Główna; 3
-| Szczecin Główny; 6
+| Piła; 4
+| Gdynia; 3
+| Szczecin; 6
 Prabuty; 53.75731; 19.210808
-| Toruń Główny; 3
+| Toruń; 3
 | Chojnice; 3
-| Olsztyn Główny; 2
-| Gdynia Główna; 3
+| Olsztyn; 2
+| Gdynia; 3
 Hajnówka; 52.73355; 23.58307
 | Ostrołęka; 4
 || Łuków; 4
@@ -68,50 +68,50 @@ Legnica; 51.214092; 16.169655
 | Żagań; 2
 | Leszno; 2
 Ostrołęka; 53.05616; 21.617113
-| Warszawa Wschodnia; 3
+| Warszawa; 3
 | Łuków; 4
 Gorzów Wielkopolski; 52.727654; 15.228638
 | Frankfurt (Oder); 2
-| Piła Główna; 3
-| Poznań Główny; 5
-| Szczecin Główny; 3
+| Piła; 3
+| Poznań; 5
+| Szczecin; 3
 Łuków; 51.940483; 22.392859
-|| Warszawa Wschodnia; 3
+|| Warszawa; 3
 || Terespol; 2
-Szczecin Główny; 53.41824; 14.549407
+Szczecin; 53.41824; 14.549407
 | Frankfurt (Oder); 5
-| Piła Główna; 4
+| Piła; 4
 Żagań; 51.603764; 15.315421
 | Leszno; 3
 | Frankfurt (Oder); 3
 Chojnice; 53.689068; 17.57775
-| Toruń Główny; 3
-|| Piła Główna; 2
-| Gdynia Główna; 3
+| Toruń; 3
+|| Piła; 2
+| Gdynia; 3
 Ostrów Wielkopolski; 51.649227; 17.805235
 || Kluczbork; 2
 || Łódź Kaliska; 3
 || Leszno; 3
-|| Poznań Główny; 3
+|| Poznań; 3
 Lichkov; 50.097305; 16.658958
-Piła Główna; 53.143074; 16.744802
-|| Poznań Główny; 2
-| Toruń Główny; 4
+Piła; 53.143074; 16.744802
+|| Poznań; 2
+| Toruń; 4
 Kluczbork; 50.97108; 18.20101
 || Częstochowa; 2
 Leszno; 51.845966; 16.565472
-| Poznań Główny; 2
-Warszawa Wschodnia; 52.25159; 21.052368
+| Poznań; 2
+Warszawa; 52.25159; 21.052368
 || Łódź Kaliska; 4
 Częstochowa; 50.80843; 19.120968
 || Łódź Kaliska; 3
 Český Těšín (Czeski Cieszyn); 49.74328; 18.622427
-Rzeszów Główny; 50.043213; 22.005808
-Poznań Główny; 52.401627; 16.91158
-|| Toruń Główny; 4
-Gdynia Główna; 54.52162; 18.527472
+Rzeszów; 50.043213; 22.005808
+Poznań; 52.401627; 16.91158
+|| Toruń; 4
+Gdynia; 54.52162; 18.527472
 Łódź Kaliska; 51.75782; 19.430542
-Toruń Główny; 53.000107; 18.61463
+Toruń; 53.000107; 18.61463
 Terespol; 52.074333; 23.601254
 Frankfurt (Oder); 52.336536; 14.546695
-Olsztyn Główny; 53.78574; 20.497665
+Olsztyn; 53.78574; 20.497665

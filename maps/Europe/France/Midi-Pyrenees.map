@@ -4,16 +4,16 @@ map-zoom: 4
 Castres; 43.59923; 2.2310696
 || Damiatte - Saint-Paul; 3
 Villefranche-de-Lauragais; 43.398342; 1.7146184
-|| Toulouse-Matabiau; 5
+|| Toulouse; 5
 Millau; 44.102394; 3.074407
 || Sévérac-le-Château; 4
 || Montpaon; 4
 Pamiers; 43.116215; 1.619491
 || Foix; 2
-|| Toulouse-Matabiau; 6
+|| Toulouse; 6
 | Muret; 6
 Muret; 43.46484; 1.3244065
-|| Toulouse-Matabiau; 3
+|| Toulouse; 3
 | L'Isle-Jourdain; 4
 || Carbonne; 3
 Gramat; 44.77351; 1.722349
@@ -32,7 +32,7 @@ Aubiet; 43.650013; 0.7891872
 Cahors; 44.449226; 1.4330956
 || Caussade; 5
 || Dégagnac; 4
-Toulouse-Matabiau; 43.61143; 1.45421
+Toulouse; 43.61143; 1.45421
 || L'Isle-Jourdain; 4
 || Damiatte - Saint-Paul; 6
 || Castelnau-d'Estrétefonds; 3

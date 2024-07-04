@@ -1,7 +1,7 @@
 map-center: 49.760098 7.605958
 map-zoom: 4
 
-Zweibrücken Hbf; 49.246933; 7.3567877
+Zweibrücken; 49.246933; 7.3567877
 || Pirmasens Nord; 3
 Germersheim; 49.225735; 8.364907
 | Wörth (Rhein); 3
@@ -9,88 +9,88 @@ Germersheim; 49.225735; 8.364907
 Pirmasens Nord; 49.259136; 7.604393
 | Glan-Münchweiler; 4
 | Wilgartswiesen; 3
-|| Kaiserslautern Hauptbahnhof; 4
-Worms Hauptbahnhof; 49.63518; 8.356647
-|| Ludwigshafen (Rhein) Hauptbahnhof; 3
+|| Kaiserslautern; 4
+Worms; 49.63518; 8.356647
+|| Ludwigshafen (Rhein); 3
 || Alzey; 4
 | Freinsheim; 3
 | Dienheim; 4
 Bad Kreuznach; 49.84285; 7.866738
-|| Bingen (Rhein) Hauptbahnhof; 2
+|| Bingen (Rhein); 2
 || Rockenhausen; 4
 | Alzey; 3
 || Monzingen; 3
-Bingen (Rhein) Hauptbahnhof; 49.96881; 7.8834853
-|| Mainz Hauptbahnhof; 4
+Bingen (Rhein); 49.96881; 7.8834853
+|| Mainz; 4
 || Alzey; 5
 || Oberwesel; 3
 Bullay (DB); 50.054283; 7.134664
 || Moselkern; 4
-|| Wittlich Hauptbahnhof; 3
+|| Wittlich; 3
 Serrig; 49.577103; 6.5699368
-| Trier Hbf; 3
+| Trier; 3
 | Hetzerath; 5
 Idar-Oberstein; 49.69938; 7.321358
 || Monzingen; 3
 Glan-Münchweiler; 49.47044; 7.444818
 | Rockenhausen; 5
 | Monzingen; 5
-| Kaiserslautern Hauptbahnhof; 4
+| Kaiserslautern; 4
 Hetzerath; 49.87805; 6.798327
-|| Trier Hbf; 3
-|| Wittlich Hauptbahnhof; 2
+|| Trier; 3
+|| Wittlich; 2
 || Bitburg-Erdorf; 3
 Moselkern; 50.195564; 7.371379
-|| Koblenz Hbf; 4
+|| Koblenz; 4
 | Andernach; 4
-Trier Hbf; 49.756966; 6.652
+Trier; 49.756966; 6.652
 | Palzem; 5
 | Bitburg-Erdorf; 4
 Oberwesel; 50.104137; 7.731883
-|| Koblenz Hbf; 5
+|| Koblenz; 5
 Rockenhausen; 49.628387; 7.817285
 | Monzingen; 4
 | Freinsheim; 5
-| Neustadt (Weinstraße) Hauptbahnhof; 5
-|| Kaiserslautern Hauptbahnhof; 3
+| Neustadt (Weinstraße); 5
+|| Kaiserslautern; 3
 | Alzey; 4
-Kaiserslautern Hauptbahnhof; 49.435986; 7.76893
-| Neustadt (Weinstraße) Hauptbahnhof; 4
+Kaiserslautern; 49.435986; 7.76893
+| Neustadt (Weinstraße); 4
 Remagen; 50.57732; 7.2297077
 || Andernach; 3
 Alzey; 49.750343; 8.109747
-| Mainz Hauptbahnhof; 5
+| Mainz; 5
 || Freinsheim; 5
 Diez; 50.37043; 8.02039
-| Koblenz Hbf; 5
+| Koblenz; 5
 | Andernach; 5
-Wittlich Hauptbahnhof; 49.97299; 6.9435525
+Wittlich; 49.97299; 6.9435525
 Dienheim; 49.841698; 8.357221
-| Mainz Hauptbahnhof; 3
+| Mainz; 3
 Wilgartswiesen; 49.20919; 7.883052
-| Landau (Pfalz) Hbf; 3
+| Landau (Pfalz); 3
 Schifferstadt; 49.39282; 8.365061
-|| Ludwigshafen (Rhein) Hauptbahnhof; 2
-| Neustadt (Weinstraße) Hauptbahnhof; 3
+|| Ludwigshafen (Rhein); 2
+| Neustadt (Weinstraße); 3
 Palzem; 49.56508; 6.3718877
 | Bitburg-Erdorf; 5
 Mayen Ost; 50.329586; 7.2390723
 || Andernach; 3
 Freinsheim; 49.501312; 8.205287
-|| Neustadt (Weinstraße) Hauptbahnhof; 3
-| Ludwigshafen (Rhein) Hauptbahnhof; 3
+|| Neustadt (Weinstraße); 3
+| Ludwigshafen (Rhein); 3
 Bitburg-Erdorf; 49.998775; 6.5709896
 || Gerolstein; 4
 Andernach; 50.43448; 7.4050665
-|| Koblenz Hbf; 3
-Ludwigshafen (Rhein) Hauptbahnhof; 49.47756; 8.434148
-| Neustadt (Weinstraße) Hauptbahnhof; 4
-Mainz Hauptbahnhof; 50.001114; 8.258723
+|| Koblenz; 3
+Ludwigshafen (Rhein); 49.47756; 8.434148
+| Neustadt (Weinstraße); 4
+Mainz; 50.001114; 8.258723
 Monzingen; 49.79388; 7.5877223
-Neustadt (Weinstraße) Hauptbahnhof; 49.349567; 8.1403885
-|| Landau (Pfalz) Hbf; 3
-Koblenz Hbf; 50.350822; 7.5892634
+Neustadt (Weinstraße); 49.349567; 8.1403885
+|| Landau (Pfalz); 3
+Koblenz; 50.350822; 7.5892634
 Wörth (Rhein); 49.045692; 8.27315
-| Landau (Pfalz) Hbf; 3
-Landau (Pfalz) Hbf; 49.197933; 8.126152
+| Landau (Pfalz); 3
+Landau (Pfalz); 49.197933; 8.126152
 Gerolstein; 50.223923; 6.6603575

@@ -1,7 +1,7 @@
 map-center: 52.28073 21.099884
 map-zoom: 4
 
-Warszawa Wschodnia; 52.25159; 21.052368
+Warszawa; 52.25159; 21.052368
 || Otwock; 3
 | Grodzisk Mazowiecki; 4
 || Czachówek Południowy; 4
@@ -20,11 +20,11 @@ Cierpigórz; 52.22606; 22.594778
 || Fronołów; 3
 || Siedlce; 3
 Pionki; 51.479774; 21.462029
-|| Radom Główny; 3
+|| Radom; 3
 | Dęblin; 3
 Skierniewice Rawka; 51.977585; 20.221304
 || Grodzisk Mazowiecki; 4
-Radom Główny; 51.390923; 21.155382
+Radom; 51.390923; 21.155382
 || Wieniawa; 3
 || Dobieszyn; 3
 | Lipowe Pole; 5

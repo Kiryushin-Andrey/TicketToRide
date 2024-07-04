@@ -6,7 +6,7 @@ Michaľany; 48.52177; 21.62622
 | Humenné; 4
 || Košice; 2
 | Plešivec; 6
-Zvolen osobná stanica; 48.5695; 19.120749
+Zvolen; 48.5695; 19.120749
 || Kriváň; 2
 || Podbrezová; 3
 || Prievidza; 3
@@ -22,7 +22,7 @@ Plešivec; 48.553463; 20.412724
 || Jesenské; 3
 | Košice; 6
 Nové Zámky; 47.995148; 18.174255
-| Bratislava hlavná stanica; 6
+| Bratislava; 6
 | Komárom; 2
 | Lužianky; 3
 | Štúrovo; 3
@@ -82,12 +82,12 @@ Liptovský Mikuláš; 49.09223; 19.605125
 || Poprad-Tatry; 4
 Šaľa; 48.146946; 17.862293
 | Trnava; 2
-| Bratislava hlavná stanica; 4
+| Bratislava; 4
 Košice; 48.72202; 21.269213
 Lipany; 49.151833; 20.960478
 || Poprad-Tatry; 4
 Poprad-Tatry; 49.060093; 20.29494
-Bratislava hlavná stanica; 48.15893; 17.106699
+Bratislava; 48.15893; 17.106699
 | Trnava; 3
 | Kúty; 4
 | Komárom; 6

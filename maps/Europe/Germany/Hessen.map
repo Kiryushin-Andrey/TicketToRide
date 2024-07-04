@@ -21,10 +21,10 @@ Biedenkopf; 50.908745; 8.530574
 Biblis; 49.688934; 8.45047
 | Raunheim; 4
 | Assmannshausen; 6
-| Darmstadt Hauptbahnhof; 3
+| Darmstadt; 3
 | Groß-Umstadt Wiebelsbach; 5
 Assmannshausen; 49.985336; 7.867459
-| Wiesbaden Hauptbahnhof; 4
+| Wiesbaden; 4
 | Raunheim; 5
 Bad Soden-Salmünster; 50.28074; 9.3720665
 || Flieden; 3
@@ -34,22 +34,22 @@ Hofgeismar-Hümme; 51.543137; 9.402086
 Bad Arolsen; 51.381485; 8.997438
 | Willingen; 4
 || Frankenberg (Eder) Viermünden; 4
-Darmstadt Hauptbahnhof; 49.872852; 8.629412
-| Frankfurt (Main) Hauptbahnhof; 3
+Darmstadt; 49.872852; 8.629412
+| Frankfurt (Main); 3
 | Raunheim; 2
 | Rödermark-Ober Roden; 2
 | Groß-Umstadt Wiebelsbach; 3
 Stockhausen/Lahn; 50.540604; 8.32514
 || Gießen; 3
-| Wiesbaden Hauptbahnhof; 6
+| Wiesbaden; 6
 | Dillenburg; 3
 | Friedberg (Hess); 5
 | Limburg (Lahn); 3
-Frankfurt (Main) Hauptbahnhof; 50.106655; 8.6625805
+Frankfurt (Main); 50.106655; 8.6625805
 | Raunheim; 2
-|| Hanau Hbf; 2
+|| Hanau; 2
 | Rödermark-Ober Roden; 2
-| Wiesbaden Hauptbahnhof; 4
+| Wiesbaden; 4
 || Friedberg (Hess); 3
 | Grävenwiesbach; 4
 Oberzent-Schöllenbach; 49.565865; 9.067769
@@ -58,12 +58,12 @@ Friedberg (Hess); 50.33269; 8.761258
 | Grävenwiesbach; 3
 | Nidda; 2
 || Gießen; 4
-|| Hanau Hbf; 3
+|| Hanau; 3
 Willingen; 51.293335; 8.603542
 | Frankenberg (Eder) Viermünden; 3
 Raunheim; 50.009903; 8.455067
-| Wiesbaden Hauptbahnhof; 2
-Hanau Hbf; 50.121075; 8.9292145
+| Wiesbaden; 2
+Hanau; 50.121075; 8.9292145
 | Nidda; 4
 || Rödermark-Ober Roden; 2
 || Gelnhausen; 3
@@ -72,7 +72,7 @@ Gießen; 50.57987; 8.662211
 || Cölbe; 4
 | Nidda; 4
 | Dillenburg; 4
-Wiesbaden Hauptbahnhof; 50.06983; 8.243985
+Wiesbaden; 50.06983; 8.243985
 | Grävenwiesbach; 5
 | Limburg (Lahn); 5
 Rödermark-Ober Roden; 49.973347; 8.8289585

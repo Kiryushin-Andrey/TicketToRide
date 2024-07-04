@@ -6,42 +6,42 @@ Cranberry Portage; 54.584297; -101.37985
 | Reserve; 3
 Kamloops; 50.678844; -120.3254
 | Harvey; 3
-| Vancouver Pacific Central; 3
+| Vancouver; 3
 || Evansburg; 6
 Galeton; 51.133896; -80.9134
 || Cochrane; 3
 Canyon; 49.979706; -93.74064
 || Flindt Landing; 3
 || Winnipeg; 3
-Vancouver Pacific Central; 49.273746; -123.09786
+Vancouver; 49.273746; -123.09786
 | Harvey; 5
 London; 42.981422; -81.24659
-|| Toronto Union Station; 2
+|| Toronto; 2
 || Windsor; 2
 Hibbard; 47.866104; -74.043884
-|| Toronto Union Station; 6
+|| Toronto; 6
 || Mégiscane; 3
 | Ottawa; 4
-| Gare centrale de Montréal; 3
+| Montréal; 3
 Winnipeg; 49.88897; -97.13426
 || Dauphin; 3
 || Watrous; 6
 Azilda; 46.551636; -81.10472
 || Sultan; 2
-|| Toronto Union Station; 4
+|| Toronto; 4
 Flindt Landing; 50.245102; -90.44454
 || Nakina; 3
 Ottawa; 45.416466; -75.651726
 | Belleville; 2
-| Gare centrale de Montréal; 2
-| Toronto Union Station; 4
+| Montréal; 2
+| Toronto; 4
 Reserve; 52.47073; -102.64716
 || Dauphin; 3
 || Arnot; 6
 Lamprey; 58.316406; -94.15796
 || Arnot; 4
 Hébertville; 48.44343; -71.6624
-|| Gare centrale de Montréal; 4
+|| Montréal; 4
 Williams Lake; 52.129818; -122.1475
 || Vanderhoof; 3
 Sultan; 47.5948; -82.77286
@@ -57,20 +57,20 @@ Evansburg; 53.594494; -115.00874
 || Harvey; 4
 || Viking; 3
 Belleville; 44.17953; -77.37418
-|| Toronto Union Station; 2
-|| Gare centrale de Montréal; 4
+|| Toronto; 2
+|| Montréal; 4
 Québec; 46.818317; -71.214355
-|| Gare centrale de Montréal; 3
+|| Montréal; 3
 | Sackville; 6
 Mégiscane; 48.333046; -77.08436
 Jacquet River; 47.920414; -66.00119
 | Sackville; 3
 Cochrane; 49.060146; -81.02329
-Gare centrale de Montréal; 45.500286; -73.56716
+Montréal; 45.500286; -73.56716
 | Sackville; 6
 Viking; 53.092598; -111.77779
 || Watrous; 5
-Toronto Union Station; 43.644535; -79.38038
+Toronto; 43.644535; -79.38038
 | Sackville; 6
 Dauphin; 51.15039; -100.052185
 || Watrous; 5

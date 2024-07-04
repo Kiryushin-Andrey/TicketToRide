@@ -3,10 +3,10 @@ map-zoom: 4
 
 Most; 50.511135; 13.658706
 | Zdice; 4
-| Plzeň hlavní nádraží; 5
+| Plzeň; 5
 | Karlovy Vary; 4
-| Děčín hlavní nádraží; 3
-| Praha hlavní nádraží; 4
+| Děčín; 3
+| Praha; 4
 | Lovosice; 2
 Tábor; 49.41402; 14.676847
 || Strakonice; 3
@@ -17,11 +17,11 @@ Tábor; 49.41402; 14.676847
 || Havlíčkův Brod; 4
 | Benešov u Prahy; 2
 Kolín; 50.025352; 15.2144985
-| Praha hlavní nádraží; 3
+| Praha; 3
 || Havlíčkův Brod; 3
 | Benešov u Prahy; 3
-| Pardubice hlavní nádraží; 2
-| Mladá Boleslav hlavní nádraží; 3
+| Pardubice; 2
+| Mladá Boleslav; 3
 Mikulovice; 50.302193; 17.319805
 | Meziměstí; 5
 | Česká Třebová; 4
@@ -29,13 +29,13 @@ Veselí nad Moravou; 48.948902; 17.382437
 | Horní Lideč; 3
 | Břeclav; 2
 | Hulín; 2
-| Brno hlavní nádraží; 4
+| Brno; 4
 Bahnhof Bayerisch Eisenstein / Železná Ruda - Alžbětín; 49.12167; 13.209448
 | Strakonice; 3
-| Plzeň hlavní nádraží; 4
+| Plzeň; 4
 Letovice; 49.556454; 16.570765
 || Česká Třebová; 2
-| Brno hlavní nádraží; 2
+| Brno; 2
 || Polom; 5
 || Havlíčkův Brod; 4
 Mosty u Jablunkova (Mosty koło Jabłonkowa); 49.52427; 18.75125
@@ -44,30 +44,30 @@ Mosty u Jablunkova (Mosty koło Jabłonkowa); 49.52427; 18.75125
 Meziměstí; 50.62656; 16.242418
 | Tanvald; 4
 | Česká Třebová; 5
-| Pardubice hlavní nádraží; 4
-Plzeň hlavní nádraží; 49.74333; 13.388255
+| Pardubice; 4
+Plzeň; 49.74333; 13.388255
 || Zdice; 3
 | Cheb; 6
 | Karlovy Vary; 4
 | Strakonice; 4
 Břeclav; 48.75397; 16.893267
 | Znojmo; 4
-| Brno hlavní nádraží; 3
+| Brno; 3
 Ebersbach (Sachsen); 51.004425; 14.578989
-| Děčín hlavní nádraží; 2
-| Mladá Boleslav hlavní nádraží; 4
+| Děčín; 2
+| Mladá Boleslav; 4
 | Tanvald; 3
 Havlíčkův Brod; 49.599182; 15.588112
 || Křižanov; 2
 || Benešov u Prahy; 4
 | Česká Třebová; 4
-| Pardubice hlavní nádraží; 3
+| Pardubice; 3
 | Telč; 3
 Krnov; 50.089; 17.683315
 | Polom; 3
 | Ostrava-Svinov; 3
 Benešov u Prahy; 49.77977; 14.682626
-|| Praha hlavní nádraží; 2
+|| Praha; 2
 || Zdice; 3
 Karlovy Vary; 50.23545; 12.866629
 | Cheb; 2
@@ -81,36 +81,36 @@ Strakonice; 49.255157; 13.916312
 | Český Krumlov; 3
 | Zdice; 4
 Zdice; 49.907764; 13.97967
-| Praha hlavní nádraží; 2
+| Praha; 2
 Telč; 49.182556; 15.46459
 | Znojmo; 3
 | Křižanov; 3
 Křižanov; 49.384636; 16.080397
 | Znojmo; 3
-|| Brno hlavní nádraží; 2
+|| Brno; 2
 Tanvald; 50.743465; 15.311032
-| Mladá Boleslav hlavní nádraží; 3
-| Pardubice hlavní nádraží; 5
-Děčín hlavní nádraží; 50.77348; 14.201296
-| Mladá Boleslav hlavní nádraží; 4
+| Mladá Boleslav; 3
+| Pardubice; 5
+Děčín; 50.77348; 14.201296
+| Mladá Boleslav; 4
 | Lovosice; 2
-Mladá Boleslav hlavní nádraží; 50.40732; 14.887254
-| Pardubice hlavní nádraží; 4
-| Praha hlavní nádraží; 3
+Mladá Boleslav; 50.40732; 14.887254
+| Pardubice; 4
+| Praha; 3
 | Lovosice; 3
 Horní Lideč; 49.189125; 18.05835
 | Hulín; 3
 Gmünd NÖ (NÖVOG); 48.764923; 14.983959
 | Český Krumlov; 3
 Lovosice; 50.509693; 14.059583
-| Praha hlavní nádraží; 3
-Brno hlavní nádraží; 49.191124; 16.613111
+| Praha; 3
+Brno; 49.191124; 16.613111
 || Hulín; 4
 | Znojmo; 3
 Česká Třebová; 49.897076; 16.446678
-|| Pardubice hlavní nádraží; 3
-Pardubice hlavní nádraží; 50.031708; 15.756088
-Praha hlavní nádraží; 50.082962; 14.436094
+|| Pardubice; 3
+Pardubice; 50.031708; 15.756088
+Praha; 50.082962; 14.436094
 Český Krumlov; 48.822388; 14.317057
 Cheb; 50.073532; 12.38057
 Znojmo; 48.85262; 16.059086

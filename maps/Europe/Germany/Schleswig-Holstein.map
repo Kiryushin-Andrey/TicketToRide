@@ -6,14 +6,14 @@ Neumünster; 54.076103; 9.979966
 || Wahlstedt; 4
 || Nortorf; 2
 || Hohenwestedt; 4
-|| Kiel Hauptbahnhof; 5
+|| Kiel; 5
 || dodenhof; 5
 Itzehoe; 53.924236; 9.510045
 || St. Michaelisdonn; 5
 || Glückstadt; 3
 Glückstadt; 53.788548; 9.428361
 || Elmshorn; 3
-Lübeck Hauptbahnhof; 53.86759; 10.669855
+Lübeck; 53.86759; 10.669855
 || Ratzeburg; 4
 | Bad Malente-Gremsmühlen; 5
 || Bad Oldesloe; 4
@@ -24,7 +24,7 @@ Bredstedt; 54.62114; 8.970375
 || Husum; 3
 || Niebüll; 4
 Stakendorf; 54.39335; 10.395324
-|| Kiel Hauptbahnhof; 4
+|| Kiel; 4
 Pinneberg; 53.655033; 9.797687
 || Elmshorn; 3
 Wahlstedt; 53.96119; 10.229697
@@ -38,7 +38,7 @@ St. Michaelisdonn; 53.989304; 9.1183
 Flensburg / Flensborg; 54.774113; 9.436527
 || Jübek; 4
 || Sörup; 3
-Kiel Hauptbahnhof; 54.313446; 10.131014
+Kiel; 54.313446; 10.131014
 || Ascheberg (Holstein); 4
 || Rendsburg; 5
 || Eckernförde; 5

@@ -2,7 +2,7 @@ map-center: 53.785225 12.606495
 map-zoom: 4
 
 Schwaan; 53.93895; 12.117918
-|| Rostock Hauptbahnhof; 2
+|| Rostock; 2
 || Bad Kleinen; 6
 | Teterow; 5
 | Güstrow; 2
@@ -14,16 +14,16 @@ Pasewalk; 53.515003; 13.989298
 | Ueckermünde; 3
 || Anklam; 6
 Ribnitz-Damgarten Ost; 54.25101; 12.48743
-|| Rostock Hauptbahnhof; 4
+|| Rostock; 4
 || Velgast; 3
 || Teterow; 6
 Grimmen; 54.1098; 13.034158
-|| Stralsund Hbf; 3
+|| Stralsund; 3
 || Sternfeld; 4
 Groß Daberkow; 53.5058; 13.650087
 || Neubrandenburg; 3
 Ostseebad Binz; 54.40498; 13.60065
-| Stralsund Hbf; 5
+| Stralsund; 5
 | Greifswald; 5
 Boizenburg/Elbe; 53.378098; 10.754175
 || Hagenow Land; 4
@@ -45,24 +45,24 @@ Grevesmühlen; 53.857395; 11.184407
 || Bad Kleinen; 3
 Neubrandenburg; 53.561886; 13.261585
 || Reuterstadt Stavenhagen; 4
-| Neustrelitz Hauptbahnhof; 3
+| Neustrelitz; 3
 || Sternfeld; 4
 Teterow; 53.76841; 12.578006
-| Rostock Hauptbahnhof; 6
+| Rostock; 6
 || Karow (Meckl); 4
 || Güstrow; 4
 || Reuterstadt Stavenhagen; 3
 | Waren (Müritz); 4
 Greifswald; 54.09298; 13.370587
 || Züssow; 2
-|| Stralsund Hbf; 4
+|| Stralsund; 4
 Güstrow; 53.800846; 12.172581
 | Karow (Meckl); 4
 || Bad Kleinen; 6
 Reuterstadt Stavenhagen; 53.70681; 12.91418
 Bad Kleinen; 53.766685; 11.466198
 || Crivitz; 3
-Neustrelitz Hauptbahnhof; 53.359238; 13.074512
+Neustrelitz; 53.359238; 13.074512
 | Waren (Müritz); 4
 Anklam; 53.856068; 13.70187
 || Züssow; 2
@@ -74,7 +74,7 @@ Zinnowitz; 54.075844; 13.902865
 || Seebad Heringsdorf; 3
 || Züssow; 3
 Sternfeld; 53.82488; 13.150243
-Stralsund Hbf; 54.307667; 13.078779
+Stralsund; 54.307667; 13.078779
 || Velgast; 2
 Seebad Heringsdorf; 53.94918; 14.170824
 Grambow; 53.417137; 14.347125
@@ -83,7 +83,7 @@ Velgast; 54.277428; 12.802819
 Crivitz; 53.572544; 11.644798
 || Lübz; 4
 Bad Doberan; 54.09998; 11.904975
-Rostock Hauptbahnhof; 54.07815; 12.1311245
+Rostock; 54.07815; 12.1311245
 Karow (Meckl); 53.540318; 12.272172
 || Lübz; 2
 Hagenow Land; 53.41343; 11.215322

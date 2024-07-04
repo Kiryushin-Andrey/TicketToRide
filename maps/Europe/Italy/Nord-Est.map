@@ -18,11 +18,11 @@ Trento; 46.072243; 11.119319
 Bolzano - Bozen; 46.49643; 11.358805
 || Meran - Merano; 2
 || Franzensfeste - Fortezza; 3
-Venezia Santa Lucia; 45.441074; 12.321033
+Venezia; 45.441074; 12.321033
 | Padova; 3
 | Adria; 4
 | Lison; 4
-| Treviso Centrale; 2
+| Treviso; 2
 Brenner - Brennero; 47.00241; 11.505536
 || Franzensfeste - Fortezza; 2
 Franzensfeste - Fortezza; 46.78879; 11.610044
@@ -31,12 +31,12 @@ Padova; 45.417744; 11.880498
 || Monselice; 2
 | Adria; 3
 || Bassano del Grappa; 3
-|| Treviso Centrale; 3
+|| Treviso; 3
 Verona Porta Nuova; 45.42918; 10.98237
 | Nogara; 2
 Adria; 45.06047; 12.054283
 | Lison; 6
-Treviso Centrale; 45.660057; 12.245219
+Treviso; 45.660057; 12.245219
 || Sacile; 3
 || Bassano del Grappa; 3
 || Lison; 3
@@ -63,7 +63,7 @@ Nogara; 45.179943; 11.070069
 Innichen - San Candido; 46.73274; 12.272095
 Rimini; 44.06425; 12.574064
 Carnia; 46.373672; 13.1331005
-| Gorizia Centrale; 5
+| Gorizia; 5
 | Udine; 3
 || Sacile; 5
 Bassano del Grappa; 45.76663; 11.741269
@@ -82,13 +82,13 @@ Lison; 45.751984; 12.759362
 | Udine; 4
 Cervignano - Aquileia - Grado; 45.82371; 13.342819
 | Udine; 2
-| Trieste Centrale; 3
-| Gorizia Centrale; 2
+| Trieste; 3
+| Gorizia; 2
 Ferrara; 44.842987; 11.60368
 || Parma; 6
-Trieste Centrale; 45.65788; 13.77188
-| Gorizia Centrale; 3
-Gorizia Centrale; 45.933037; 13.606853
+Trieste; 45.65788; 13.77188
+| Gorizia; 3
+Gorizia; 45.933037; 13.606853
 | Udine; 2
 Borgo Val di Taro; 44.486526; 9.78144
 | Parma; 4

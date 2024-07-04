@@ -11,7 +11,7 @@ Mazara del Vallo; 37.652588; 12.594568
 || Castelvetrano; 3
 Noto; 36.882393; 15.074537
 || Siracusa; 4
-Palermo Centrale; 38.109257; 13.36748
+Palermo; 38.109257; 13.36748
 || Piraineto; 3
 || San Nicola Tonnara; 4
 Siracusa; 37.06909; 15.280743
@@ -28,14 +28,14 @@ Cefalù; 38.032803; 14.019557
 || Santo Stefano di Camastra; 4
 Carruba; 37.6888; 15.191487
 || Taormina-Giardini; 3
-|| Catania Centrale; 3
+|| Catania; 3
 Enna; 37.581013; 14.289692
 || Caltanissetta Xirbi; 3
 || Catenanuova-Centuripe; 5
 Aragona Caldare; 37.3811; 13.636528
 || Canicattì; 3
 || Casteltermini - Acquaviva Platani; 3
-Catania Centrale; 37.506462; 15.099996
+Catania; 37.506462; 15.099996
 || Lentini; 4
 || Catenanuova-Centuripe; 6
 Casteltermini - Acquaviva Platani; 37.57043; 13.674824
@@ -53,10 +53,10 @@ Milazzo; 38.197857; 15.258118
 Grammichele; 37.20929; 14.641233
 || Lentini; 5
 Giampilieri; 38.063904; 15.47978
-|| Messina Centrale; 2
+|| Messina; 2
 Caltanissetta Xirbi; 37.536255; 14.056983
 || Canicattì; 4
-Messina Centrale; 38.184887; 15.56136
+Messina; 38.184887; 15.56136
 || Rometta Messinese; 2
 Rometta Messinese; 38.228397; 15.406001
 Santo Stefano di Camastra; 38.01749; 14.351838

@@ -12,8 +12,8 @@ Ryjewo; 53.84253; 18.956694
 Kartuzy; 54.33441; 18.206291
 | Gdańsk Osowa; 3
 || Kościerzyna; 4
-|| Gdynia Główna; 6
-| Gdańsk Główny; 6
+|| Gdynia; 6
+| Gdańsk; 6
 Kuźnica (Hel); 54.73624; 18.576637
 || Hel; 3
 || Władysławowo; 2
@@ -23,16 +23,16 @@ Lębork; 54.53362; 17.750237
 || Łeba; 4
 Wejherowo; 54.60575; 18.229647
 || Strzebielino Morskie; 2
-|| Gdynia Główna; 3
+|| Gdynia; 3
 || Mrzezino; 2
 Gdańsk Osowa; 54.42222; 18.452633
-| Gdańsk Główny; 2
-| Gdynia Główna; 2
+| Gdańsk; 2
+| Gdynia; 2
 Mrzezino; 54.653008; 18.41303
 || Władysławowo; 2
-|| Gdynia Główna; 3
-Gdynia Główna; 54.52162; 18.527472
-|| Gdańsk Główny; 3
+|| Gdynia; 3
+Gdynia; 54.52162; 18.527472
+|| Gdańsk; 3
 Łeba; 54.755966; 17.553415
 Władysławowo; 54.793472; 18.401905
 Strzebielino Morskie; 54.562893; 18.028786
@@ -57,16 +57,16 @@ Pelplin; 53.92692; 18.707277
 Tczew; 54.097248; 18.789782
 | Różyny; 2
 || Piesienice; 6
-|| Gdańsk Główny; 6
+|| Gdańsk; 6
 || Malbork; 3
 Różyny; 54.211475; 18.66217
-| Gdańsk Główny; 3
+| Gdańsk; 3
 | Piesienice; 5
 Kościerzyna; 54.120667; 17.994623
 | Kaliska; 4
-| Gdańsk Główny; 6
+| Gdańsk; 6
 | Gutowiec; 6
-Gdańsk Główny; 54.356434; 18.644194
+Gdańsk; 54.356434; 18.644194
 || Piesienice; 6
 || Malbork; 6
 Gutowiec; 53.777557; 17.861036

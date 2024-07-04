@@ -7,9 +7,9 @@ Wittenberge; 53.00213; 11.762847
 | Brück (Mark); 6
 | Meyenburg; 4
 Bernau (bei Berlin); 52.675385; 13.591942
-|| Berlin Hauptbahnhof; 2
+|| Berlin; 2
 || Berlin-Mahlsdorf; 2
-|| Eberswalde Hauptbahnhof; 2
+|| Eberswalde; 2
 || Oranienburg; 2
 Falkenberg (Elster); 51.58359; 13.24726
 | Elsterwerda; 2
@@ -19,8 +19,8 @@ Nauen; 52.612732; 12.885586
 || Neustadt (Dosse); 4
 | Rathenow; 3
 || Golm; 2
-|| Berlin Hauptbahnhof; 3
-Eberswalde Hauptbahnhof; 52.834003; 13.797783
+|| Berlin; 3
+Eberswalde; 52.834003; 13.797783
 || Angermünde; 2
 | Letschin; 4
 Angermünde; 53.015835; 13.995991
@@ -37,11 +37,11 @@ Neustadt (Dosse); 52.85333; 12.450013
 | Meyenburg; 5
 Golm; 52.409794; 12.971877
 | Rathenow; 4
-|| Berlin Hauptbahnhof; 3
+|| Berlin; 3
 || Trebbin; 3
-| Brandenburg Hauptbahnhof; 3
+| Brandenburg; 3
 Trebbin; 52.217052; 13.229908
-| Berlin Hauptbahnhof; 3
+| Berlin; 3
 || Walddrehna; 5
 | Jüterbog; 3
 | Flughafen BER; 2
@@ -51,13 +51,13 @@ Doberlug-Kirchhain; 51.62061; 13.564226
 || Walddrehna; 2
 | Ruhland; 3
 Calau (Niederlausitz) - Kalawa (Dolna Łužyca); 51.73808; 13.979676
-| Cottbus Hauptbahnhof / Chóśebuz głowne dwórnišćo; 2
+| Cottbus / Chóśebuz głowne dwórnišćo; 2
 | Oderin; 4
 | Ruhland; 3
 | Walddrehna; 2
 Meyenburg; 53.311165; 12.247386
 | Rheinsberg (Mark); 5
-Cottbus Hauptbahnhof / Chóśebuz głowne dwórnišćo; 51.7513; 14.322308
+Cottbus / Chóśebuz głowne dwórnišćo; 51.7513; 14.322308
 | Guben; 3
 || Oderin; 5
 | Ruhland; 4
@@ -70,14 +70,14 @@ Elsterwerda; 51.46001; 13.516572
 Rheinsberg (Mark); 53.09278; 12.900206
 || Oranienburg; 4
 | Vogelsang (Kr Oberhavel); 3
-Brandenburg Hauptbahnhof; 52.400482; 12.56575
+Brandenburg; 52.400482; 12.56575
 | Rathenow; 3
 Oranienburg; 52.753906; 13.249321
 | Vogelsang (Kr Oberhavel); 3
-|| Berlin Hauptbahnhof; 3
+|| Berlin; 3
 Guben; 51.959084; 14.706748
 || Frankfurt (Oder); 4
-Berlin Hauptbahnhof; 52.524944; 13.369661
+Berlin; 52.524944; 13.369661
 || Berlin-Mahlsdorf; 2
 || Flughafen BER; 2
 Berlin-Mahlsdorf; 52.511894; 13.610797

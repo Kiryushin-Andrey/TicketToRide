@@ -17,7 +17,7 @@ Bhusaval Junction; 21.047255; 75.78806
 | Itarsi Junction; 3
 Gorakhpur Junction; 26.759666; 83.38197
 | Duddhinagar; 3
-| Kanpur Central; 3
+| Kanpur; 3
 | Tanakpur; 4
 Tatanagar; 22.76828; 86.20112
 | Malda Town; 3
@@ -25,7 +25,7 @@ Tatanagar; 22.76828; 86.20112
 | Howrah Junction; 2
 | Brahmapur; 4
 Guntakal Junction; 15.173713; 77.369865
-| Puratchi Thalaivar Dr. M. G. Ramachandran Central; 4
+| Puratchi Thalaivar Dr. M. G. Ramachandran; 4
 | Suravali; 3
 | Vijayawada Junction; 3
 || Mysore Junction; 3
@@ -39,7 +39,7 @@ New Delhi; 28.641926; 77.22175
 | Bajalta; 4
 || Agra Fort; 2
 Mysore Junction; 12.31574; 76.64512
-| Puratchi Thalaivar Dr. M. G. Ramachandran Central; 4
+| Puratchi Thalaivar Dr. M. G. Ramachandran; 4
 | Suravali; 4
 | Manaparai; 3
 | Kollam Junction; 4
@@ -50,7 +50,7 @@ Gajsinghpur; 29.65799; 73.43751
 Virangana Lakshmibai Jhansi Junction Railway Station; 25.44395; 78.553444
 || Itarsi Junction; 3
 || Agra Fort; 2
-| Kanpur Central; 2
+| Kanpur; 2
 Bajalta; 32.762054; 74.952126
 Bhilai Nagar; 21.201183; 81.33523
 || Majri Junction; 3
@@ -65,7 +65,7 @@ Howrah Junction; 22.58287; 88.34281
 | Malda Town; 3
 Katni Junction; 23.834763; 80.400696
 | Duddhinagar; 3
-| Kanpur Central; 3
+| Kanpur; 3
 | Itarsi Junction; 3
 Kurduvadi Junction; 18.091848; 75.41704
 | Chhatrapati Shivaji Maharaj Terminus - CSMT; 3
@@ -78,20 +78,20 @@ Surat; 21.205029; 72.840744
 | Nagda Junction; 3
 | Itarsi Junction; 4
 Agra Fort; 27.183002; 78.018715
-|| Kanpur Central; 2
+|| Kanpur; 2
 || Ajmer Junction; 3
 | Nagda Junction; 4
 | Tanakpur; 3
 Tanakpur; 29.067379; 80.10946
-| Kanpur Central; 3
+| Kanpur; 3
 Brahmapur; 19.296753; 84.7974
 | Vijayawada Junction; 4
 Manaparai; 10.607339; 78.41811
-|| Puratchi Thalaivar Dr. M. G. Ramachandran Central; 3
+|| Puratchi Thalaivar Dr. M. G. Ramachandran; 3
 Malda Town; 25.015965; 88.13058
 Duddhinagar; 24.208616; 83.21661
-|| Kanpur Central; 4
-Puratchi Thalaivar Dr. M. G. Ramachandran Central; 13.082423; 80.27596
+|| Kanpur; 4
+Puratchi Thalaivar Dr. M. G. Ramachandran; 13.082423; 80.27596
 || Vijayawada Junction; 4
 Gandhidham Junction; 23.06839; 70.14771
 | Mahesana Junction; 2
@@ -110,7 +110,7 @@ Mahesana Junction; 23.602833; 72.38896
 || Ajmer Junction; 4
 | Nagda Junction; 3
 Majri Junction; 20.139336; 79.04296
-Kanpur Central; 26.453861; 80.35124
+Kanpur; 26.453861; 80.35124
 Ajmer Junction; 26.456335; 74.637344
 | Nagda Junction; 3
 Nagda Junction; 23.456402; 75.4126

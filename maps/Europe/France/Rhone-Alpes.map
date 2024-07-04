@@ -2,7 +2,7 @@ map-center: 45.636868 5.5111504
 map-zoom: 4
 
 Villars-les-Dombes; 46.00423; 5.028384
-| Lyon-Perrache; 3
+| Lyon; 3
 | Saint-Germain-au-Mont-d'Or; 2
 | Lyon-Saint-Exupéry TGV; 3
 || Bourg-en-Bresse; 3
@@ -11,7 +11,7 @@ Clelles-Mens; 44.827255; 5.6050215
 Saint-Germain-au-Mont-d'Or; 45.88838; 4.804575
 || Saint-Romain-de-Popey; 2
 | Saint-Étienne Châteaucreux; 6
-|| Lyon-Perrache; 2
+|| Lyon; 2
 || Belleville-sur-Saône; 3
 Feurs; 45.744064; 4.2306094
 || Saint-Étienne Châteaucreux; 4
@@ -59,7 +59,7 @@ Bourg-Saint-Maurice; 45.619022; 6.7715263
 Évian-les-Bains; 46.39791; 6.5777774
 || Annemasse; 3
 Vienne; 45.51956; 4.8727746
-| Lyon-Perrache; 3
+| Lyon; 3
 || Lyon-Saint-Exupéry TGV; 3
 || Saint-Étienne Châteaucreux; 4
 Modane; 45.19333; 6.659044
@@ -68,7 +68,7 @@ Annemasse; 46.19959; 6.2371106
 | Cluses; 3
 || Annecy; 3
 || Bellegarde; 3
-Lyon-Perrache; 45.74832; 4.825327
+Lyon; 45.74832; 4.825327
 | Saint-Étienne Châteaucreux; 6
 || Lyon-Saint-Exupéry TGV; 2
 Belleville-sur-Saône; 46.111946; 4.729008

@@ -64,10 +64,10 @@ Zug; 47.173786; 8.515509
 | Göschenen; 4
 || Rapperswil SG; 2
 | Lenzburg; 3
-| Zürich Hauptbahnhof; 2
+| Zürich; 2
 Visp; 46.293766; 7.881778
 Winterthur; 47.500313; 8.723973
-| Zürich Hauptbahnhof; 2
+| Zürich; 2
 | Basel SBB; 5
 | Rapperswil SG; 3
 | Kreuzlingen; 3
@@ -92,7 +92,7 @@ Biel/Bienne [Gleis 11/voie 11]; 47.13232; 7.242552
 || Delémont; 2
 | La Chaux-de-Fonds; 3
 || Solothurn; 2
-Zürich Hauptbahnhof; 47.3781; 8.539364
+Zürich; 47.3781; 8.539364
 | Rapperswil SG; 2
 | Lenzburg; 2
 Montreux; 46.43586; 6.910369

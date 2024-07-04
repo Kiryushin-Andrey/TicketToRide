@@ -8,7 +8,7 @@ Griebnitzsee; 52.39446; 13.127272
 || Griebnitzsee (2); 0
 Berlin Zoologischer Garten; 52.507435; 13.332561
 || Zoologischer Garten; 0
-|| Berlin Hauptbahnhof; 3
+|| Berlin; 3
 Karow; 52.615215; 13.469464
 | Berlin-Hohenschönhausen; 6
 | Pankow; 6
@@ -41,14 +41,14 @@ Berlin Gesundbrunnen; 52.548645; 13.390217
 | Schönhauser Allee; 2
 | Pankow; 2
 Berlin Friedrichstraße; 52.520176; 13.386989
-|| Berlin Hauptbahnhof; 1
+|| Berlin; 1
 Berlin-Hohenschönhausen; 52.56618; 13.512226
 | Pankow; 6
 Berlin Jungfernheide; 52.530277; 13.299666
 || Westhafen; 3
 || Berlin-Spandau; 6
 Wedding; 52.542786; 13.367
-|| Berlin Hauptbahnhof; 2
+|| Berlin; 2
 | Westhafen; 2
 || Gesundbrunnen; 2
 Gesundbrunnen; 52.549175; 13.390076
@@ -60,10 +60,10 @@ Berlin Ostbahnhof; 52.510384; 13.434911
 | Berlin-Schöneweide; 6
 Griebnitzsee (2); 52.394283; 13.128292
 Berlin Potsdamer Platz; 52.509205; 13.3759365
-|| Berlin Hauptbahnhof; 2
+|| Berlin; 2
 Berlin-Schöneweide; 52.454872; 13.509251
 | Berlin Ostkreuz (Ringbahn-F); 6
-Berlin Hauptbahnhof; 52.524944; 13.369661
+Berlin; 52.524944; 13.369661
 || Westhafen; 2
 Westhafen; 52.536278; 13.344416
 Ahrensfelde; 52.571445; 13.565302

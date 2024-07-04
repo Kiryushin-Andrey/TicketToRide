@@ -7,7 +7,7 @@ Llanwrtyd; 52.104607; -3.6322246
 Ebbw Vale Town; 51.776615; -3.2024665
 || Crosskeys; 5
 Ynyswen; 51.66496; -3.521481
-| Cardiff Central; 6
+| Cardiff; 6
 | Pontyclun; 6
 Neath; 51.662186; -3.807019
 || Swansea; 3
@@ -18,15 +18,15 @@ Milford Haven; 51.715755; -5.041412
 Bargoed; 51.692905; -3.2300432
 || Llanbradach; 3
 Crosskeys; 51.620758; -3.1258366
-|| Cardiff Central; 4
+|| Cardiff; 4
 | Newport; 2
 Knighton; 52.345016; -3.0423374
 || Llanbister Road; 3
 Rhoose Cardiff International Airport; 51.387154; -3.3494456
-| Cardiff Central; 4
+| Cardiff; 4
 | Llantwit Major; 2
 Mountain Ash; 51.681763; -3.376667
-| Cardiff Central; 6
+| Cardiff; 6
 | Llanbradach; 3
 Clarbeston Road; 51.85172; -4.8821673
 || Fishguard and Goodwick; 5
@@ -44,12 +44,12 @@ Llantwit Major; 51.40965; -3.4814284
 || Bridgend; 3
 Lamphey; 51.66712; -4.8728814
 Newport; 51.588768; -3.000425
-|| Cardiff Central; 6
+|| Cardiff; 6
 || Severn Tunnel Junction; 4
 || Pontypool and New Inn; 3
 Carmarthen; 51.853306; -4.3057647
 || Kidwelly; 3
-Cardiff Central; 51.475548; -3.1797657
+Cardiff; 51.475548; -3.1797657
 || Pontyclun; 4
 || Llanbradach; 4
 Kidwelly; 51.734398; -4.3176546

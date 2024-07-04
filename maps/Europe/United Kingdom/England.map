@@ -4,12 +4,12 @@ map-zoom: 4
 Leeds; 53.794415; -1.548621
 | Carlisle; 6
 || York; 1
-|| Manchester Piccadilly; 2
+|| Manchester; 2
 | Sheffield; 2
 | Lancaster; 3
-London Waterloo; 51.50284; -0.112801
+London; 51.50284; -0.112801
 || Gatwick Airport; 1
-|| Milton Keynes Central; 3
+|| Milton Keynes; 3
 | Reading; 2
 | Ashford International; 3
 | Colchester; 3
@@ -29,13 +29,13 @@ Peterborough; 52.574604; -0.2503162
 | Nottingham; 3
 || Cambridge; 2
 | Grimsby Town; 4
-| Milton Keynes Central; 3
+| Milton Keynes; 3
 || Lincoln; 3
 Moreton-in-Marsh; 51.992184; -1.7002656
-|| Birmingham New Street; 2
-| Bristol Temple Meads; 3
+|| Birmingham; 2
+| Bristol; 3
 || Reading; 3
-| Milton Keynes Central; 2
+| Milton Keynes; 2
 | Hereford; 3
 Exeter St Davids; 50.729214; -3.5435703
 || Plymouth; 2
@@ -56,20 +56,20 @@ Sheffield; 53.378372; -1.462138
 | Lincoln; 2
 || Nottingham; 2
 | Crewe; 3
-| Manchester Piccadilly; 2
-Milton Keynes Central; 52.0342; -0.7748261
+| Manchester; 2
+Milton Keynes; 52.0342; -0.7748261
 || Nottingham; 4
-| Birmingham New Street; 3
+| Birmingham; 3
 || Reading; 2
 Lincoln; 53.226105; -0.5398447
 | Nottingham; 2
 | Grimsby Town; 2
-Liverpool Lime Street; 53.407608; -2.9775853
+Liverpool; 53.407608; -2.9775853
 | Crewe; 2
-| Manchester Piccadilly; 2
+| Manchester; 2
 | Lancaster; 3
 | Hereford; 6
-Bristol Temple Meads; 51.4491; -2.5804029
+Bristol; 51.4491; -2.5804029
 || Taunton; 2
 | Reading; 4
 || Hereford; 3
@@ -77,12 +77,12 @@ Carlisle; 54.890583; -2.9329195
 | Newcastle; 3
 | Lancaster; 4
 Lancaster; 54.048836; -2.807799
-| Manchester Piccadilly; 3
+| Manchester; 3
 Scarborough; 54.27995; -0.4056223
 | Grimsby Town; 3
 Nottingham; 52.947304; -1.1449555
 | Crewe; 3
-|| Birmingham New Street; 3
+|| Birmingham; 3
 Berwick-upon-Tweed; 55.774555; -2.0105424
 || Newcastle; 4
 Newcastle; 54.968735; -1.6171916
@@ -96,22 +96,22 @@ Reading; 51.459198; -0.9723236
 | Portsmouth Harbour; 3
 | Gatwick Airport; 2
 Hereford; 52.0612; -2.708122
-| Birmingham New Street; 3
+| Birmingham; 3
 || Crewe; 4
 Taunton; 51.023296; -3.102674
 Crewe; 53.088963; -2.4326365
-|| Birmingham New Street; 3
-|| Manchester Piccadilly; 2
+|| Birmingham; 3
+|| Manchester; 2
 Ashford International; 51.14338; 0.8752323
 || Ramsgate; 2
 | Gatwick Airport; 3
 | Colchester; 3
 Portsmouth Harbour; 50.796703; -1.1087807
 | Gatwick Airport; 3
-Manchester Piccadilly; 53.47722; -2.2301402
+Manchester; 53.47722; -2.2301402
 Colchester; 51.900578; 0.8924554
 Northallerton; 54.332474; -1.441378
-Birmingham New Street; 52.477646; -1.898694
+Birmingham; 52.477646; -1.898694
 Gatwick Airport; 51.156734; -0.1609224
 Ramsgate; 51.341076; 1.4052263
 Grimsby Town; 53.563457; -0.0868507

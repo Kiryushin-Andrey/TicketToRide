@@ -17,6 +17,14 @@ def fetch_subregions(url, indent, parentFolder):
                             None)
             if nameLink != None:
                 name = nameLink.find_all(string=True, recursive=True)[-1].get_text().strip('()')
+                if (name == "South America"
+                        or name == "Africa"
+                        or name == "Canada"
+                        or name == "United States of America"
+                        or name == "Netherlands"
+                        or name == "Spain"):
+                    return
+
                 os.makedirs("{}/{}".format(parentFolder, name), exist_ok=True)
 
                 pbfUrl = url.rsplit('/', 1)[0] + "/" + next(

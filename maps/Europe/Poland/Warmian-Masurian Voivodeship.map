@@ -4,7 +4,7 @@ map-zoom: 4
 Żabi Róg; 53.876404; 20.017607
 || Morąg; 3
 || Gamerki Wielkie; 3
-Olsztyn Główny; 53.78574; 20.497665
+Olsztyn; 53.78574; 20.497665
 || Olsztyn Gutkowo; 2
 || Gągławki; 4
 || Unieszewo; 5
@@ -47,9 +47,9 @@ Gralewo; 53.320164; 20.034908
 Samborowo; 53.67184; 19.820736
 || Rudzienice Suskie; 4
 Rudzienice Suskie; 53.638565; 19.669489
-|| Iława Główna; 3
+|| Iława; 3
 Rakowice; 53.47815; 19.641521
-|| Iława Główna; 4
+|| Iława; 4
 || Hartowiec; 6
 Nidzica; 53.35797; 20.41397
 || Kozłowo; 3
@@ -57,8 +57,8 @@ Nidzica; 53.35797; 20.41397
 Ostrowite koło Jabłonowa; 53.433125; 19.267262
 || Biskupiec Pomorski; 3
 Biskupiec Pomorski; 53.489494; 19.389307
-|| Iława Główna; 5
-Iława Główna; 53.58108; 19.573122
+|| Iława; 5
+Iława; 53.58108; 19.573122
 || Ząbrowo; 3
 Kozłowo; 53.308777; 20.311169
 || Działdowo; 4
