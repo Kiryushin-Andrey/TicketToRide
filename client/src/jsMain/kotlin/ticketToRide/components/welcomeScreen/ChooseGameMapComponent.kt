@@ -113,73 +113,71 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
                 }
             }
 
-            mapsTree?.takeUnless { it.children.isEmpty() }?.let { mapsTree ->
-                Popper {
-                    open = isChooseMapMenuOpen
-                    anchorEl = chooseMapButtonRef.current
-                    placement = Placement.rightStart
-                    sx { zIndex = integer(1600) }
+            Popper {
+                open = isChooseMapMenuOpen
+                anchorEl = chooseMapButtonRef.current
+                placement = Placement.rightStart
+                sx { zIndex = integer(1600) }
 
-                    Paper {
-                        sx {
-                            height = 420.px
-                            width = 360.px
-                            overflow = Auto.auto
-                        }
+                Paper {
+                    sx {
+                        height = 420.px
+                        width = 360.px
+                        overflow = Auto.auto
+                    }
 
-                        ClickAwayListener {
-                            onClickAway = { isChooseMapMenuOpen = false }
+                    ClickAwayListener {
+                        onClickAway = { isChooseMapMenuOpen = false }
 
-                            MenuList {
-                                if ((currentFolder?.size ?: 0) > 1) {
+                        MenuList {
+                            if ((currentFolder?.size ?: 0) > 1) {
+                                MenuItem {
+                                    divider = true
+                                    onClick = {
+                                        currentFolder = currentFolder.orEmpty().dropLast(1)
+                                    }
+                                    ListItemIcon {
+                                        ChevronLeft()
+                                    }
+                                    ListItemText {
+                                        primary = ReactNode(str.back)
+                                    }
+                                }
+                            }
+                            currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Folder>()
+                                ?.forEach { folder ->
                                     MenuItem {
-                                        divider = true
                                         onClick = {
-                                            currentFolder = currentFolder.orEmpty().dropLast(1)
+                                            currentFolder = currentFolder.orEmpty() + folder
+                                        }
+
+                                        ListItemIcon { Folder() }
+                                        ListItemText {
+                                            primary = ReactNode(folder.name)
                                         }
                                         ListItemIcon {
-                                            ChevronLeft()
-                                        }
-                                        ListItemText {
-                                            primary = ReactNode(str.back)
+                                            sx { justifyContent = JustifyContent.end }
+                                            ChevronRight()
                                         }
                                     }
                                 }
-                                currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Folder>()
-                                    ?.forEach { folder ->
-                                        MenuItem {
-                                            onClick = {
-                                                currentFolder = currentFolder.orEmpty() + folder
-                                            }
 
-                                            ListItemIcon { Folder() }
-                                            ListItemText {
-                                                primary = ReactNode(folder.name)
-                                            }
-                                            ListItemIcon {
-                                                sx { justifyContent = JustifyContent.end }
-                                                ChevronRight()
+                            currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Map>()
+                                ?.forEach { map ->
+                                    MenuItem {
+                                        onClick = {
+                                            isChooseMapMenuOpen = false
+                                            (currentFolder!!.drop(1).map { it.name } + map.name).let {
+                                                selectedMap = it
+                                                props.onMapChanged(ConnectRequest.StartGameMap.BuiltIn(it))
                                             }
                                         }
-                                    }
-
-                                currentFolder?.lastOrNull()?.children?.filterIsInstance<MapsTreeItem.Map>()
-                                    ?.forEach { map ->
-                                        MenuItem {
-                                            onClick = {
-                                                isChooseMapMenuOpen = false
-                                                (currentFolder!!.drop(1).map { it.name } + map.name).let {
-                                                    selectedMap = it
-                                                    props.onMapChanged(ConnectRequest.StartGameMap.BuiltIn(it))
-                                                }
-                                            }
-                                            ListItemIcon { Map() }
-                                            ListItemText {
-                                                primary = ReactNode(map.name)
-                                            }
+                                        ListItemIcon { Map() }
+                                        ListItemText {
+                                            primary = ReactNode(map.name)
                                         }
                                     }
-                            }
+                                }
                         }
                     }
                 }
@@ -188,7 +186,7 @@ val ChooseGameMapComponent = FC<ChooseGameMapComponentProps> { props ->
             Tooltip {
                 title = ReactNode(str.downloadSample)
                 a {
-                    href = "/maps/${selectedMap.joinToString("/") { encodeURIComponent(it) }}"
+                    href = "/maps/${selectedMap.joinToString("/") { encodeURIComponent(it) }}.map"
                     Download()
                 }
             }

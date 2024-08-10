@@ -36,15 +36,16 @@ fun WelcomeScreen(
         when (val screen = screenState.value) {
             is WelcomeScreenState.StartNewGame ->
                 StartNewGameDialog(
+                    serverHost,
                     onJoinGame = {
                         screenState.value = initialGameId?.let { WelcomeScreenState.JoinGame(it) }
                             ?: WelcomeScreenState.EnterGameIdToJoin
                     },
-                    onStartGame = { name, color, customMap, settings ->
-                        customMap?.let { appState.initMap(it) }
+                    onStartGame = { name, color, gameMap, settings ->
                         startGame(
                             PlayerName(name),
                             color,
+                            gameMap,
                             settings.carsCount,
                             settings.calculateScoreInProgress,
                             appState,
@@ -94,8 +95,9 @@ fun ShowGameIdScreen(serverHost: String, appState: AppState, screenState: Screen
             appState.updateScreen(
                 Screen.GameInProgress(
                     screenState.gameId,
+                    screenState.gameMap,
                     screenState.gameState,
-                    PlayerState.initial(appState.map, screenState.gameState)
+                    PlayerState.initial(screenState.gameMap, screenState.gameState)
                 )
             )
         }

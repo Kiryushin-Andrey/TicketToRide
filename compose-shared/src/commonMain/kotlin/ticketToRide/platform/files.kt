@@ -2,8 +2,10 @@ package ticketToRide.platform
 
 import androidx.compose.runtime.Composable
 
-@Composable
-expect fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit)
+data class UploadedGameMap(val filename: String, val content: String)
 
 @Composable
-expect fun FileSaveDialog(content: String, close: () -> Unit)
+expect fun FileUploadDialog(onMapUploaded: (UploadedGameMap) -> Unit, close: () -> Unit)
+
+@Composable
+expect fun FileSaveDialog(mapName: String, content: suspend () -> String, close: () -> Unit)

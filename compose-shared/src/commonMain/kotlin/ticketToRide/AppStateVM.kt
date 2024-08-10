@@ -4,7 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 
-class AppStateVM(override val serverHost: String, private val defaultMap: String) : AppState {
+class AppStateVM(override val serverHost: String) : AppState {
 
     private val state = object {
         val locale = mutableStateOf(Locale.En)
@@ -12,7 +12,6 @@ class AppStateVM(override val serverHost: String, private val defaultMap: String
         val errorMessage = mutableStateOf("")
         val showErrorMessage = mutableStateOf(false)
         val screen = mutableStateOf<Screen>(Screen.Welcome)
-        val map = mutableStateOf((GameMap.parse(defaultMap) as Try.Success).value)
         val chatMessages = mutableStateListOf<Response.ChatMessage>()
     }
 
@@ -21,9 +20,6 @@ class AppStateVM(override val serverHost: String, private val defaultMap: String
 
     override val locale: Locale
         get() = state.locale.value
-
-    override val map: GameMap
-        get() = state.map.value
 
     override val chatMessages: Collection<Response.ChatMessage>
         get() = state.chatMessages
@@ -39,11 +35,6 @@ class AppStateVM(override val serverHost: String, private val defaultMap: String
 
     override fun log(message: String) {
         log.info { message }
-    }
-
-    override fun initMap(map: GameMap) {
-        state.map.value = map
-        state.showErrorMessage.value = false
     }
 
     override fun setConnectionState(state: ConnectionState, errorMessage: String?) {

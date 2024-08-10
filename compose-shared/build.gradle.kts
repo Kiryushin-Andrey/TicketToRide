@@ -18,6 +18,8 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(libs.oshai.kotlin.logging)
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.serialization.json)
                 api(libs.moko.resources)
                 api(libs.moko.resources.compose)
                 implementation(project(":common"))

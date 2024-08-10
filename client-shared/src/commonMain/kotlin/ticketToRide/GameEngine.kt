@@ -14,14 +14,12 @@ interface AppState {
     val serverHost: String
     val screen: Screen
     val locale: Locale
-    val map: GameMap
     val chatMessages: Collection<Response.ChatMessage>
     val connectionState: ConnectionState
     val errorMessage: String
     val showErrorMessage: Boolean
 
     fun log(message: String)
-    fun initMap(map: GameMap)
     fun setConnectionState(state: ConnectionState, errorMessage: String? = null)
     fun updateScreen(screen: Screen)
     fun showErrorMessage(message: String)
@@ -151,8 +149,8 @@ private fun ServerConnection.runAsPlayer(
 ) {
     addExitAppListener { requests.trySend(LeaveGameRequest).isSuccess }
     connectResponse.apply {
-        runGame<Response>(map, appState, str, Response.GameState(state)) { msg ->
-            processResponse(id, msg, appState)
+        runGame<Response>(appState, str, Response.GameState(state)) { msg ->
+            processResponse(id, map, msg, appState)
         }
     }
 }
@@ -163,21 +161,19 @@ private fun ServerConnection.runAsObserver(
     str: AppStrings
 ) {
     connectResponse.apply {
-        runGame(map, appState, str, state) { gameState ->
-            processGameStateForObserver(id, gameState, appState)
+        runGame(appState, str, state) { gameState ->
+            processGameStateForObserver(id, map, gameState, appState)
         }
     }
 }
 
 private inline fun <reified T> ServerConnection.runGame(
-    gameMap: GameMap,
     appState: AppState,
     str: AppStrings,
     initialGameState: T,
     crossinline processResponse: (T) -> Unit
 ) {
     connection = this
-    appState.initMap(gameMap)
     processResponse(initialGameState)
     run<T>(
         requests = requests,
@@ -186,42 +182,43 @@ private inline fun <reified T> ServerConnection.runGame(
     )
 }
 
-private fun processResponse(gameId: GameId, msg: Response, appState: AppState) = when (msg) {
+private fun processResponse(gameId: GameId, map: GameMap, msg: Response, appState: AppState) = when (msg) {
 
     is Response.ErrorMessage -> appState.showErrorMessage(msg.text)
 
     is Response.ChatMessage -> appState.appendChatMessage(msg)
 
-    is Response.GameState -> processGameState(gameId, appState, msg.state, msg.action)
+    is Response.GameState -> processGameState(gameId, map, appState, msg.state, msg.action)
 
     is Response.GameEnd -> {
-        appState.updateScreen(Screen.GameOver(gameId, observing = false, msg.players))
+        appState.updateScreen(Screen.GameOver(gameId, map, observing = false, msg.players))
         msg.action?.let {
-            appState.appendChatMessage(it.chatMessage(appState.map, appState.locale))
+            appState.appendChatMessage(it.chatMessage(map, appState.locale))
         }
     }
 }
 
-private fun processGameState(gameId: GameId, appState: AppState, newGameState: GameStateView, gameAction: PlayerAction?) {
+private fun processGameState(gameId: GameId, gameMap: GameMap, appState: AppState, newGameState: GameStateView, gameAction: PlayerAction?) {
     with(appState.screen) {
         when (this) {
 
             is Screen.Welcome ->
                 appState.updateScreen(
                     if (newGameState.players.size == 1)
-                        Screen.ShowGameId(gameId, newGameState)
+                        Screen.ShowGameId(gameId, gameMap, newGameState)
                     else
                         Screen.GameInProgress(
                             gameId,
+                            gameMap,
                             newGameState,
-                            PlayerState.initial(appState.map, newGameState)
+                            PlayerState.initial(gameMap, newGameState)
                         )
                 )
 
             is Screen.ShowGameId -> {
                 appState.updateScreen(withGameState(newGameState))
                 gameAction?.let {
-                    appState.appendChatMessage(it.chatMessage(appState.map, appState.locale))
+                    appState.appendChatMessage(it.chatMessage(gameMap, appState.locale))
                 }
             }
 
@@ -231,10 +228,10 @@ private fun processGameState(gameId: GameId, appState: AppState, newGameState: G
                 }
                 val newPlayerState =
                     if (playerState is PlayerState.ChoosingTickets && newGameState.myPendingTicketsChoice != null) playerState
-                    else PlayerState.initial(appState.map, newGameState)
+                    else PlayerState.initial(gameMap, newGameState)
                 appState.updateScreen(copy(gameState = newGameState, playerState = newPlayerState))
                 gameAction?.let {
-                    appState.appendChatMessage(it.chatMessage(appState.map, appState.locale))
+                    appState.appendChatMessage(it.chatMessage(gameMap, appState.locale))
                 }
             }
 
@@ -244,15 +241,15 @@ private fun processGameState(gameId: GameId, appState: AppState, newGameState: G
     }
 }
 
-private fun processGameStateForObserver(gameId: GameId, gameState: GameStateForObserver, appState: AppState) {
+private fun processGameStateForObserver(gameId: GameId, gameMap: GameMap, gameState: GameStateForObserver, appState: AppState) {
     appState.updateScreen(
         if (gameState.gameEnded)
-            Screen.GameOver(gameId, observing = true, gameState.players.zip(gameState.tickets))
+            Screen.GameOver(gameId, gameMap, observing = true, gameState.players.zip(gameState.tickets))
         else
-            Screen.ObserveGameInProgress(gameState)
+            Screen.ObserveGameInProgress(gameMap, gameState)
     )
     gameState.action?.let {
-        appState.appendChatMessage(it.chatMessage(appState.map, appState.locale))
+        appState.appendChatMessage(it.chatMessage(gameMap, appState.locale))
     }
 }
 

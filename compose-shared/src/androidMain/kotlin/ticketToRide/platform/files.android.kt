@@ -10,17 +10,17 @@ import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
 
 @Composable
-actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) {
+actual fun FileUploadDialog(onMapUploaded: (UploadedGameMap) -> Unit, close: () -> Unit) {
     val contentResolver = LocalContext.current.contentResolver
     val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { result ->
         if (result != null) {
-            val inputStream = contentResolver.openInputStream(result)
-            if (inputStream != null) {
-                try {
-                    onMapUploaded(inputStream.readBytes().toString(StandardCharsets.UTF_8))
-                } finally {
-                    inputStream.close()
-                }
+            contentResolver.openInputStream(result)?.use { inputStream ->
+                onMapUploaded(
+                    UploadedGameMap(
+                        result.pathSegments.last(),
+                        inputStream.readBytes().toString(StandardCharsets.UTF_8)
+                    )
+                )
             }
         }
         close()
@@ -32,19 +32,14 @@ actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) 
 }
 
 @Composable
-actual fun FileSaveDialog(content: String, close: () -> Unit) {
+actual fun FileSaveDialog(mapName: String, content: suspend () -> String, close: () -> Unit) {
     val contentResolver = LocalContext.current.contentResolver
     val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("*/*")) { uri ->
         scope.launch {
             if (uri != null) {
-                val outputStream = contentResolver.openOutputStream(uri)
-                if (outputStream != null) {
-                    try {
-                        outputStream.write(content.toByteArray(Charsets.UTF_8))
-                    } finally {
-                        outputStream.close()
-                    }
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(content().toByteArray(Charsets.UTF_8))
                 }
             }
             close()
@@ -52,6 +47,6 @@ actual fun FileSaveDialog(content: String, close: () -> Unit) {
     }
     
     LaunchedEffect(launcher) {
-        launcher.launch("default_map")
+        launcher.launch("${mapName}_map")
     }
 }

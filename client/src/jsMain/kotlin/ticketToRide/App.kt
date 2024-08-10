@@ -28,7 +28,6 @@ private const val ERROR_MESSAGE_TIMEOUT_SECS = 4
 external interface AppReactState : HookstateRoot<AppReactStateValue> {
     var screen: Hookstate<Screen>
     var locale: Hookstate<Locale>
-    var map: Hookstate<GameMap>
     var chatMessages: Hookstate<Array<Response.ChatMessage>>
     var connectionState: Hookstate<ConnectionState>
     var errorMessage: Hookstate<String>
@@ -68,8 +67,6 @@ val App = FC<AppProps> { props ->
                 get() = appReactState.screen.get()
             override val locale: Locale
                 get() = appReactState.locale.get()
-            override val map: GameMap
-                get() = appReactState.map.get()
             override val chatMessages: Collection<Response.ChatMessage>
                 get() = appReactState.chatMessages.get().asList()
             override val connectionState: ConnectionState
@@ -78,13 +75,6 @@ val App = FC<AppProps> { props ->
                 get() = appReactState.errorMessage.get()
             override val showErrorMessage: Boolean
                 get() = appReactState.showErrorMessage.get()
-
-            override fun initMap(map: GameMap) {
-                appReactState.merge(jso<AppReactStateValue> {
-                    this.map = map
-                    showErrorMessage = false
-                })
-            }
 
             override fun setConnectionState(state: ConnectionState, errorMessage: String?) {
                 appReactState.merge(jso<AppReactStateValue> {
@@ -169,8 +159,9 @@ val App = FC<AppProps> { props ->
                     appState.updateScreen(
                         Screen.GameInProgress(
                             screen.gameId,
+                            screen.gameMap,
                             screen.gameState,
-                            PlayerState.initial(appState.map, screen.gameState)
+                            PlayerState.initial(screen.gameMap, screen.gameState)
                         )
                     )
                 }
@@ -180,7 +171,7 @@ val App = FC<AppProps> { props ->
             GameScreen {
                 locale = appState.locale
                 connected = appState.connectionState == Connected
-                gameMap = appState.map
+                gameMap = screen.gameMap
                 gameState = screen.gameState
                 playerState = screen.playerState
                 act = { action -> appReactState.screen.set(screen.copy(playerState = screen.playerState.action())) }
@@ -192,7 +183,7 @@ val App = FC<AppProps> { props ->
             val allPlayers = screen.players.map { it.first }
             FinalScreen {
                 locale = appState.locale
-                gameMap = appState.map
+                gameMap = screen.gameMap
                 chatMessages = appState.chatMessages
                 observing = screen.observing
                 players = screen.players.map { (player, tickets) ->
@@ -203,7 +194,7 @@ val App = FC<AppProps> { props ->
                         player.placedStations,
                         tickets,
                         allPlayers.filter { it != player }.flatMap { it.occupiedSegments },
-                        appState.map
+                        screen.gameMap
                     )
                 }
                 onSendMessage = { sendToServer(ChatMessage(it)) }
@@ -213,7 +204,7 @@ val App = FC<AppProps> { props ->
         is Screen.ObserveGameInProgress ->
             ObserveGameScreen {
                 locale = appState.locale
-                gameMap = appState.map
+                gameMap = screen.gameMap
                 chatMessages = appState.chatMessages
                 connected = appState.connectionState == Connected
                 gameState = screen.gameState

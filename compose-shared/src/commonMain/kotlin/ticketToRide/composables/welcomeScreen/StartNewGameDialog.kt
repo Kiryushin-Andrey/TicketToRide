@@ -11,10 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import ticketToRide.GameMap
-import ticketToRide.GameMapParseError
-import ticketToRide.LocalAppActions
-import ticketToRide.PlayerColor
+import ticketToRide.*
 
 
 class NewGameVM {
@@ -22,7 +19,7 @@ class NewGameVM {
     var color by mutableStateOf(PlayerColor.RED)
     var carsNumber by mutableStateOf(45)
     var calculateScoreInProgress by mutableStateOf(true)
-    var customMap by mutableStateOf<GameMap?>(null)
+    var gameMap by mutableStateOf<ConnectRequest.StartGameMap?>(ConnectRequest.StartGameMap.BuiltIn(listOf("default")))
     var customMapParseErrors by mutableStateOf<List<GameMapParseError>?>(null)
     var errorMessage by mutableStateOf<String?>(null)
 }
@@ -34,19 +31,25 @@ class GameSettings(
 
 @Composable
 fun StartNewGameDialog(
+    serverHost: String,
     onJoinGame: () -> Unit,
-    onStartGame: (String, PlayerColor, GameMap?, GameSettings) -> Unit,
+    onStartGame: (String, PlayerColor, ConnectRequest.StartGameMap, GameSettings) -> Unit,
 ) {
     val vm = remember { NewGameVM() }
     var showSettings by remember { mutableStateOf(false) }
     val textInputFocusRequester = remember { FocusRequester() }
     val startGame = remember(onStartGame, vm) {
         {
-            if (vm.name.isBlank()) {
-                vm.errorMessage = "Enter your name"
-            } else {
-                val gameSettings = GameSettings(vm.carsNumber, vm.calculateScoreInProgress)
-                onStartGame(vm.name, vm.color, vm.customMap, gameSettings)
+            val gameMap = vm.gameMap
+            when {
+                vm.name.isBlank() ->
+                    vm.errorMessage = "Enter your name"
+                gameMap == null ->
+                    vm.errorMessage = "Choose or upload the game map"
+                else -> {
+                    val gameSettings = GameSettings(vm.carsNumber, vm.calculateScoreInProgress)
+                    onStartGame(vm.name, vm.color, gameMap, gameSettings)
+                }
             }
         }
     }
@@ -65,6 +68,9 @@ fun StartNewGameDialog(
         Spacer(Modifier.height(8.dp))
 
         PlayerColorSelector(vm.color, ticketToRide.PlayerColor.entries, { vm.color = it })
+        Spacer(Modifier.height(8.dp))
+
+        GameMapSelector(vm, serverHost)
         Spacer(Modifier.height(8.dp))
 
         AnimatedVisibility(showSettings) {

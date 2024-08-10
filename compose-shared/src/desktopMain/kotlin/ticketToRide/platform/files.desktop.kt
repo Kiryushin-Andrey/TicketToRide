@@ -8,12 +8,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @Composable
-actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) {
+actual fun FileUploadDialog(onMapUploaded: (UploadedGameMap) -> Unit, close: () -> Unit) {
     LaunchedEffect(onMapUploaded, close) {
         FileDialog(ComposeWindow(), "Upload game map", FileDialog.LOAD).apply {
             isVisible = true
             if (file != null) {
-                onMapUploaded(Files.readString(Path.of(directory, file)))
+                onMapUploaded(UploadedGameMap(file, Files.readString(Path.of(directory, file))))
             }
             close()
         }
@@ -21,13 +21,13 @@ actual fun FileUploadDialog(onMapUploaded: (String) -> Unit, close: () -> Unit) 
 }
 
 @Composable
-actual fun FileSaveDialog(content: String, close: () -> Unit) {
+actual fun FileSaveDialog(mapName: String, content: suspend () -> String, close: () -> Unit) {
     LaunchedEffect(close) {
         FileDialog(ComposeWindow(), "Download game map", FileDialog.SAVE).apply {
-            file = "default.map"
+            file = "$mapName.map"
             isVisible = true
             if (file != null) {
-                Files.writeString(Path.of(directory, file), content)
+                Files.writeString(Path.of(directory, file), content())
             }
             close()
         }

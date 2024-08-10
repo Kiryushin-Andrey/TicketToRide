@@ -2,7 +2,6 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
     id("com.android.library")
-    id("dev.icerock.mobile.multiplatform-resources")
 }
 
 val serializationVersion = "1.5.0"
@@ -30,7 +29,6 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.protobuf)
                 implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5")
-                api(libs.moko.resources)
             }
         }
         val jvmMain by getting {
@@ -56,10 +54,6 @@ kotlin {
             optIn("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
-}
-
-multiplatformResources {
-    multiplatformResourcesPackage = "ticketToRide.common"
 }
 
 android {
