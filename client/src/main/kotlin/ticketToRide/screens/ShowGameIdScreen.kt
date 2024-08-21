@@ -11,11 +11,14 @@ import react.dom.html.ReactHTML.a
 import react.dom.html.ReactHTML.p
 import ticketToRide.*
 import web.window.WindowTarget
+import ticketToRide.PlayerColor
+import ticketToRide.GameStateView
 
 external interface ShowGameIdScreenProps : Props {
     var gameId: GameId
     var locale: Locale
     var onClosed: () -> Unit
+    var gameState: GameStateView
 }
 
 @JsExport
@@ -23,10 +26,25 @@ external interface ShowGameIdScreenProps : Props {
 val ShowGameIdScreen = FC<ShowGameIdScreenProps> { props ->
     val str = useMemo(props.locale) { strings(props.locale) }
     val gameUrl = window.location.href
+    val currentPlayer = props.gameState.me
 
     // navigator.clipboard can actually be undefined
     @Suppress("UNNECESSARY_SAFE_CALL")
     window.navigator.clipboard?.writeText(gameUrl)
+
+    fun ChildrenBuilder.coloredCircle(color: PlayerColor) {
+        Box {
+            sx {
+                width = 20.px
+                height = 20.px
+                borderRadius = 50.pct
+                backgroundColor = Color(color.rgb)
+                display = Display.inlineBlock
+                marginRight = 10.px
+                verticalAlign = VerticalAlign.middle
+            }
+        }
+    }
 
     Dialog {
         sx {
@@ -41,6 +59,29 @@ val ShowGameIdScreen = FC<ShowGameIdScreenProps> { props ->
         }
 
         DialogContent {
+            Box {
+                sx {
+                    display = Display.flex
+                    alignItems = AlignItems.center
+                    marginBottom = 16.px
+                }
+                Typography {
+                    variant = TypographyVariant.body1
+                    +str.currentPlayer
+                }
+            }
+            Box {
+                sx {
+                    display = Display.flex
+                    alignItems = AlignItems.center
+                    marginBottom = 16.px
+                }
+                coloredCircle(currentPlayer.color)
+                Typography {
+                    variant = TypographyVariant.body1
+                    +currentPlayer.name.value
+                }
+            }
             p {
                 +str.sendThisLinkToOtherPlayers
                 if (window.navigator.clipboard != undefined)
@@ -78,4 +119,9 @@ private fun strings(locale: Locale) = object : LocalizedStrings({ locale }) {
     )
 
     val ok by loc(Locale.En to "OK", Locale.Ru to "OK")
+
+    val currentPlayer by loc(
+        Locale.En to "Current player:",
+        Locale.Ru to "Текущий игрок:"
+    )
 }
