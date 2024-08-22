@@ -92,6 +92,7 @@ val App = FC<AppProps> { props ->
                 ShowGameIdScreen {
                     gameId = it.gameId
                     locale = appState.locale.get()
+                    gameState = it.gameState
                     onClosed = {
                         props.onGameStarted()
                         screen.set(
