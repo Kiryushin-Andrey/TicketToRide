@@ -113,13 +113,10 @@ fun <T> MutableMap<T, PersistentMap<T, Int>>.removeEdge(from: T, to: T) {
     (this[to]!! - from).takeIf { it.isNotEmpty() }?.let { this[to] = it } ?: this.remove(to)
 }
 
-fun <T> Graph<T>.removePath(from: T, to: T, distances: Distances<T>): Pair<Graph<T>, List<GraphSegment<T>>> {
-    val path = distances.getPath(from, to)
-    val newGraph = mutate { graph ->
-        path.forEach { s -> graph.removeEdge(s.from, s.to) }
+fun <T> Graph<T>.removePath(from: T, to: T, distances: Distances<T>) =
+    mutate { graph ->
+        distances.getPath(from, to).forEach { s -> graph.removeEdge(s.from, s.to) }
     }
-    return newGraph to path
-}
 
 fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
     if (isEulerian()) this
@@ -134,22 +131,12 @@ fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
             .sortedBy { s -> s.weight }
             .toList()
 
-        val allCombinations = pathsToRemove.asSequence()
-            .map { it.from to it.to }
-            .allCombinations()
+        val subgraphs = pathsToRemove
+            .map { removePath(it.from, it.to, distances) }
+            .filter { it.isConnected() }
+            .map { it.getMaxEulerianSubgraph() }
 
-        allCombinations
-            .map { combination ->
-                combination.fold(this to emptyList<GraphSegment<T>>()) { (graph, removedPaths), (from, to) ->
-                    val (newGraph, path) = graph.removePath(from, to, distances)
-                    newGraph to removedPaths + path
-                }
-            }
-            .filter { (graph, _) -> graph.isConnected() }
-            .maxByOrNull { (_, removedPaths) -> removedPaths.sumOf { it.weight } }
-            ?.first
-            ?.getMaxEulerianSubgraph()
-            ?: this
+        subgraphs.maxByOrNull { it.getTotalWeight() } ?: this
     }
 
 fun <T> Graph<T>.getTotalWeight() = flatMap { it.value.values }.sum() / 2
