@@ -44,7 +44,6 @@ private val playersListComponent = FC<PlayersListComponentProps> { props ->
                     }
                 }
 
-
                 div {
                     css {
                         width = 100.pct
@@ -56,17 +55,24 @@ private val playersListComponent = FC<PlayersListComponentProps> { props ->
                     }
                     div {
                         css {
-                            display = Display.inlineBlock
-                            width = 12.px
-                            height = 12.px
-                            backgroundColor = Color(player.color.rgb)
-                            borderRadius = 50.pct
-                            marginRight = 8.px
+                            display = Display.flex
+                            flexDirection = FlexDirection.row
+                            alignItems = AlignItems.center
                         }
-                    }
-                    Typography {
-                        variant = TypographyVariant.h6
-                        +player.name.value
+                        div {
+                            css {
+                                display = Display.inlineBlock
+                                width = 12.px
+                                height = 12.px
+                                backgroundColor = Color(player.color.rgb)
+                                borderRadius = 50.pct
+                                marginRight = 8.px
+                            }
+                        }
+                        Typography {
+                            variant = TypographyVariant.h6
+                            +player.name.value
+                        }
                     }
                     player.points?.let {
                         pointsLabel(it.toString(), NamedColor.lightyellow)
