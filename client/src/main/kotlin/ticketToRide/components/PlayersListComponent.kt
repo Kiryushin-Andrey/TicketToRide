@@ -54,6 +54,16 @@ private val playersListComponent = FC<PlayersListComponentProps> { props ->
                         alignItems = AlignItems.center
                         paddingRight = 16.px
                     }
+                    div {
+                        css {
+                            display = Display.inlineBlock
+                            width = 12.px
+                            height = 12.px
+                            backgroundColor = Color(player.color.rgb)
+                            borderRadius = 50.pct
+                            marginRight = 8.px
+                        }
+                    }
                     Typography {
                         variant = TypographyVariant.h6
                         +player.name.value
