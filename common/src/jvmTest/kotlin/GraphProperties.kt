@@ -116,6 +116,14 @@ class GraphProperties : FreeSpec({
                 graph.getMaxEulerianSubgraph().getTotalWeight() >= subgraph.getTotalWeight()
             }
         }
+
+        "finds the largest eulerian subgraph" {
+            forAll(Arb.graphWithSubgraph.filter { it.second.isEulerian() }) { (graph, subgraph) ->
+                val maxEulerianSubgraph = graph.getMaxEulerianSubgraph()
+                val allEulerianSubgraphs = graph.splitIntoConnectedSubgraphs().filter { it.isEulerian() }
+                maxEulerianSubgraph.getTotalWeight() >= allEulerianSubgraphs.maxOfOrNull { it.getTotalWeight() } ?: 0
+            }
+        }
     }
 
     "adding segment to graph" - {
