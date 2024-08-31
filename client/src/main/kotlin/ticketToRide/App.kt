@@ -102,6 +102,8 @@ val App = FC<AppProps> { props ->
                             )
                         )
                     }
+                    playerName = it.me.name
+                    playerColor = it.me.color
                 }
 
             is Screen.GameInProgress ->
