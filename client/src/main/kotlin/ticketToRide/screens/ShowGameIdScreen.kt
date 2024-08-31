@@ -16,6 +16,8 @@ external interface ShowGameIdScreenProps : Props {
     var gameId: GameId
     var locale: Locale
     var onClosed: () -> Unit
+    var playerName: PlayerName
+    var playerColor: PlayerColor
 }
 
 @JsExport
@@ -52,6 +54,12 @@ val ShowGameIdScreen = FC<ShowGameIdScreenProps> { props ->
                     target = WindowTarget._blank
                     +gameUrl
                 }
+            }
+            p {
+                +"Player Name: ${props.playerName.value}"
+            }
+            p {
+                +"Player Color: ${props.playerColor.name}"
             }
         }
         DialogActions {
