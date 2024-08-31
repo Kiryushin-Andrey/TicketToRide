@@ -2,6 +2,8 @@ package ticketToRide.screens
 
 import csstype.pct
 import csstype.px
+import csstype.Color
+import csstype.NamedColor
 import emotion.react.css
 import kotlinx.browser.window
 import mui.material.*
@@ -9,6 +11,7 @@ import mui.system.sx
 import react.*
 import react.dom.html.ReactHTML.a
 import react.dom.html.ReactHTML.p
+import react.dom.html.ReactHTML.span
 import ticketToRide.*
 import web.window.WindowTarget
 
@@ -56,10 +59,17 @@ val ShowGameIdScreen = FC<ShowGameIdScreenProps> { props ->
                 }
             }
             p {
+                span {
+                    css {
+                        display = csstype.Display.inlineBlock
+                        width = 12.px
+                        height = 12.px
+                        backgroundColor = Color(props.playerColor.rgb)
+                        borderRadius = 50.pct
+                        marginRight = 8.px
+                    }
+                }
                 +"Player Name: ${props.playerName.value}"
-            }
-            p {
-                +"Player Color: ${props.playerColor.name}"
             }
         }
         DialogActions {
