@@ -131,10 +131,12 @@ fun <T> Graph<T>.getMaxEulerianSubgraph(): Graph<T> =
             .sortedBy { s -> s.weight }
             .toList()
 
-        pathsToRemove
+        val subgraphs = pathsToRemove
             .map { removePath(it.from, it.to, distances) }
-            .first { it.isConnected() }
-            .getMaxEulerianSubgraph()
+            .filter { it.isConnected() }
+            .map { it.getMaxEulerianSubgraph() }
+
+        subgraphs.maxByOrNull { it.getTotalWeight() } ?: this
     }
 
 fun <T> Graph<T>.getTotalWeight() = flatMap { it.value.values }.sum() / 2
