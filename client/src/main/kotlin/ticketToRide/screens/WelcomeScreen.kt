@@ -38,8 +38,11 @@ data class WelcomeScreenState(
     val calculateScoresInProcess: Boolean = false,
     val joinAsObserver: Boolean = false,
     val map: ConnectRequest.StartGameMap? = ConnectRequest.StartGameMap.BuiltIn(listOf("default")),
-    val gameMapParseErrors: CustomGameMapParseErrors? = null
+    val gameMapParseErrors: CustomGameMapParseErrors? = null,
+    val weatherConditions: List<WeatherCondition> = emptyList()
 )
+
+data class WeatherCondition(val city: String, val temperature: Double, val description: String)
 
 val WelcomeScreenState.availableColors get() =
     otherPlayers.find { it.name.value == playerName }
@@ -88,6 +91,28 @@ val WelcomeScreen = FC<WelcomeScreenProps> { props ->
         }
     }
 
+    useEffect(*emptyArray()) {
+        val scope = CoroutineScope(Dispatchers.Default + Job())
+        scope.launch {
+            val response = window.fetch("https://api.openweathermap.org/data/2.5/group?id=2643743,2950159,2968815,2988507,3117735&units=metric&appid=YOUR_API_KEY")
+            if (response.ok) {
+                val data = response.json().await()
+                val weatherList = data.asDynamic().list as Array<dynamic>
+                val weatherConditions = weatherList.map {
+                    WeatherCondition(
+                        city = it.name as String,
+                        temperature = it.main.temp as Double,
+                        description = it.weather[0].description as String
+                    )
+                }
+                setState(state.copy(weatherConditions = weatherConditions))
+            }
+        }
+        cleanup {
+            scope.cancel()
+        }
+    }
+
     Dialog {
         sx {
             width = 100.pct
@@ -116,6 +141,7 @@ val WelcomeScreen = FC<WelcomeScreenProps> { props ->
                     +str.notificationNote
                 }
             }
+            weatherConditions(state.weatherConditions)
         }
         DialogActions {
             if (startingNewGame) {
@@ -347,6 +373,26 @@ private fun proceed(gameId: GameId?, props: WelcomeScreenProps, state: WelcomeSc
 
         else ->
             props.onJoinGame(gameId, playerName, state.playerColor)
+    }
+}
+
+private fun ChildrenBuilder.weatherConditions(weatherConditions: List<WeatherCondition>) {
+    if (weatherConditions.isNotEmpty()) {
+        div {
+            css {
+                marginTop = 20.px
+            }
+            Typography {
+                variant = TypographyVariant.h6
+                +"Current Weather Conditions in Major European Capitals"
+            }
+            weatherConditions.forEach { condition ->
+                Typography {
+                    variant = TypographyVariant.body1
+                    +"${condition.city}: ${condition.temperature}°C, ${condition.description}"
+                }
+            }
+        }
     }
 }
 
