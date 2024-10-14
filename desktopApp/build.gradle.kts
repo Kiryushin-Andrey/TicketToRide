@@ -17,6 +17,7 @@ kotlin {
                 implementation(libs.oshai.kotlin.logging)
                 implementation(libs.slf4j)
                 implementation(project(":compose-shared"))
+                implementation(libs.kotlinx.coroutines.swing)
             }
         }
     }

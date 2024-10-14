@@ -32,6 +32,7 @@ dependencyResolutionManagement {
             version("moko", extra["moko.version"] as String)
 
             library("kotlinx.coroutines.core", "org.jetbrains.kotlinx", "kotlinx-coroutines-core").versionRef("kotlinx.coroutines")
+            library("kotlinx.coroutines.swing", "org.jetbrains.kotlinx", "kotlinx-coroutines-swing").versionRef("kotlinx.coroutines")
             library("kotlinx.serialization.core", "org.jetbrains.kotlinx", "kotlinx-serialization-core").versionRef("kotlinx.serialization")
             library("kotlinx.serialization.json", "org.jetbrains.kotlinx", "kotlinx-serialization-json").versionRef("kotlinx.serialization")
             library("kotlinx.serialization.protobuf", "org.jetbrains.kotlinx", "kotlinx-serialization-protobuf").versionRef("kotlinx.serialization")
@@ -48,6 +49,7 @@ dependencyResolutionManagement {
             library("ktor.client.java", "io.ktor", "ktor-client-java").versionRef("ktor")
             library("ktor.client.okhttp", "io.ktor", "ktor-client-okhttp").versionRef("ktor")
             library("ktor.client.websockets", "io.ktor", "ktor-client-websockets").versionRef("ktor")
+            library("ktor.client.auth", "io.ktor", "ktor-client-auth").versionRef("ktor")
 
             library("ktor.serialization.kotlinx-json", "io.ktor", "ktor-serialization-kotlinx-json").versionRef("ktor")
 

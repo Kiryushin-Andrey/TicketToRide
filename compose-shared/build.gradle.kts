@@ -24,6 +24,7 @@ kotlin {
                 api(libs.moko.resources.compose)
                 implementation(project(":common"))
                 implementation(project(":client-shared"))
+                implementation("ovh.plrapps:mapcompose-mp:0.9.3")
             }
         }
 
