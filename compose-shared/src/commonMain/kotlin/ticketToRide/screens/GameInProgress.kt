@@ -22,11 +22,15 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.resources.ImageResource
 import dev.icerock.moko.resources.compose.painterResource
@@ -60,6 +64,8 @@ fun GameInProgressScreen(
 @Composable
 private fun GameInProgressScreenLarge(vm: GameInProgressVM, modifier: Modifier = Modifier) {
     val str = remember(vm.locale) { GameScreenStrings(vm.locale) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
     Column(modifier = modifier.fillMaxSize()) {
         when {
             vm.gameState.myTurn ->
@@ -70,8 +76,8 @@ private fun GameInProgressScreenLarge(vm: GameInProgressVM, modifier: Modifier =
                 GameStatusMessage(str.playerXmoves(vm.gameState.players[vm.gameState.turn].name.value), Color.White)
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            GameMap(modifier = Modifier.fillMaxSize())
+        Box(modifier = Modifier.fillMaxSize().onSizeChanged { newSize -> size = newSize }) {
+            GameMap(size, modifier = Modifier.fillMaxSize())
             Column(modifier = Modifier.align(Alignment.TopStart)) {
                 PlayersList(vm.gameState.players, vm.gameState.turn, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
 
@@ -113,10 +119,11 @@ private fun GameInProgressScreenLarge(vm: GameInProgressVM, modifier: Modifier =
 @Composable
 private fun GameInProgressScreenCompact(vm: GameInProgressVM, modifier: Modifier = Modifier) {
     val str = remember(vm.locale) { GameScreenStrings(vm.locale) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
     val selectedNavItem = remember { mutableStateOf<SelectedNavItem?>(null) }
 
-    Box(modifier = modifier.background(Color.White).fillMaxSize()) {
-        GameMap(modifier = Modifier.fillMaxSize())
+    Box(modifier = modifier.background(Color.White).fillMaxSize().onSizeChanged { newSize -> size = newSize }) {
+        GameMap(size, modifier = Modifier.fillMaxSize())
         NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
             navBarItem(SelectedNavItem.Players, selectedNavItem)
             navBarItem(SelectedNavItem.MyHand, selectedNavItem)

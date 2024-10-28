@@ -57,7 +57,7 @@ val MapComponentBase = FC<MapComponentBaseProps> { props ->
         ref = mapElement
 
         pigeonMaps.Map::class.react {
-            provider = mapTilesProvider.provider
+            provider = { x, y, z, _ -> mapTilesProvider.provider(x, y, z) }
             attribution = attribution(mapTilesProvider)
 
             defaultCenter = props.gameMap.mapCenter.toPigeonMapCoords()
