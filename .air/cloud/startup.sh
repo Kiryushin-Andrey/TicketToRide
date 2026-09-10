@@ -59,12 +59,41 @@ fi
 
 chmod +x ./gradlew
 
-# Yarn (invoked internally by the Kotlin/JS plugin) aborts large downloads over this proxy
-# under its default 30s timeout; give it more room and less parallelism.
-cat > "$HOME/.yarnrc" <<'EOF'
+# yarn (invoked internally by the Kotlin/JS plugin) hits packages pinned in
+# kotlin-js-store/yarn.lock to registry.yarnpkg.com, and node's HTTPS client reliably
+# aborts some of those downloads part-way through over this proxy (plain curl does not).
+# Pre-fetch every pinned tarball with curl into a yarn offline mirror so `yarn install`
+# reads them from disk instead of hitting the flaky path.
+YARN_LOCK="$REPO_ROOT/kotlin-js-store/yarn.lock"
+MIRROR_DIR="$HOME/.yarn-offline-mirror"
+if [ -f "$YARN_LOCK" ]; then
+  log "Pre-fetching npm packages pinned in yarn.lock into an offline mirror..."
+  mkdir -p "$MIRROR_DIR"
+  grep -oE 'resolved "[^"]+"' "$YARN_LOCK" | sed -E 's/^resolved "//; s/"$//' | sort -u > /tmp/tickettoride-yarn-urls.txt
+  fetch_one() {
+    local url="${1%%#*}"
+    local fname
+    fname="$(echo "$url" | awk -F/ '{n=NF; f=$n; scope=$(n-2); if (scope ~ /^@/) print scope "-" f; else print f}')"
+    local out="$MIRROR_DIR/$fname"
+    [ -s "$out" ] && return 0
+    for _ in 1 2 3; do
+      curl -fsSL --max-time 60 -o "$out" "$url" && return 0
+    done
+    rm -f "$out"
+    echo "failed to fetch $url" >&2
+    return 1
+  }
+  export -f fetch_one
+  export MIRROR_DIR
+  xargs -P 8 -n 1 -I{} bash -c 'fetch_one "$@"' _ {} < /tmp/tickettoride-yarn-urls.txt || true
+  rm -f /tmp/tickettoride-yarn-urls.txt
+
+  cat > "$HOME/.yarnrc" <<EOF
+yarn-offline-mirror "$MIRROR_DIR"
+yarn-offline-mirror-pruning false
 network-timeout 300000
-network-concurrency 2
 EOF
+fi
 
 # --- Build: primes the Gradle distribution, Maven deps, Kotlin/JS Node+Yarn toolchain and npm
 # packages, and compiles+bundles both the server jar and the client JS it serves. This is the
@@ -76,7 +105,7 @@ until ./gradlew --no-daemon :server:build -x test; do
     log "Build failed after $attempt attempts."
     exit 1
   fi
-  log "Build attempt $attempt failed (likely a transient network hiccup fetching npm packages); retrying..."
+  log "Build attempt $attempt failed; retrying..."
   attempt=$((attempt + 1))
 done
 log "Build finished."
