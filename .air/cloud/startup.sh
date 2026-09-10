@@ -71,16 +71,24 @@ if [ -f "$YARN_LOCK" ]; then
   mkdir -p "$MIRROR_DIR"
   grep -oE 'resolved "[^"]+"' "$YARN_LOCK" | sed -E 's/^resolved "//; s/"$//' | sort -u > /tmp/tickettoride-yarn-urls.txt
   fetch_one() {
-    local url="${1%%#*}"
+    local full="$1"
+    local url="${full%%#*}"
+    local sha1="${full#*#}"
+    [ "$sha1" = "$full" ] && sha1=""
     local fname
-    fname="$(echo "$url" | awk -F/ '{n=NF; f=$n; scope=$(n-2); if (scope ~ /^@/) print scope "-" f; else print f}')"
+    fname="$(echo "$url" | awk -F/ '{n=NF; f=$n; scope=$(n-3); if (scope ~ /^@/) print scope "-" f; else print f}')"
     local out="$MIRROR_DIR/$fname"
-    [ -s "$out" ] && return 0
+    if [ -s "$out" ] && { [ -z "$sha1" ] || [ "$(sha1sum "$out" | cut -d' ' -f1)" = "$sha1" ]; }; then
+      return 0
+    fi
     for _ in 1 2 3; do
-      curl -fsSL --max-time 60 -o "$out" "$url" && return 0
+      curl -fsSL --max-time 60 -o "$out" "$url" || continue
+      if [ -z "$sha1" ] || [ "$(sha1sum "$out" | cut -d' ' -f1)" = "$sha1" ]; then
+        return 0
+      fi
     done
     rm -f "$out"
-    echo "failed to fetch $url" >&2
+    echo "failed to fetch (or verify) $url" >&2
     return 1
   }
   export -f fetch_one
