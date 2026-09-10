@@ -59,11 +59,26 @@ fi
 
 chmod +x ./gradlew
 
+# Yarn (invoked internally by the Kotlin/JS plugin) aborts large downloads over this proxy
+# under its default 30s timeout; give it more room and less parallelism.
+cat > "$HOME/.yarnrc" <<'EOF'
+network-timeout 300000
+network-concurrency 2
+EOF
+
 # --- Build: primes the Gradle distribution, Maven deps, Kotlin/JS Node+Yarn toolchain and npm
 # packages, and compiles+bundles both the server jar and the client JS it serves. This is the
 # expensive, cacheable part that the snapshot makes free for real tasks. ---
 log "Building server (compiles Kotlin/JVM + Kotlin/JS, primes Gradle/npm caches)..."
-./gradlew --no-daemon :server:build -x test
+attempt=1
+until ./gradlew --no-daemon :server:build -x test; do
+  if [ "$attempt" -ge 3 ]; then
+    log "Build failed after $attempt attempts."
+    exit 1
+  fi
+  log "Build attempt $attempt failed (likely a transient network hiccup fetching npm packages); retrying..."
+  attempt=$((attempt + 1))
+done
 log "Build finished."
 
 SERVER_JAR="$REPO_ROOT/server/build/libs/server-all.jar"
