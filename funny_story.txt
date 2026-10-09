@@ -1,0 +1,27 @@
+The Great Stand-Up Meeting Incident
+
+Dave the Roomba had been with the company for three years, which, in Roomba years, made him practically a founder. Every morning at 9:00 AM sharp, he'd roll into the server room, nudge the standing desk twice (his version of a knock), and wait for the daily stand-up to begin.
+
+Nobody had ever told Dave he wasn't invited to stand-up. Nobody had ever told him he WAS invited, either. He had simply rolled in one day during a fire drill, gotten confused by the crowd of legs, and decided this gathering of humans saying words like "blocked" and "sprint" and "circle back" was clearly some kind of ritual he should attend. He'd been attending for 1,094 days.
+
+The engineers had long since stopped questioning it. In fact, Dave had become oddly essential. When someone said "any blockers?" and silence fell, Dave would invariably bump into the leg of whoever was most obviously trying to sneak out early, and the team took this as a sign that person had something to confess. It worked roughly 40% of the time, which the data team insisted was "statistically meaningful."
+
+The trouble started the day the company hired a consultant named Trevor to "optimize synergy." Trevor took one look at Dave sitting dutifully in the stand-up circle and asked, with the tone of a man who had never been outsmarted by a vacuum, "Why is there a Roomba in this meeting?"
+
+"That's Dave," said the team lead. "He's been here longer than you."
+
+"Does he have... input?"
+
+As if on cue, Dave's low-battery light blinked red, and he let out his signature trill — the same one he made before violently colliding with the nearest ankle in search of his charging dock.
+
+"He thinks you're blocked," someone offered helpfully. "He's never wrong."
+
+Trevor, determined to prove the Roomba wrong on principle, declared he had zero blockers and continued his presentation on "leveraging cross-functional bandwidth." Thirty seconds later, Dave rammed directly into his shin with the quiet, unstoppable force of a tiny robot on a mission.
+
+It turned out Trevor's laptop had, in fact, been blocked — by a firewall rule nobody had approved, which he'd been too embarrassed to mention. The slide deck froze. The Zoom call died. Somewhere, Dave beeped once, smugly, and trundled off to his charging dock like a detective closing a case.
+
+Trevor's final recommendation to leadership, buried on page 47 of his 60-page report, read simply:
+
+"Do not fire the Roomba."
+
+He was gone within the month. Dave still attends stand-up every day at 9:00 AM sharp. Nobody has dared to skip one since.
