@@ -1,0 +1,13 @@
+The Bug That Wasn't
+
+A junior developer spent three days tracking down a bug where the production server
+crashed every day at exactly 4:17 PM. He checked cron jobs, memory leaks, network
+timeouts, even solar flare data. Nothing matched.
+
+On day four, he finally found it: the cleaning lady unplugged the server every
+afternoon to plug in her vacuum cleaner, then plugged it back in a few minutes later.
+The "crash" was just the server rebooting. The "fix" was a sticky note that said
+"DO NOT UNPLUG - EXPENSIVE COMPUTER" taped next to the outlet.
+
+The post-mortem report listed the root cause as "insufficient PDU redundancy."
+Everyone just called it "the vacuum incident."
