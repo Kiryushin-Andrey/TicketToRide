@@ -1,0 +1,17 @@
+The Bug That Wasn't
+
+A junior developer spent three straight days chasing a bug where the app crashed every single time — but only on Fridays.
+
+He checked the date-handling code. Fine. He checked the deployment pipeline. Fine. He checked the server logs, the database, the moon phase, his own sanity. Nothing.
+
+On the fourth Friday, he finally found it: a cron job labeled "cleanup_temp_files," written two years earlier by someone who had since left the company. It didn't clean up temp files. It deleted a file called "do_not_delete_prod_config.json," because the job matched anything with "temp" in the *folder path* — and someone had, at some point, during a rushed migration, moved the entire config directory into a folder called "temp_backup_FINAL_v2."
+
+The developer stared at the screen for a long moment, then typed a Slack message to the whole engineering channel:
+
+"Found the Friday bug. It's been quietly eating our prod config for two years. It only triggered on Fridays because that's the only day the cron job had permission to run, because someone restricted it 'temporarily' during an incident... in 2022."
+
+The most senior engineer on the team, who had in fact written that temporary restriction, replied with a single word:
+
+"oh no."
+
+Turns out "temporary" is the most load-bearing word in software engineering.
