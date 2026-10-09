@@ -1,0 +1,12 @@
+A rubber duck walks into a code review. The senior engineer says, "Wait, you're
+not allowed in here, you're just for debugging." The duck replies, "I know, I
+just wanted to see what happens when nobody explains anything to me out loud."
+
+Turns out the PR had an off-by-one error that three humans missed — but the
+duck caught it, because it had been patiently listening to someone talk
+through the loop logic at 2am the night before, and that explanation never
+got written into the code's comments, only muttered aloud.
+
+The moral, taped above the senior engineer's desk the next morning:
+"If you can't explain it to the duck, you can't explain it to the next person
+reading this either."
