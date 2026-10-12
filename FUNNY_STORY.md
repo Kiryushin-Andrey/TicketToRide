@@ -8,7 +8,7 @@ By 9 AM, QA reported that players in production could now claim the Vancouver–
 
 Meanwhile, the frontend team's map renderer, which had been quietly misinterpreting coordinate data for weeks, chose this exact moment to reveal that it had been drawing the entire Europe map upside down. Nobody had noticed because, as one developer put it, "Europe looks weirdly plausible either way if you squint."
 
-The two bugs collided beautifully. A player in Lisbon discovered he could claim a train route to what the game insisted was "Reykjavik" but was actually rendering somewhere in the Sahara, using his own display name as fuel, while another player's dice-colored llama avatar (don't ask) got stuck permanently rotating on the destination ticket screen, slowly becoming a beloved unofficial mascot.
+The two bugs collided beautifully. A player in Lisbon discovered he could claim a train route to what the game insisted was "Stockholm" but was actually rendering somewhere in the Sahara, using his own display name as fuel, while another player's dice-colored llama avatar (don't ask) got stuck permanently rotating on the destination ticket screen, slowly becoming a beloved unofficial mascot.
 
 The team convened an emergency stand-up. Dave, still riding his coffee high, proposed fixing the regex by "just adding another character to cancel out the first one." This is, legally speaking, not how regular expressions work, but nobody had the energy to argue.
 
