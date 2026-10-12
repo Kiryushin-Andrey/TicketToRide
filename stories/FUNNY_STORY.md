@@ -24,9 +24,13 @@ Across the table, Marcus had not drawn a single destination ticket all game and 
 
 By the final round, Dave's northern detour had taken him through eight states, two increasingly personal arguments about whether Duluth was a real place or a bit someone had made up in 1997, and one entire bag of pretzels. He placed his last train car with the triumphant flourish of a man who has technically succeeded.
 
-He had not technically succeeded. He was four cities short. His ticket was worth negative points. He had, in the process of avoiding this outcome, caused it with great enthusiasm and at considerable pretzel cost.
+He had not technically succeeded. He was four cities short. His ticket was worth negative points.
 
-"Well," Dave said, tallying his score with the expression of a man reading his own obituary, "the moose thing was worth it though."
+"I don't understand," Dave said, staring at the board. "I had a plan."
+
+"You had a sentence," Priya said. "'I'll just take the short route.' That was forty minutes ago. You have since personally recreated the Lewis and Clark expedition, pretzels included."
+
+Dave opened his mouth to argue this, found he could not, and closed it again.
 
 Priya won. She always wins. Nobody has ever beaten Priya at this game, and there is a growing suspicion among the group that she has been secretly practicing alone, on a second board, that she keeps in her closet, that no one has ever been allowed to see.
 
