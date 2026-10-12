@@ -1,6 +1,6 @@
 # The Great Caboose Incident
 
-Somewhere between Vienna and Berlin, a junior conductor named Gerald discovered
+Somewhere between Paris and Berlin, a junior conductor named Gerald discovered
 that the "Destination Ticket" deck in Car 7 had been secretly replaced,
 overnight, by a stack of parking tickets someone's cousin had been collecting
 since 2019.
